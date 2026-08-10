@@ -1,6 +1,0 @@
-{
-  "parent": "block/cube_all",
-  "textures": {
-    "all": "friday_cultivation:block/low_spirit_stone_ore"
-  }
-}

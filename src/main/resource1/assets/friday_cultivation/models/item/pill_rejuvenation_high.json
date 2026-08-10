@@ -1,6 +1,0 @@
-{
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "friday_cultivation:item/pill_rejuvenation_high"
-  }
-}

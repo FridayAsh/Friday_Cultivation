@@ -1,7 +1,0 @@
-{
-  "type": "friday_cultivation:add_item",
-  "conditions": [],
-  "item": "friday_cultivation:dao_foundation_fruit",
-  "chance": 0.005,
-  "table_filter": "leaves"
-}

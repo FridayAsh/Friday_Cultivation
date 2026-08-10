@@ -1,6 +1,0 @@
-{
-  "variants": {
-    "lit=false": { "model": "friday_cultivation:block/alchemy_core" },
-    "lit=true":  { "model": "friday_cultivation:block/alchemy_core_lit" }
-  }
-}

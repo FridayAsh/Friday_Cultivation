@@ -1,9 +1,0 @@
-{
-  "feature": "friday_cultivation:difu_bone_cluster",
-  "placement": [
-    { "type": "minecraft:count", "count": 14 },
-    { "type": "minecraft:in_square" },
-    { "type": "minecraft:height_range", "height": { "type": "minecraft:uniform", "min_inclusive": { "absolute": 5 }, "max_inclusive": { "absolute": 95 } } },
-    { "type": "minecraft:biome" }
-  ]
-}

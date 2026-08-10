@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "friday_cultivation:item/spell_book_time_stasis"
-  }
-}

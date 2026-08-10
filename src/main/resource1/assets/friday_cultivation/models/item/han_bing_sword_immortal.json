@@ -1,6 +1,0 @@
-{
-  "parent": "item/handheld",
-  "textures": {
-    "layer0": "friday_cultivation:item/han_bing_sword_immortal"
-  }
-}

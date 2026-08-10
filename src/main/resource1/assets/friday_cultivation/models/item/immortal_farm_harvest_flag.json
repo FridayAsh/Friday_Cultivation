@@ -1,6 +1,0 @@
-{
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "friday_cultivation:block/immortal_farm_harvest_flag"
-  }
-}
