@@ -2384,7 +2384,7 @@ extends AbstractContainerScreen<WanderingCultivatorMenu> {
         this.spellHoverRects.add(new int[]{spellIdx, x, y, rowW, 14});
     }
 
-    public boolean calculateIngredientsPositions(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
             if (this.isInsideRect((int)mouseX, (int)mouseY, this.closeButtonRect)) {
                 this.onClose();

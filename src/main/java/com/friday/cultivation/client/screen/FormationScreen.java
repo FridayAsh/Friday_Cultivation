@@ -555,7 +555,7 @@ extends AbstractContainerScreen<FormationMenu> {
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    public boolean calculateIngredientsPositions(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0 && this.isInNameConfirmButton((int)mouseX, (int)mouseY)) {
             this.commitRadiusEdit();
             this.confirmName();

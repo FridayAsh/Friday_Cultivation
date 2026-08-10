@@ -1015,7 +1015,7 @@ extends Screen {
         return layout.width >= 500;
     }
 
-    public boolean calculateIngredientsPositions(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0) {
             if (SectJoinDialogueScreen.isInsideScrollbar(mouseX, mouseY, this.lastTaskScrollMetrics)) {
                 this.draggingTaskScroll = true;

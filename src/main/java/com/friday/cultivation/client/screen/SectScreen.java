@@ -1080,7 +1080,7 @@ extends Screen {
         }
     }
 
-    public boolean calculateIngredientsPositions(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         double ly;
         if (button != 0) {
             return super.mouseClicked(mouseX, mouseY, button);

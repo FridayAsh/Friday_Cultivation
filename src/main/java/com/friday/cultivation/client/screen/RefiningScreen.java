@@ -311,7 +311,7 @@ extends AbstractContainerScreen<RefiningMenu> {
         gfx.renderComponentTooltip(this.font, new java.util.ArrayList<net.minecraft.network.chat.Component>(lines), mouseX, mouseY);
     }
 
-    public boolean calculateIngredientsPositions(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0 && this.isMouseOverAutoRetryCheckbox((int)mouseX, (int)mouseY)) {
             this.playClick();
             boolean newState = !((RefiningMenu)this.menu).isAutoRetryEnabled();

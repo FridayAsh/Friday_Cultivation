@@ -203,7 +203,7 @@ extends Screen {
         }
     }
 
-    public boolean calculateIngredientsPositions(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0 && this.hoveredSlot >= 0) {
             this.commitAndClose();
             return true;
