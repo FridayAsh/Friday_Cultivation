@@ -116,7 +116,7 @@ extends Screen {
         gfx.fill(0, 0, this.width, this.height, 0x50000000);
     }
 
-    public void addEntry(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partial) {
+    public void render(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partial) {
         this.renderBackground(gfx);
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;

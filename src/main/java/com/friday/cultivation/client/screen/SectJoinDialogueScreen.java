@@ -154,7 +154,7 @@ extends Screen {
         return options;
     }
 
-    public void addEntry(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
+    public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         List<DialogueOption> options = this.dialogueOptions();
         this.hoverTipRects.clear();
         this.itemHoverRects.clear();

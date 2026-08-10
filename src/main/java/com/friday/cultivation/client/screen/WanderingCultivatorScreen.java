@@ -313,7 +313,7 @@ extends AbstractContainerScreen<WanderingCultivatorMenu> {
     /*
      * WARNING - void declaration
      */
-    public void addEntry(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partial) {
+    public void render(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partial) {
         WanderingCultivatorEntity npc;
         int rh;
         int rw;

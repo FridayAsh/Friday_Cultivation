@@ -82,7 +82,7 @@ extends Screen {
         }
     }
 
-    public void addEntry(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
+    public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         Component hoveredHint;
         gfx.fillGradient(0, 0, this.width, this.height, 0x60500000, -1600126976);
         gfx.pose().pushPose();

@@ -406,7 +406,7 @@ extends Screen {
         this.editingName = false;
     }
 
-    public void addEntry(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partial) {
+    public void render(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partial) {
         Technique ht;
         Spell hovered;
         ArrayList<Component> lines;

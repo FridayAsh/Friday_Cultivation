@@ -771,7 +771,7 @@ extends AbstractContainerScreen<FormationMenu> {
         gfx.drawString(this.font, headerText, this.titleLabelX, this.titleLabelY, -15067628, false);
     }
 
-    public void addEntry(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
+    public void render(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(gfx);
         super.render(gfx, mouseX, mouseY, partialTick);
         this.renderTooltip(gfx, mouseX, mouseY);

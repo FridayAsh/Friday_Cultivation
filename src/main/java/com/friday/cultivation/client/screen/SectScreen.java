@@ -194,7 +194,7 @@ extends Screen {
         return new SectViewport(left, top, scale);
     }
 
-    public void addEntry(GuiGraphics gfx, int mouseX, int mouseY, float partial) {
+    public void render(GuiGraphics gfx, int mouseX, int mouseY, float partial) {
         SectViewport vp;
         this.lastViewport = vp = this.sectViewport();
         int lmx = vp.toLocalX(mouseX);

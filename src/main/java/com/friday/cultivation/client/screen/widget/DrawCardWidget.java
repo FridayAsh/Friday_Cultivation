@@ -96,7 +96,7 @@ extends AbstractButton {
         return null;
     }
 
-    protected void getCategory(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partial) {
+    protected void renderWidget(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partial) {
         boolean hover;
         boolean bl = hover = this.isHoveredOrFocused() && !this.selected && this.isRevealed();
         if (hover) {

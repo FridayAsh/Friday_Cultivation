@@ -47,7 +47,7 @@ extends Screen {
         Minecraft.getInstance().setScreen(null);
     }
 
-    public void addEntry(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
+    public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(gfx);
         int cx = this.width / 2;
         int left = cx - 190;
