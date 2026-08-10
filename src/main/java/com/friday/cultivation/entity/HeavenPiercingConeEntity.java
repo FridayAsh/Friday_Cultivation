@@ -271,7 +271,7 @@ implements IEntityAdditionalSpawnData {
         this.entityData.define(DATA_CHARGE_TICKS, 0);
     }
 
-    public void canEat() {
+    public void tick() {
         LivingEntity owner;
         if (TimeStasisHandler.pauseEntityTickInStoppedTime(this)) {
             return;

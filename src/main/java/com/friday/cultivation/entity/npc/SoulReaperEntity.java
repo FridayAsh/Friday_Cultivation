@@ -188,7 +188,7 @@ extends PathfinderMob {
         super.die(source);
     }
 
-    public void canEat() {
+    public void tick() {
         boolean soulValid;
         super.tick();
         if (this.level().isClientSide) {

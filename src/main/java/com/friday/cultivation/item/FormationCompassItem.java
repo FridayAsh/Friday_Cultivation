@@ -81,7 +81,7 @@ extends Item {
     }
 
     @NotNull
-    public InteractionResult playSound(@NotNull UseOnContext context) {
+    public InteractionResult useOn(@NotNull UseOnContext context) {
         Level level = context.getLevel();
         Player player = context.getPlayer();
         if (player == null) {

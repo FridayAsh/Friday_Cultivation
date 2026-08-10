@@ -40,7 +40,7 @@ extends PillItem {
 
     @Override
     @NotNull
-    public InteractionResultHolder<ItemStack> appendHoverText(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
+    public InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
         if (!level.isClientSide) {
             player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.pill.life_creation.passive_hint").withStyle(ChatFormatting.GOLD), true);
         }

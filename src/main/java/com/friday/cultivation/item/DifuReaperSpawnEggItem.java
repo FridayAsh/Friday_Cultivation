@@ -59,7 +59,7 @@ extends ForgeSpawnEggItem {
     }
 
     @NotNull
-    public InteractionResult playSound(UseOnContext context) {
+    public InteractionResult useOn(UseOnContext context) {
         Level level = context.getLevel();
         if (!(level instanceof ServerLevel)) {
             return InteractionResult.SUCCESS;

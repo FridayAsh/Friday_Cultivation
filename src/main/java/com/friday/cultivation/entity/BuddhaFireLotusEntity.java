@@ -140,7 +140,7 @@ implements IEntityAdditionalSpawnData {
         this.entityData.define(DATA_ROOT_FLAGS, 0);
     }
 
-    public void canEat() {
+    public void tick() {
         Vec3 newPos;
         if (TimeStasisHandler.pauseEntityTickInStoppedTime(this)) {
             return;

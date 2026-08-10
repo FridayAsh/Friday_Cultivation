@@ -49,7 +49,7 @@ extends HorizontalDirectionalBlock {
     }
 
     @NotNull
-    public VoxelShape canSurvive(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext ctx) {
+    public VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext ctx) {
         return SHAPE;
     }
 }

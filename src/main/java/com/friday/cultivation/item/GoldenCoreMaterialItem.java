@@ -58,17 +58,17 @@ extends Item {
         this.kind = kind;
     }
 
-    public int defaultDurability(@NotNull ItemStack stack) {
+    public int getUseDuration(@NotNull ItemStack stack) {
         return 32;
     }
 
     @NotNull
-    public UseAnim durability(@NotNull ItemStack stack) {
+    public UseAnim getUseAnimation(@NotNull ItemStack stack) {
         return UseAnim.EAT;
     }
 
     @NotNull
-    public InteractionResultHolder<ItemStack> appendHoverText(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
+    public InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (this.kind == Kind.BLOOD_TRANSFORMATION_TALISMAN) {
             if (!level.isClientSide && player instanceof ServerPlayer) {

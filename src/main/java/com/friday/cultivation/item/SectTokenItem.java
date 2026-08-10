@@ -64,7 +64,7 @@ extends Item {
     }
 
     @NotNull
-    public InteractionResult playSound(@NotNull UseOnContext ctx) {
+    public InteractionResult useOn(@NotNull UseOnContext ctx) {
         BlockPos pos;
         Level level = ctx.getLevel();
         BlockState state = level.getBlockState(pos = ctx.getClickedPos());
