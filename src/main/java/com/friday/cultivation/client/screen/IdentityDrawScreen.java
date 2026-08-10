@@ -476,7 +476,7 @@ extends Screen {
         g.pose().popPose();
     }
 
-    public boolean calculateIngredientsPositions(double mx, double my, int button) {
+    public boolean mouseClicked(double mx, double my, int button) {
         RootPick picked = this.rootPickAt((int)mx, (int)my);
         if (picked != null) {
             this.toggleRootPick(picked);

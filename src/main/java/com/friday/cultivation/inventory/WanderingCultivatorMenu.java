@@ -84,7 +84,7 @@ extends AbstractContainerMenu {
         }
         this.sellSlot = this.addSlot(new Slot((Container)this.sellContainer, 0, 192, 222){
 
-            public boolean allowModification() {
+            public boolean isActive() {
                 return WanderingCultivatorMenu.this.sellSlotVisible && WanderingCultivatorMenu.this.playerSlotsVisible;
             }
         });
@@ -178,7 +178,7 @@ extends AbstractContainerMenu {
             super((Container)inventory, index, x, y);
         }
 
-        public boolean allowModification() {
+        public boolean isActive() {
             return WanderingCultivatorMenu.this.playerSlotsVisible;
         }
     }

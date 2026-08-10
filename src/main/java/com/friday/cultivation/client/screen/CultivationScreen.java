@@ -642,7 +642,7 @@ extends Screen {
         this.timeAccelerationStartBtn.active = this.timeAccelerationStartBtn.visible && sittingOnCushion;
         this.timeAccelerationStopBtn.active = this.timeAccelerationStopBtn.visible = canUseTimeAcceleration && timeAccelerationActive;
         int breakthroughW = 112;
-        this.breakthroughBtn.setWidth(splitX + 24);
+        this.breakthroughBtn.setX(splitX + 24);
         this.breakthroughBtn.setY(topY + 200 - 26);
         this.breakthroughBtn.setWidth(breakthroughW);
         this.breakthroughBtn.visible = this.currentTab == Tab.BREAKTHROUGH && data.getRealm() != Realm.TRUE_IMMORTAL;
@@ -3109,7 +3109,7 @@ extends Screen {
         return false;
     }
 
-    public boolean calculateIngredientsPositions(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int idx;
         int cy;
         int cx;
