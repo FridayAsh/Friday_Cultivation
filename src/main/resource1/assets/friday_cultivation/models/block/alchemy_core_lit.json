@@ -1,0 +1,6 @@
+{
+  "parent": "block/cube_all",
+  "textures": {
+    "all": "friday_cultivation:block/alchemy_core_lit"
+  }
+}

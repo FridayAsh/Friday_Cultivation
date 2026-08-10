@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "friday_cultivation:item/technique_book_heart_sutra"
+  }
+}

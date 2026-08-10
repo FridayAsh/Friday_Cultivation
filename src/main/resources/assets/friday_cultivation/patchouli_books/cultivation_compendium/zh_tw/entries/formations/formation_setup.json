@@ -1,0 +1,17 @@
+{
+  "name": "陣盤與陣旗",
+  "icon": "friday_cultivation:low_formation_core_plate",
+  "category": "friday_cultivation:formations",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "陣法由陣盤作為陣眼，陣旗決定陣法類型與範圍。陣盤與陣旗是一對多關係，同一陣盤可連結多種陣旗。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "放置完成後，回到陣盤 GUI 按下啟動陣法。陣法啟動後會依範圍與品階持續消耗陣盤靈氣。GUI 會以每秒消耗顯示。"
+    }
+  ],
+  "advancement": "friday_cultivation:guide/has_formation_tools"
+}

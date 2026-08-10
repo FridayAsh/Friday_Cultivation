@@ -1,0 +1,16 @@
+{
+  "name": "自訂煉丹配方",
+  "icon": "minecraft:written_book",
+  "category": "friday_cultivation:alchemy",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "煉丹已支援資料包。配方檔放在 data/<namespace>/recipes/*.json，type 使用 friday_cultivation:alchemy。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "欄位包含 ingredients、qi_cost_per_pill、outputs、translation_key、sort_order。outputs 需要為 low、mid、high、supreme、immortal 五個品階都指定輸出物品。"
+    }
+  ]
+}

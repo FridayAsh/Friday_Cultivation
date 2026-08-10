@@ -1,0 +1,17 @@
+{
+  "name": "Spirit Vein Spring",
+  "icon": "friday_cultivation:spirit_vein_spring",
+  "category": "friday_cultivation:spirit_veins",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Spirit Vein Springs generate rarely underground in the Overworld near spirit stone ore of any grade. Higher-grade ore has a better chance to attract a spring, while lower-grade ore has a much lower chance."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The spring emits faint light and can be harvested intact with a pickaxe. It is the key ingredient for crafting the low-grade Spirit Vein Core."
+    }
+  ],
+  "advancement": "friday_cultivation:guide/has_spirit_vein"
+}

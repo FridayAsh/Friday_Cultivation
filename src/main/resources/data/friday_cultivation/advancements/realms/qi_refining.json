@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "friday_cultivation:realm_token_qi_refining"
+    },
+    "title": {
+      "translate": "advancements.friday_cultivation.realm.qi_refining.title"
+    },
+    "description": {
+      "translate": "advancements.friday_cultivation.realm.qi_refining.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "reached": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

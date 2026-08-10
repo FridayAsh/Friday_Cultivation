@@ -1,0 +1,16 @@
+{
+  "name": "剑类法术",
+  "icon": "friday_cultivation:spell_book_sky_splitting_sword_aura",
+  "category": "friday_cultivation:spells",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "飞剑术、万剑归宗、剑气与裂天剑气都属于剑类玩法。这些法术会受到剑类加成、金属性、法伤与武器词条影响。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "裂天剑气点按时会斩出高速剑气；蓄力后放开会释放巨大剑气。巨大剑气伤害会依蓄力灵气、武器与法伤加成计算，超高蓄力时还会追加系统性扣血。"
+    }
+  ]
+}

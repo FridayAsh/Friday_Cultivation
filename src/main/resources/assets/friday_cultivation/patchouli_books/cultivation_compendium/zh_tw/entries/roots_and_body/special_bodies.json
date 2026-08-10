@@ -1,0 +1,16 @@
+{
+  "name": "特殊體質",
+  "icon": "minecraft:deepslate",
+  "category": "friday_cultivation:roots_and_body",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "絕脈石體是體修專屬體質：靈氣上限只有正常的十分之一，但仍可吸收靈氣與突破境界；最大生命值 ×2，常駐抗性提升 I、回復 I，所有近戰武器物理傷害 +100%。先天劍體則是劍道極致體質，劍系傷害與耗靈大幅優化，但非劍系元素法術會受到嚴重排斥。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "這類體質偏向未來的體修方向。現在它已經能改變玩法，但完整體修體系仍屬於後續開發空間。"
+    }
+  ]
+}

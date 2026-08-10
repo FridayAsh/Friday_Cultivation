@@ -1,0 +1,16 @@
+{
+  "name": "劍類法術",
+  "icon": "friday_cultivation:spell_book_sky_splitting_sword_aura",
+  "category": "friday_cultivation:spells",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "飛劍術、萬劍歸宗、劍氣與裂天劍氣都屬於劍類玩法。這些法術會受到劍類加成、金屬性、法傷與武器詞條影響。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "裂天劍氣點按時會斬出高速劍氣；蓄力後放開會釋放巨大劍氣。巨大劍氣傷害會依蓄力靈氣、武器與法傷加成計算，超高蓄力時還會追加系統性扣血。"
+    }
+  ]
+}

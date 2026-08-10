@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SAS",
+    "ACA",
+    "SAS"
+  ],
+  "key": {
+    "A": { "item": "minecraft:amethyst_shard" },
+    "S": { "item": "friday_cultivation:supreme_spirit_stone" },
+    "C": { "item": "friday_cultivation:supreme_formation_core_plate" }
+  },
+  "result": {
+    "item": "friday_cultivation:immortal_formation_core_plate",
+    "count": 1
+  }
+}

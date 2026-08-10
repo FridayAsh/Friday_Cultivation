@@ -1,0 +1,16 @@
+{
+  "name": "阵纹输灵网络",
+  "icon": "friday_cultivation:formation_inscription_knife",
+  "category": "friday_cultivation:spirit_veins",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "阵纹默认是黯淡的。只有当阵纹网络把灵脉核心连到可储存灵气的方块，例如炼丹核心、炼器核心、阵盘时，网络才会亮起。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "连通后，灵脉核心可以无视原距离限制，把这些目标纳入补灵气候选，仍沿用「灵气最少者优先」。输送粒子会沿阵纹旁边零散出现，而不是从核心直线飞到目标。"
+    }
+  ]
+}

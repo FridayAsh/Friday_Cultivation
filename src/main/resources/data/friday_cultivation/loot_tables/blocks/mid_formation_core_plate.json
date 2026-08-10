@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:block",
+  "pools": [{
+    "rolls": 1,
+    "entries": [{ "type": "minecraft:item", "name": "friday_cultivation:mid_formation_core_plate" }],
+    "conditions": [{ "condition": "minecraft:survives_explosion" }]
+  }]
+}

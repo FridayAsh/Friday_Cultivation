@@ -1,0 +1,16 @@
+{
+  "name": "Sword Spells",
+  "icon": "friday_cultivation:spell_book_sky_splitting_sword_aura",
+  "category": "friday_cultivation:spells",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Flying Sword, Sword Convergence, Sword Aura, and Sky-Splitting Sword Aura form the sword spell family. They benefit from sword bonuses, Metal affinity, Spell Power, and weapon modifiers."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Sky-Splitting Sword Aura fires a quick slash on click. Hold, charge, then release to send a huge slash. Its damage scales with charged qi, weapon bonuses, and Spell Power; extreme charge adds direct health loss."
+    }
+  ]
+}

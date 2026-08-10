@@ -1,0 +1,18 @@
+{
+  "type": "friday_cultivation:alchemy",
+  "translation_key": "recipe.friday_cultivation.sex_change_pill",
+  "sort_order": 56,
+  "ingredients": [
+    { "item": "friday_cultivation:herb", "count": 3 },
+    { "item": "minecraft:amethyst_shard", "count": 1 },
+    { "item": "friday_cultivation:low_spirit_stone", "count": 2 }
+  ],
+  "qi_cost_per_pill": 120,
+  "outputs": {
+    "low": "friday_cultivation:sex_change_pill",
+    "mid": "friday_cultivation:sex_change_pill",
+    "high": "friday_cultivation:sex_change_pill",
+    "supreme": "friday_cultivation:sex_change_pill",
+    "immortal": "friday_cultivation:sex_change_pill"
+  }
+}

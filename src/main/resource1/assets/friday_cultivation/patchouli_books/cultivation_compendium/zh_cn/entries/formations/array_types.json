@@ -1,0 +1,16 @@
+{
+  "name": "聚灵与护宗",
+  "icon": "friday_cultivation:low_qi_gathering_flag",
+  "category": "friday_cultivation:formations",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "聚灵阵提高范围内灵气粒子的产生与恢复节奏，品阶越高倍率越强。护宗大阵不强化灵气，而是生成宗门护罩抵挡攻击。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "阵旗、武器、装备等若有品阶区分，视觉上应使用一致的品阶背景扩散颜色，让玩家一眼看出等级。"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "自訂煉器配方",
+  "icon": "minecraft:written_book",
+  "category": "friday_cultivation:refining",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "煉器也支援資料包。配方 type 使用 friday_cultivation:refining。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "欄位包含 ingredients、qi_cost_per_item、outputs、translation_key、sort_order。outputs 以 low、mid、high、supreme、immortal 對應五品階輸出。"
+    }
+  ]
+}

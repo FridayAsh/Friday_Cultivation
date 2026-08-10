@@ -1,0 +1,11 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="All Rights Reserved"
+
+[[mods]]
+modId="friday_cultivation"
+version="0.1.0"
+displayName="Friday修仙"
+logoFile=""
+authors="Friday"
+description="复刻小翔的修仙世界，包含境界、灵根、体质、身份、法术、功法、炼丹、炼器、阵法、宗门、地府等完整修仙体系。"

@@ -1,0 +1,17 @@
+{
+  "name": "Technique Basics",
+  "icon": "friday_cultivation:technique_book_fragment",
+  "category": "friday_cultivation:techniques",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Techniques define long-term builds. Equipping one grants elemental spell bonuses, qi cost changes, special passives, or death-saving effects."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Technique tiers matter. Higher realms can equip stronger techniques. Some techniques require a matching spirit root or sufficient realm, such as Qingdi Longevity for wood or high-realm builds."
+    }
+  ],
+  "advancement": "friday_cultivation:guide/has_technique_book"
+}

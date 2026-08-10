@@ -1,0 +1,16 @@
+{
+  "name": "Realms and Breakthroughs",
+  "icon": "friday_cultivation:realm_token_golden_core",
+  "category": "friday_cultivation:immortal_path",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Realms progress from Mortal through Qi Condensation, Foundation, Golden Core, Nascent Soul, Soul Formation, Void Refining, Body Integration, Mahayana, Tribulation, and Earth Immortal."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Minor breakthroughs grant +1 freely assignable zhenyuan and raise Constitution, Bone, Agility, Spell Power, and Qi Sea by +1 each. Major breakthroughs grant +5 freely assignable zhenyuan and raise all five attributes by +5 each."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "has_precipitation": false,
+  "temperature": 2.0,
+  "downfall": 0.0,
+  "effects": {
+    "fog_color": 3344392,
+    "water_color": 4159204,
+    "water_fog_color": 329011,
+    "sky_color": 3344392,
+    "mood_sound": { "sound": "minecraft:ambient.nether_wastes.mood", "tick_delay": 6000, "block_search_extent": 8, "offset": 2.0 }
+  },
+  "spawners": {},
+  "spawn_costs": {},
+  "carvers": { "air": "minecraft:nether_cave" },
+  "features": [ [], [], [], [], [], [], [ "friday_cultivation:difu_soul_patch" ], [], [], [ "friday_cultivation:difu_bone_skeleton", "friday_cultivation:difu_village" ], [] ]
+}

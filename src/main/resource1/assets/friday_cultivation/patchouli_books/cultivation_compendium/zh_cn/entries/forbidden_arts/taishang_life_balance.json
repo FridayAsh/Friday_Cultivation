@@ -1,0 +1,16 @@
+{
+  "name": "太上均命",
+  "icon": "friday_cultivation:spell_book_taishang_life_balance",
+  "category": "friday_cultivation:forbidden_arts",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "太上均命是仙术、无属性主动法术。点按会给目标血色锁链印记，玩家 30 秒内每秒强制扣最大生命 10%，并把流失血量转为对目标的放大伤害。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "长按会用血色锁链牵住自己与目标，双方无法移动但仍能转视角、施法、吃丹药。扣血量会先吃青帝长生诀的吸收护盾；玩家血量降到 1 时停止双方扣血。"
+    }
+  ]
+}

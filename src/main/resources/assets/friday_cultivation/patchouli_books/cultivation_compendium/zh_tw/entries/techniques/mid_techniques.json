@@ -1,0 +1,16 @@
+{
+  "name": "中品功法",
+  "icon": "friday_cultivation:technique_book_deadwood_rebirth",
+  "category": "friday_cultivation:techniques",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "中品功法開始明顯分流。金系、木系、水系、火系、土系功法會加成對應屬性；風、影、冰等路線則提供更特殊的戰鬥節奏。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "枯木逢春訣是中品木屬性功法：木系法術傷害 +30%，木系法術靈氣消耗 -20%。白天直曬陽光時，靈氣與生命回復速度提升；站在自然方塊上還會獲得生命恢復。"
+    }
+  ]
+}

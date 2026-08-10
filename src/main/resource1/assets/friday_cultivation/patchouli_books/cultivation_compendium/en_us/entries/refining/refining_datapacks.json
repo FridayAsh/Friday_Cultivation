@@ -1,0 +1,16 @@
+{
+  "name": "Custom Refining Recipes",
+  "icon": "minecraft:written_book",
+  "category": "friday_cultivation:refining",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Refining also supports datapacks. Use recipe type friday_cultivation:refining."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Fields include ingredients, qi_cost_per_item, outputs, translation_key, and sort_order. outputs maps low, mid, high, supreme, and immortal to the five tier outputs."
+    }
+  ]
+}

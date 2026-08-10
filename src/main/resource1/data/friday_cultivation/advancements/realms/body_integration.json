@@ -1,0 +1,23 @@
+{
+  "parent": "friday_cultivation:realms/void_refining",
+  "display": {
+    "icon": {
+      "item": "friday_cultivation:realm_token_body_integration"
+    },
+    "title": {
+      "translate": "advancements.friday_cultivation.realm.body_integration.title"
+    },
+    "description": {
+      "translate": "advancements.friday_cultivation.realm.body_integration.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "reached": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

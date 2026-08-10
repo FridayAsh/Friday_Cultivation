@@ -1,0 +1,17 @@
+{
+  "type": "friday_cultivation:alchemy",
+  "translation_key": "recipe.friday_cultivation.zhuji_dan",
+  "sort_order": 60,
+  "ingredients": [
+    { "item": "friday_cultivation:herb", "count": 1 },
+    { "item": "friday_cultivation:mid_spirit_stone", "count": 1 }
+  ],
+  "qi_cost_per_pill": 300,
+  "outputs": {
+    "low": "friday_cultivation:zhuji_dan",
+    "mid": "friday_cultivation:zhuji_dan",
+    "high": "friday_cultivation:zhuji_dan",
+    "supreme": "friday_cultivation:zhuji_dan",
+    "immortal": "friday_cultivation:zhuji_dan"
+  }
+}

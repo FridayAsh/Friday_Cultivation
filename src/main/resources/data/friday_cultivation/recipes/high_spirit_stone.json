@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "MMM",
+    "MMM",
+    "MMM"
+  ],
+  "key": {
+    "M": { "item": "friday_cultivation:mid_spirit_stone" }
+  },
+  "result": {
+    "item": "friday_cultivation:high_spirit_stone",
+    "count": 1
+  }
+}

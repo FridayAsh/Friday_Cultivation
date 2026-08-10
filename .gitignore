@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+build/
+bin/
+
+# IDE
+.settings/
+.project
+.classpath
+.vscode/
+*.iml
+.idea/
+
+# 日志/临时
+*.txt
+build_*.txt
+build_log*.txt
+
+# 系统
+Thumbs.db
+.DS_Store

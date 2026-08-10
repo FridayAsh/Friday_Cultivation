@@ -1,0 +1,16 @@
+{
+  "name": "法寶武器",
+  "icon": "friday_cultivation:xuan_iron_sword_mid",
+  "category": "friday_cultivation:refining",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "目前武器包含玄鐵劍、青木劍、赤焰劍與寒冰劍等系列。不同武器會提供不同元素或戰鬥效果，例如中毒、燃燒、冰凍或劍類法術配合。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "武器不是只增加近戰手感；它也可能參與法術最終加成。使用劍類法術、無屬性法術或元素法術時，手持武器的詞條可能非常重要。"
+    }
+  ]
+}

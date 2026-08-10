@@ -1,0 +1,16 @@
+{
+  "name": "Core Plate Capacity",
+  "icon": "friday_cultivation:immortal_formation_core_plate",
+  "category": "friday_cultivation:formations",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Core plates have five tiers with qi capacities 100, 1000, 10000, 100000, and 1000000. Link limits are low 1, mid 5, high 10, supreme 30, immortal 50."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "An active core generally should not be relinked casually. Plan the eye first, then use the compass to connect farm, sect wall, spirit vein, and workshop zones."
+    }
+  ]
+}

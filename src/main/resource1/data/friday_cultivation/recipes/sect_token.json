@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " W ",
+    "EME",
+    " S "
+  ],
+  "key": {
+    "W": { "item": "minecraft:red_wool" },
+    "E": { "item": "minecraft:emerald" },
+    "M": { "item": "friday_cultivation:mid_spirit_stone" },
+    "S": { "item": "minecraft:string" }
+  },
+  "result": {
+    "item": "friday_cultivation:sect_token",
+    "count": 2
+  }
+}

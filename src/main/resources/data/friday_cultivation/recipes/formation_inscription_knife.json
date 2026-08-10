@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " I ",
+    " L ",
+    " S "
+  ],
+  "key": {
+    "I": { "item": "minecraft:iron_ingot" },
+    "L": { "item": "friday_cultivation:low_spirit_stone" },
+    "S": { "item": "minecraft:stick" }
+  },
+  "result": {
+    "item": "friday_cultivation:formation_inscription_knife",
+    "count": 1
+  }
+}

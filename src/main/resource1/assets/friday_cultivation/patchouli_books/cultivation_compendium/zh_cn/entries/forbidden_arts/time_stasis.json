@@ -1,0 +1,17 @@
+{
+  "name": "时间停滞",
+  "icon": "friday_cultivation:spell_book_time_stasis",
+  "category": "friday_cultivation:forbidden_arts",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "时间停滞是仙术。点按可暂停准星指向的实体 30 秒；蓄力 100% 可展开范围时间停止，使范围内万物停止，施法者与同样能施放此术者可保持行动。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "范围时间停止会让范围外看见灰黑半透明球体。范围内施放出的飞剑、火球、剑气等投射物也会先停住，时间解除后再继续飞行。"
+    }
+  ],
+  "advancement": "friday_cultivation:guide/has_forbidden_spell"
+}

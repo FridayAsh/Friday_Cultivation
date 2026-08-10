@@ -1,0 +1,16 @@
+{
+  "name": "Planned Talismans",
+  "icon": "minecraft:paper",
+  "category": "friday_cultivation:talismans_future",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Talismans are not fully implemented yet. In the future, they will become another cultivation technology line based on materials, preparation, and fast combat use."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "This chapter is reserved. Once talismans arrive, it will cover talisman paper, brushes, ink, categories, crafting, and datapack rules."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "功法与法术加成",
+  "icon": "friday_cultivation:qing_mu_sword_mid",
+  "category": "friday_cultivation:techniques",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "法术最终数值会综合计算基础伤害、法伤属性、灵根、功法、武器、被动法术与其他系统加成。新增法术时，也应遵守这套规则，不把伤害写死。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "若你使用木系功法再施放木系法术，或手持能加成无属性法术的武器再使用太上均命，伤害与扣血都应被正确放大。"
+    }
+  ]
+}

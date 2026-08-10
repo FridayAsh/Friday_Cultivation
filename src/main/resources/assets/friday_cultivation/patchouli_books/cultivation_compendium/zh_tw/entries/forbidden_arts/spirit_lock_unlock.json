@@ -1,0 +1,16 @@
+{
+  "name": "鎖靈與解靈",
+  "icon": "friday_cultivation:spell_book_spirit_unlock",
+  "category": "friday_cultivation:forbidden_arts",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "鎖靈術是極品無屬性主動法術，點按消耗 500 靈氣。它可以封住實體施法能力，也可以封住靈氣驅動方塊的功能。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "解靈術點按消耗 100 靈氣，可解除自身、目標實體或目標方塊的鎖靈。這是專門的反制法術，因此被鎖靈時仍可施放。"
+    }
+  ]
+}

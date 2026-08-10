@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:block",
+  "pools": [{
+    "rolls": 1,
+    "entries": [{ "type": "minecraft:item", "name": "friday_cultivation:supreme_sect_protection_flag" }],
+    "conditions": [{ "condition": "minecraft:survives_explosion" }]
+  }]
+}

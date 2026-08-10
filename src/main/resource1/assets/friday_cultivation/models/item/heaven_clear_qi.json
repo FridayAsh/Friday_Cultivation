@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "friday_cultivation:item/heaven_clear_qi"
+  }
+}

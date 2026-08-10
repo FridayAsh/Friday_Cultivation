@@ -1,0 +1,6 @@
+{
+  "parent": "item/handheld",
+  "textures": {
+    "layer0": "friday_cultivation:item/qing_mu_sword_low"
+  }
+}

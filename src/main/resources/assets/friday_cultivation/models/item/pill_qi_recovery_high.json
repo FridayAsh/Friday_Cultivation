@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "friday_cultivation:item/pill_qi_recovery_high"
+  }
+}

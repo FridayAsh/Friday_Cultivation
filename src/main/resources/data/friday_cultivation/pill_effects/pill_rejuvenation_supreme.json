@@ -1,0 +1,7 @@
+{
+  "heal_full": true,
+  "regeneration_ticks": 2400,
+  "regeneration_amplifier": 1,
+  "absorption_ticks": 2400,
+  "absorption_amplifier": 0
+}

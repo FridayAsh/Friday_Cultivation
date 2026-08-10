@@ -1,0 +1,16 @@
+{
+  "name": "凡人、修士與仙人",
+  "icon": "friday_cultivation:spawn_egg_cultivator_golden_core",
+  "category": "friday_cultivation:immortal_path",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "世界中的 NPC 會以凡人、修士或仙人身份出現，境界有高有低。低境界通常只會少量下品法術；高境界會使用極品法術、仙術、靈氣飛行、丹藥與反制法術。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "地仙境仙人很危險。他們可能使用時間停滯、鎖靈術、解靈術、破妄法眼、追魂印與佛怒火蓮，也可能使用被動劍氣。戰鬥時保持距離，準備解控手段。"
+    }
+  ]
+}

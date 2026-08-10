@@ -1,0 +1,16 @@
+{
+  "name": "Rune Qi Networks",
+  "icon": "friday_cultivation:formation_inscription_knife",
+  "category": "friday_cultivation:spirit_veins",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Formation Runes are dim by default. A rune network lights up only when it connects a Spirit Vein Core to a qi storage block such as an Alchemy Core, Refining Core, or core plate."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Once connected, the Spirit Vein Core ignores its normal distance limit for those targets and still prioritizes the lowest-qi block. Transfer particles appear along the runes instead of a straight line from core to target."
+    }
+  ]
+}

@@ -1,0 +1,196 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  net.minecraft.resources.ResourceLocation
+ *  net.minecraftforge.network.NetworkRegistry
+ *  net.minecraftforge.network.simple.SimpleChannel
+ */
+package com.friday.cultivation.network;
+
+import com.friday.cultivation.network.AirJumpPacket;
+import com.friday.cultivation.network.AutoFillRecipePacket;
+import com.friday.cultivation.network.AutoFillRefiningRecipePacket;
+import com.friday.cultivation.network.BeginChargeSpellPacket;
+import com.friday.cultivation.network.BuddhaFireLotusFlashPacket;
+import com.friday.cultivation.network.CastSpellPacket;
+import com.friday.cultivation.network.ChooseOriginPacket;
+import com.friday.cultivation.network.ClientOnlyGlowPacket;
+import com.friday.cultivation.network.ConfirmIdentityDrawPacket;
+import com.friday.cultivation.network.CycleGenderPacket;
+import com.friday.cultivation.network.DeathChoicePacket;
+import com.friday.cultivation.network.DeathSequencePacket;
+import com.friday.cultivation.network.DharmaBodyManifestationPacket;
+import com.friday.cultivation.network.DivineSenseScanPacket;
+import com.friday.cultivation.network.EditPlayerStatsPacket;
+import com.friday.cultivation.network.EndChargeSpellPacket;
+import com.friday.cultivation.network.EquipSpellPacket;
+import com.friday.cultivation.network.EquipTechniquePacket;
+import com.friday.cultivation.network.ExecuteAlchemyPacket;
+import com.friday.cultivation.network.ExecuteCultivatorTradePacket;
+import com.friday.cultivation.network.ExecuteRefiningPacket;
+import com.friday.cultivation.network.ExecuteSundryTradePacket;
+import com.friday.cultivation.network.FireSwordAuraPacket;
+import com.friday.cultivation.network.JoinSectPacket;
+import com.friday.cultivation.network.LifeBalanceVisualPacket;
+import com.friday.cultivation.network.LooseImmortalChoicePacket;
+import com.friday.cultivation.network.NascentSoulBodyPacket;
+import com.friday.cultivation.network.OpenDeathChoicePacket;
+import com.friday.cultivation.network.OpenIdentityDrawPacket;
+import com.friday.cultivation.network.OpenLooseImmortalChoicePacket;
+import com.friday.cultivation.network.OpenReincarnationPacket;
+import com.friday.cultivation.network.OpenSectJoinDialoguePacket;
+import com.friday.cultivation.network.OpenSectScreenPacket;
+import com.friday.cultivation.network.OriginRandomizedPacket;
+import com.friday.cultivation.network.PalmThunderVisualPacket;
+import com.friday.cultivation.network.QiAbsorbedPacket;
+import com.friday.cultivation.network.QiShieldHitPacket;
+import com.friday.cultivation.network.RealmPressureVisualPacket;
+import com.friday.cultivation.network.ReincarnationChoicePacket;
+import com.friday.cultivation.network.RequestBreakthroughPacket;
+import com.friday.cultivation.network.RequestGoDifuPacket;
+import com.friday.cultivation.network.RequestReincarnationScreenPacket;
+import com.friday.cultivation.network.RequestSectJoinDialoguePacket;
+import com.friday.cultivation.network.RequestSectScreenPacket;
+import com.friday.cultivation.network.RevealNextCardPacket;
+import com.friday.cultivation.network.SectShieldRipplePacket;
+import com.friday.cultivation.network.SectTaskActionPacket;
+import com.friday.cultivation.network.SelectCultivatorOfferPacket;
+import com.friday.cultivation.network.SelectSpellSlotPacket;
+import com.friday.cultivation.network.SetCultivationNamePacket;
+import com.friday.cultivation.network.SetFormationFlagPreviewPacket;
+import com.friday.cultivation.network.SetFormationFlagRadiusPacket;
+import com.friday.cultivation.network.SetFormationNamePacket;
+import com.friday.cultivation.network.SetMeditatingPacket;
+import com.friday.cultivation.network.SetRefiningAutoRetryPacket;
+import com.friday.cultivation.network.SetSectFriendlyFirePacket;
+import com.friday.cultivation.network.SetSpellTerrainDestructionPacket;
+import com.friday.cultivation.network.SetTimeAccelerationPacket;
+import com.friday.cultivation.network.ShadowStepPacket;
+import com.friday.cultivation.network.SoulHookProgressPacket;
+import com.friday.cultivation.network.SoulHookVisualPacket;
+import com.friday.cultivation.network.SoulReaperTargetsPacket;
+import com.friday.cultivation.network.SoulReaperTeleportPacket;
+import com.friday.cultivation.network.SoulStatePacket;
+import com.friday.cultivation.network.SpendZhenyuanPacket;
+import com.friday.cultivation.network.SpiritLockVisualPacket;
+import com.friday.cultivation.network.SyncCultivationDataPacket;
+import com.friday.cultivation.network.SyncCultivatorInventoryPacket;
+import com.friday.cultivation.network.SyncCultivatorOffersPacket;
+import com.friday.cultivation.network.SyncDomePacket;
+import com.friday.cultivation.network.SyncFormationFlagsPacket;
+import com.friday.cultivation.network.SyncFormationPreviewPacket;
+import com.friday.cultivation.network.SyncImmortalDarkVisionPacket;
+import com.friday.cultivation.network.TimeStasisDomainPacket;
+import com.friday.cultivation.network.TimeStasisTargetPacket;
+import com.friday.cultivation.network.ToggleAlchemyGhostPacket;
+import com.friday.cultivation.network.ToggleBodyDefensePacket;
+import com.friday.cultivation.network.ToggleBonusCategoryPacket;
+import com.friday.cultivation.network.ToggleFormationPacket;
+import com.friday.cultivation.network.ToggleRefiningGhostPacket;
+import com.friday.cultivation.network.ToggleSpellPacket;
+import com.friday.cultivation.network.TrackSectTaskIssuerPacket;
+import com.friday.cultivation.network.TribulationCloudPacket;
+import com.friday.cultivation.network.VoidEscapeEntryEffectPacket;
+import com.friday.cultivation.network.VoidStepPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.simple.SimpleChannel;
+
+public final class ModNetwork {
+    private static final String PROTOCOL_VERSION = "1";
+    public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel((ResourceLocation)new ResourceLocation("friday_cultivation", "main"), () -> "1", "1"::equals, "1"::equals);
+
+    private ModNetwork() {
+    }
+
+    public static void register() {
+        int id = 0;
+        CHANNEL.registerMessage(id++, SyncCultivationDataPacket.class, SyncCultivationDataPacket::encode, SyncCultivationDataPacket::decode, SyncCultivationDataPacket::handle);
+        CHANNEL.registerMessage(id++, QiAbsorbedPacket.class, QiAbsorbedPacket::encode, QiAbsorbedPacket::decode, QiAbsorbedPacket::handle);
+        CHANNEL.registerMessage(id++, SetMeditatingPacket.class, SetMeditatingPacket::encode, SetMeditatingPacket::decode, SetMeditatingPacket::handle);
+        CHANNEL.registerMessage(id++, SetTimeAccelerationPacket.class, SetTimeAccelerationPacket::encode, SetTimeAccelerationPacket::decode, SetTimeAccelerationPacket::handle);
+        CHANNEL.registerMessage(id++, RequestBreakthroughPacket.class, RequestBreakthroughPacket::encode, RequestBreakthroughPacket::decode, RequestBreakthroughPacket::handle);
+        CHANNEL.registerMessage(id++, ToggleSpellPacket.class, ToggleSpellPacket::encode, ToggleSpellPacket::decode, ToggleSpellPacket::handle);
+        CHANNEL.registerMessage(id++, SetSpellTerrainDestructionPacket.class, SetSpellTerrainDestructionPacket::encode, SetSpellTerrainDestructionPacket::decode, SetSpellTerrainDestructionPacket::handle);
+        CHANNEL.registerMessage(id++, EquipSpellPacket.class, EquipSpellPacket::encode, EquipSpellPacket::decode, EquipSpellPacket::handle);
+        CHANNEL.registerMessage(id++, SelectSpellSlotPacket.class, SelectSpellSlotPacket::encode, SelectSpellSlotPacket::decode, SelectSpellSlotPacket::handle);
+        CHANNEL.registerMessage(id++, CastSpellPacket.class, CastSpellPacket::encode, CastSpellPacket::decode, CastSpellPacket::handle);
+        CHANNEL.registerMessage(id++, EquipTechniquePacket.class, EquipTechniquePacket::encode, EquipTechniquePacket::decode, EquipTechniquePacket::handle);
+        CHANNEL.registerMessage(id++, BeginChargeSpellPacket.class, BeginChargeSpellPacket::encode, BeginChargeSpellPacket::decode, BeginChargeSpellPacket::handle);
+        CHANNEL.registerMessage(id++, EndChargeSpellPacket.class, EndChargeSpellPacket::encode, EndChargeSpellPacket::decode, EndChargeSpellPacket::handle);
+        CHANNEL.registerMessage(id++, QiShieldHitPacket.class, QiShieldHitPacket::encode, QiShieldHitPacket::decode, QiShieldHitPacket::handle);
+        CHANNEL.registerMessage(id++, FireSwordAuraPacket.class, FireSwordAuraPacket::encode, FireSwordAuraPacket::decode, FireSwordAuraPacket::handle);
+        CHANNEL.registerMessage(id++, ExecuteCultivatorTradePacket.class, ExecuteCultivatorTradePacket::encode, ExecuteCultivatorTradePacket::decode, ExecuteCultivatorTradePacket::handle);
+        CHANNEL.registerMessage(id++, SyncCultivatorOffersPacket.class, SyncCultivatorOffersPacket::encode, SyncCultivatorOffersPacket::decode, SyncCultivatorOffersPacket::handle);
+        CHANNEL.registerMessage(id++, SelectCultivatorOfferPacket.class, SelectCultivatorOfferPacket::encode, SelectCultivatorOfferPacket::decode, SelectCultivatorOfferPacket::handle);
+        CHANNEL.registerMessage(id++, SyncCultivatorInventoryPacket.class, SyncCultivatorInventoryPacket::encode, SyncCultivatorInventoryPacket::decode, SyncCultivatorInventoryPacket::handle);
+        CHANNEL.registerMessage(id++, ExecuteSundryTradePacket.class, ExecuteSundryTradePacket::encode, ExecuteSundryTradePacket::decode, ExecuteSundryTradePacket::handle);
+        CHANNEL.registerMessage(id++, ToggleAlchemyGhostPacket.class, ToggleAlchemyGhostPacket::encode, ToggleAlchemyGhostPacket::decode, ToggleAlchemyGhostPacket::handle);
+        CHANNEL.registerMessage(id++, ExecuteAlchemyPacket.class, ExecuteAlchemyPacket::encode, ExecuteAlchemyPacket::decode, ExecuteAlchemyPacket::handle);
+        CHANNEL.registerMessage(id++, AutoFillRecipePacket.class, AutoFillRecipePacket::encode, AutoFillRecipePacket::decode, AutoFillRecipePacket::handle);
+        CHANNEL.registerMessage(id++, AirJumpPacket.class, AirJumpPacket::encode, AirJumpPacket::decode, AirJumpPacket::handle);
+        CHANNEL.registerMessage(id++, ShadowStepPacket.class, ShadowStepPacket::encode, ShadowStepPacket::decode, ShadowStepPacket::handle);
+        CHANNEL.registerMessage(id++, ToggleRefiningGhostPacket.class, ToggleRefiningGhostPacket::encode, ToggleRefiningGhostPacket::decode, ToggleRefiningGhostPacket::handle);
+        CHANNEL.registerMessage(id++, ExecuteRefiningPacket.class, ExecuteRefiningPacket::encode, ExecuteRefiningPacket::decode, ExecuteRefiningPacket::handle);
+        CHANNEL.registerMessage(id++, AutoFillRefiningRecipePacket.class, AutoFillRefiningRecipePacket::encode, AutoFillRefiningRecipePacket::decode, AutoFillRefiningRecipePacket::handle);
+        CHANNEL.registerMessage(id++, SetRefiningAutoRetryPacket.class, SetRefiningAutoRetryPacket::encode, SetRefiningAutoRetryPacket::decode, SetRefiningAutoRetryPacket::handle);
+        CHANNEL.registerMessage(id++, ToggleFormationPacket.class, ToggleFormationPacket::encode, ToggleFormationPacket::decode, ToggleFormationPacket::handle);
+        CHANNEL.registerMessage(id++, OpenIdentityDrawPacket.class, OpenIdentityDrawPacket::encode, OpenIdentityDrawPacket::decode, OpenIdentityDrawPacket::handle);
+        CHANNEL.registerMessage(id++, RevealNextCardPacket.class, RevealNextCardPacket::encode, RevealNextCardPacket::decode, RevealNextCardPacket::handle);
+        CHANNEL.registerMessage(id++, ConfirmIdentityDrawPacket.class, ConfirmIdentityDrawPacket::encode, ConfirmIdentityDrawPacket::decode, ConfirmIdentityDrawPacket::handle);
+        CHANNEL.registerMessage(id++, SpendZhenyuanPacket.class, SpendZhenyuanPacket::encode, SpendZhenyuanPacket::decode, SpendZhenyuanPacket::handle);
+        CHANNEL.registerMessage(id++, SetFormationNamePacket.class, SetFormationNamePacket::encode, SetFormationNamePacket::decode, SetFormationNamePacket::handle);
+        CHANNEL.registerMessage(id++, SyncFormationFlagsPacket.class, SyncFormationFlagsPacket::encode, SyncFormationFlagsPacket::decode, SyncFormationFlagsPacket::handle);
+        CHANNEL.registerMessage(id++, SetFormationFlagRadiusPacket.class, SetFormationFlagRadiusPacket::encode, SetFormationFlagRadiusPacket::decode, SetFormationFlagRadiusPacket::handle);
+        CHANNEL.registerMessage(id++, SetFormationFlagPreviewPacket.class, SetFormationFlagPreviewPacket::encode, SetFormationFlagPreviewPacket::decode, SetFormationFlagPreviewPacket::handle);
+        CHANNEL.registerMessage(id++, SyncFormationPreviewPacket.class, SyncFormationPreviewPacket::encode, SyncFormationPreviewPacket::decode, SyncFormationPreviewPacket::handle);
+        CHANNEL.registerMessage(id++, SyncDomePacket.class, SyncDomePacket::encode, SyncDomePacket::decode, SyncDomePacket::handle);
+        CHANNEL.registerMessage(id++, SectShieldRipplePacket.class, SectShieldRipplePacket::encode, SectShieldRipplePacket::decode, SectShieldRipplePacket::handle);
+        CHANNEL.registerMessage(id++, TimeStasisDomainPacket.class, TimeStasisDomainPacket::encode, TimeStasisDomainPacket::decode, TimeStasisDomainPacket::handle);
+        CHANNEL.registerMessage(id++, TimeStasisTargetPacket.class, TimeStasisTargetPacket::encode, TimeStasisTargetPacket::decode, TimeStasisTargetPacket::handle);
+        CHANNEL.registerMessage(id++, SpiritLockVisualPacket.class, SpiritLockVisualPacket::encode, SpiritLockVisualPacket::decode, SpiritLockVisualPacket::handle);
+        CHANNEL.registerMessage(id++, LifeBalanceVisualPacket.class, LifeBalanceVisualPacket::encode, LifeBalanceVisualPacket::decode, LifeBalanceVisualPacket::handle);
+        CHANNEL.registerMessage(id++, RealmPressureVisualPacket.class, RealmPressureVisualPacket::encode, RealmPressureVisualPacket::decode, RealmPressureVisualPacket::handle);
+        CHANNEL.registerMessage(id++, BuddhaFireLotusFlashPacket.class, BuddhaFireLotusFlashPacket::encode, BuddhaFireLotusFlashPacket::decode, BuddhaFireLotusFlashPacket::handle);
+        CHANNEL.registerMessage(id++, TribulationCloudPacket.class, TribulationCloudPacket::encode, TribulationCloudPacket::decode, TribulationCloudPacket::handle);
+        CHANNEL.registerMessage(id++, SyncImmortalDarkVisionPacket.class, SyncImmortalDarkVisionPacket::encode, SyncImmortalDarkVisionPacket::decode, SyncImmortalDarkVisionPacket::handle);
+        CHANNEL.registerMessage(id++, NascentSoulBodyPacket.class, NascentSoulBodyPacket::encode, NascentSoulBodyPacket::decode, NascentSoulBodyPacket::handle);
+        CHANNEL.registerMessage(id++, DivineSenseScanPacket.class, DivineSenseScanPacket::encode, DivineSenseScanPacket::decode, DivineSenseScanPacket::handle);
+        CHANNEL.registerMessage(id++, ClientOnlyGlowPacket.class, ClientOnlyGlowPacket::encode, ClientOnlyGlowPacket::decode, ClientOnlyGlowPacket::handle);
+        CHANNEL.registerMessage(id++, DharmaBodyManifestationPacket.class, DharmaBodyManifestationPacket::encode, DharmaBodyManifestationPacket::decode, DharmaBodyManifestationPacket::handle);
+        CHANNEL.registerMessage(id++, VoidEscapeEntryEffectPacket.class, VoidEscapeEntryEffectPacket::encode, VoidEscapeEntryEffectPacket::decode, VoidEscapeEntryEffectPacket::handle);
+        CHANNEL.registerMessage(id++, ChooseOriginPacket.class, ChooseOriginPacket::encode, ChooseOriginPacket::decode, ChooseOriginPacket::handle);
+        CHANNEL.registerMessage(id++, OriginRandomizedPacket.class, OriginRandomizedPacket::encode, OriginRandomizedPacket::decode, OriginRandomizedPacket::handle);
+        CHANNEL.registerMessage(id++, VoidStepPacket.class, VoidStepPacket::encode, VoidStepPacket::decode, VoidStepPacket::handle);
+        CHANNEL.registerMessage(id++, ToggleBodyDefensePacket.class, ToggleBodyDefensePacket::encode, ToggleBodyDefensePacket::decode, ToggleBodyDefensePacket::handle);
+        CHANNEL.registerMessage(id++, ToggleBonusCategoryPacket.class, ToggleBonusCategoryPacket::encode, ToggleBonusCategoryPacket::decode, ToggleBonusCategoryPacket::handle);
+        CHANNEL.registerMessage(id++, SoulStatePacket.class, SoulStatePacket::encode, SoulStatePacket::decode, SoulStatePacket::handle);
+        CHANNEL.registerMessage(id++, OpenReincarnationPacket.class, OpenReincarnationPacket::encode, OpenReincarnationPacket::decode, OpenReincarnationPacket::handle);
+        CHANNEL.registerMessage(id++, ReincarnationChoicePacket.class, ReincarnationChoicePacket::encode, ReincarnationChoicePacket::decode, ReincarnationChoicePacket::handle);
+        CHANNEL.registerMessage(id++, RequestReincarnationScreenPacket.class, RequestReincarnationScreenPacket::encode, RequestReincarnationScreenPacket::decode, RequestReincarnationScreenPacket::handle);
+        CHANNEL.registerMessage(id++, RequestGoDifuPacket.class, RequestGoDifuPacket::encode, RequestGoDifuPacket::decode, RequestGoDifuPacket::handle);
+        CHANNEL.registerMessage(id++, SetCultivationNamePacket.class, SetCultivationNamePacket::encode, SetCultivationNamePacket::decode, SetCultivationNamePacket::handle);
+        CHANNEL.registerMessage(id++, CycleGenderPacket.class, CycleGenderPacket::encode, CycleGenderPacket::decode, CycleGenderPacket::handle);
+        CHANNEL.registerMessage(id++, SoulHookVisualPacket.class, SoulHookVisualPacket::encode, SoulHookVisualPacket::decode, SoulHookVisualPacket::handle);
+        CHANNEL.registerMessage(id++, SoulHookProgressPacket.class, SoulHookProgressPacket::encode, SoulHookProgressPacket::decode, SoulHookProgressPacket::handle);
+        CHANNEL.registerMessage(id++, EditPlayerStatsPacket.class, EditPlayerStatsPacket::encode, EditPlayerStatsPacket::decode, EditPlayerStatsPacket::handle);
+        CHANNEL.registerMessage(id++, DeathSequencePacket.class, DeathSequencePacket::encode, DeathSequencePacket::decode, DeathSequencePacket::handle);
+        CHANNEL.registerMessage(id++, OpenDeathChoicePacket.class, OpenDeathChoicePacket::encode, OpenDeathChoicePacket::decode, OpenDeathChoicePacket::handle);
+        CHANNEL.registerMessage(id++, DeathChoicePacket.class, DeathChoicePacket::encode, DeathChoicePacket::decode, DeathChoicePacket::handle);
+        CHANNEL.registerMessage(id++, SoulReaperTargetsPacket.class, SoulReaperTargetsPacket::encode, SoulReaperTargetsPacket::decode, SoulReaperTargetsPacket::handle);
+        CHANNEL.registerMessage(id++, SoulReaperTeleportPacket.class, SoulReaperTeleportPacket::encode, SoulReaperTeleportPacket::decode, SoulReaperTeleportPacket::handle);
+        CHANNEL.registerMessage(id++, OpenLooseImmortalChoicePacket.class, OpenLooseImmortalChoicePacket::encode, OpenLooseImmortalChoicePacket::decode, OpenLooseImmortalChoicePacket::handle);
+        CHANNEL.registerMessage(id++, LooseImmortalChoicePacket.class, LooseImmortalChoicePacket::encode, LooseImmortalChoicePacket::decode, LooseImmortalChoicePacket::handle);
+        CHANNEL.registerMessage(id++, PalmThunderVisualPacket.class, PalmThunderVisualPacket::encode, PalmThunderVisualPacket::decode, PalmThunderVisualPacket::handle);
+        CHANNEL.registerMessage(id++, RequestSectScreenPacket.class, RequestSectScreenPacket::encode, RequestSectScreenPacket::decode, RequestSectScreenPacket::handle);
+        CHANNEL.registerMessage(id++, OpenSectScreenPacket.class, OpenSectScreenPacket::encode, OpenSectScreenPacket::decode, OpenSectScreenPacket::handle);
+        CHANNEL.registerMessage(id++, RequestSectJoinDialoguePacket.class, RequestSectJoinDialoguePacket::encode, RequestSectJoinDialoguePacket::decode, RequestSectJoinDialoguePacket::handle);
+        CHANNEL.registerMessage(id++, OpenSectJoinDialoguePacket.class, OpenSectJoinDialoguePacket::encode, OpenSectJoinDialoguePacket::decode, OpenSectJoinDialoguePacket::handle);
+        CHANNEL.registerMessage(id++, SetSectFriendlyFirePacket.class, SetSectFriendlyFirePacket::encode, SetSectFriendlyFirePacket::decode, SetSectFriendlyFirePacket::handle);
+        CHANNEL.registerMessage(id++, JoinSectPacket.class, JoinSectPacket::encode, JoinSectPacket::decode, JoinSectPacket::handle);
+        CHANNEL.registerMessage(id++, SectTaskActionPacket.class, SectTaskActionPacket::encode, SectTaskActionPacket::decode, SectTaskActionPacket::handle);
+        CHANNEL.registerMessage(id++, TrackSectTaskIssuerPacket.class, TrackSectTaskIssuerPacket::encode, TrackSectTaskIssuerPacket::decode, TrackSectTaskIssuerPacket::handle);
+    }
+}
+

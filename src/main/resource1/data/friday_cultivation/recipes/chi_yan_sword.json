@@ -1,0 +1,18 @@
+{
+  "type": "friday_cultivation:refining",
+  "translation_key": "recipe.friday_cultivation.chi_yan_sword",
+  "sort_order": 30,
+  "ingredients": [
+    { "item": "friday_cultivation:low_spirit_stone", "count": 1 },
+    { "item": "minecraft:blaze_rod", "count": 1 },
+    { "item": "minecraft:gold_ingot", "count": 1 }
+  ],
+  "qi_cost_per_item": 50,
+  "outputs": {
+    "low": "friday_cultivation:chi_yan_sword_low",
+    "mid": "friday_cultivation:chi_yan_sword_mid",
+    "high": "friday_cultivation:chi_yan_sword_high",
+    "supreme": "friday_cultivation:chi_yan_sword_supreme",
+    "immortal": "friday_cultivation:chi_yan_sword_immortal"
+  }
+}

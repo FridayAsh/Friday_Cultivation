@@ -1,0 +1,16 @@
+{
+  "name": "Taishang Life Balance",
+  "icon": "friday_cultivation:spell_book_taishang_life_balance",
+  "category": "friday_cultivation:forbidden_arts",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Taishang Life Balance is an immortal Pure active spell. Click-cast marks the target with blood chains; for 30 seconds, the caster loses 10% max health per second and converts that loss into amplified damage."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Holding the spell chains caster and target together. Both cannot move but can still look around, cast, and use pills. Qingdi absorption is consumed first; when the caster reaches 1 health, both health losses stop."
+    }
+  ]
+}

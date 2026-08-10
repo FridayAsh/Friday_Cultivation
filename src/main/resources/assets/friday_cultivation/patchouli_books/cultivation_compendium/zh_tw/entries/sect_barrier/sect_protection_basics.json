@@ -1,0 +1,17 @@
+{
+  "name": "護宗大陣基礎",
+  "icon": "friday_cultivation:low_sect_protection_flag",
+  "category": "friday_cultivation:sect_barrier",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "護宗大陣由護宗陣旗與陣盤啟動。它會形成隱藏護罩，保護範圍內方塊與實體免受外部攻擊、爆炸與法術破壞。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "護罩抗傷轉化依品階不同：下品 100 靈氣抵 1 傷害，中品 50，上品 20，極品 5，仙品 1。護罩被攻擊時會顯示白色漣漪。"
+    }
+  ],
+  "advancement": "friday_cultivation:guide/has_sect_protection"
+}

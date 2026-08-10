@@ -1,0 +1,17 @@
+{
+  "name": "蒲團修行",
+  "icon": "friday_cultivation:cushion",
+  "category": "friday_cultivation:immortal_path",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "蒲團是最早期的修練工具。玩家只要裝備任意功法，即使仍是凡人，也能開始自動吸收周圍靈氣粒子；坐上蒲團後修練效率會提高。若周圍有聚靈陣或產靈氣的方塊，靈氣粒子產生與方塊靈氣回復會更好。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "修行不是只看蒲團本身，也看周圍環境。靈脈核心、陣紋輸靈、聚靈陣、自然方塊的靈氣設定，都會逐漸把基地變成真正的洞府。"
+    }
+  ],
+  "advancement": "friday_cultivation:guide/has_cushion"
+}

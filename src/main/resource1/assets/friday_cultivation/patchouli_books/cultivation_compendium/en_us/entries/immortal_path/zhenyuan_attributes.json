@@ -1,0 +1,16 @@
+{
+  "name": "Zhenyuan and Attributes",
+  "icon": "minecraft:experience_bottle",
+  "category": "friday_cultivation:immortal_path",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Zhenyuan improves five attributes: Constitution gives +1 Max HP per point (Defense is now the standalone \"Body Defense\" attribute); Bone gives +1 Melee Damage and +1% Mining Speed; Agility gives +1% Move Speed and +0.2% Jump Height; Spell Power gives +5% base spell damage; Qi Sea gives +100 Max Qi and +1/sec Qi Recovery."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Most spell damage is not only its base value. It also scales with Spell Power, spirit roots, techniques, held weapons, passives, and other bonuses."
+    }
+  ]
+}

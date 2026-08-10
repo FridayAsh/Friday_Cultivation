@@ -1,0 +1,17 @@
+{
+  "type": "friday_cultivation:alchemy",
+  "translation_key": "recipe.friday_cultivation.qi_recovery",
+  "sort_order": 10,
+  "ingredients": [
+    { "item": "friday_cultivation:herb", "count": 1 },
+    { "item": "minecraft:wheat_seeds", "count": 1 }
+  ],
+  "qi_cost_per_pill": 10,
+  "outputs": {
+    "low": "friday_cultivation:pill_qi_recovery_low",
+    "mid": "friday_cultivation:pill_qi_recovery_mid",
+    "high": "friday_cultivation:pill_qi_recovery_high",
+    "supreme": "friday_cultivation:pill_qi_recovery_supreme",
+    "immortal": "friday_cultivation:pill_qi_recovery_immortal"
+  }
+}

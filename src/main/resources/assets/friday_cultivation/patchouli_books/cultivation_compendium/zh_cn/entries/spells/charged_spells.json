@@ -1,0 +1,16 @@
+{
+  "name": "蓄力法术",
+  "icon": "friday_cultivation:spell_book_heaven_piercing_cone",
+  "category": "friday_cultivation:spells",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "部分法术可以按住施法键蓄力，例如大火球术、天星坠、万剑归宗、穿天锥、时间停滞、太上均命与佛怒火莲。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "有些蓄力法术达到 100% 后不会自动放出，需要玩家松开施法键。若灵气在 100% 后耗尽，像佛怒火莲这类法术也会自动完成释放。"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "阵法罗盘",
+  "icon": "friday_cultivation:formation_compass",
+  "category": "friday_cultivation:formations",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "手持阵法罗盘，蹲下右键阵盘可锁定阵眼 1 分钟。接着右键任意阵旗即可连接到该阵眼。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "手持罗盘进入勘测模式时，会显示阵旗连向阵盘的发光射线与更清楚的生效边界。不同阵法会使用不同颜色。"
+    }
+  ]
+}

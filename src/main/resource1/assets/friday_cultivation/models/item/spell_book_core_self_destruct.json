@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "friday_cultivation:item/spell_book_core_self_destruct"
+  }
+}

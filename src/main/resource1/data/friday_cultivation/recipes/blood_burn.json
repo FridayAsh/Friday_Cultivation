@@ -1,0 +1,17 @@
+{
+  "type": "friday_cultivation:alchemy",
+  "translation_key": "recipe.friday_cultivation.blood_burn",
+  "sort_order": 20,
+  "ingredients": [
+    { "item": "friday_cultivation:herb", "count": 1 },
+    { "item": "minecraft:rotten_flesh", "count": 1 }
+  ],
+  "qi_cost_per_pill": 50,
+  "outputs": {
+    "low": "friday_cultivation:pill_blood_burn_low",
+    "mid": "friday_cultivation:pill_blood_burn_mid",
+    "high": "friday_cultivation:pill_blood_burn_high",
+    "supreme": "friday_cultivation:pill_blood_burn_supreme",
+    "immortal": "friday_cultivation:pill_blood_burn_immortal"
+  }
+}

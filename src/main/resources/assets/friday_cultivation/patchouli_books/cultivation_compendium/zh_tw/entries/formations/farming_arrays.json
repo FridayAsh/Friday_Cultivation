@@ -1,0 +1,16 @@
+{
+  "name": "農業陣法",
+  "icon": "friday_cultivation:low_farm_harvest_flag",
+  "category": "friday_cultivation:formations",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "枯榮陣加速草方塊、農作物、樹木與靈草的生長。倍率從 ×2 到 ×10。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "農收陣會自動收成熟作物並嘗試補種。下品每分鐘 1 作物；中品 30 秒；上品 10 秒；極品每秒 1 作物；仙品每秒最多 10 作物且掉落加倍。"
+    }
+  ]
+}

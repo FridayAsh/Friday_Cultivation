@@ -1,0 +1,16 @@
+{
+  "name": "令牌權限",
+  "icon": "friday_cultivation:sect_token",
+  "category": "friday_cultivation:sect_barrier",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "宗門令牌可連結陣盤，用來判定玩家或 NPC 是否屬於該陣法的友方。回春、禁空、迷蹤與護宗權限都會用到這個判定。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "令牌即使被玩家用滑鼠從物品欄拿起，也不應短暫失效。這避免戰鬥中因整理背包而突然被自己的陣法排除在外。"
+    }
+  ]
+}

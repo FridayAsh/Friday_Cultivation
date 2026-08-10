@@ -1,0 +1,12 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": [
+    "friday_cultivation:low_spirit_stone_ore",
+    "friday_cultivation:mid_spirit_stone_ore",
+    "friday_cultivation:high_spirit_stone_ore",
+    "friday_cultivation:supreme_spirit_stone_ore",
+    "friday_cultivation:spirit_vein_spring"
+  ],
+  "step": "underground_ores"
+}

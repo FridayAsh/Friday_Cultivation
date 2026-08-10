@@ -1,0 +1,16 @@
+{
+  "name": "丹药种类",
+  "icon": "friday_cultivation:pill_qi_recovery_mid",
+  "category": "friday_cultivation:alchemy",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "目前主要丹药包含回灵丹、修为丹、血煞丹、清心丹、回春丹与神行丹。每种丹药都有下品、中品、上品、极品、仙品品阶。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "仙品生生造化丹不是普通消耗品，而是死亡保命用丹。若青帝长生诀的移花接木可用，会优先触发功法免死；冷却中才消耗丹药。"
+    }
+  ]
+}

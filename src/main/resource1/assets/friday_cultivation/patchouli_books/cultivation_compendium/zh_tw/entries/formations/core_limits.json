@@ -1,0 +1,16 @@
+{
+  "name": "陣盤容量",
+  "icon": "friday_cultivation:immortal_formation_core_plate",
+  "category": "friday_cultivation:formations",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "陣盤分五品階，靈氣容量為 100、1000、10000、100000、1000000。可連結陣旗數量為：下品 1、中品 5、上品 10、極品 30、仙品 50。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "若陣盤已啟動，通常不能隨意重新連結。規劃基地時，建議先決定陣眼位置，再用羅盤逐一接入農田、宗門外牆、靈脈與工坊區。"
+    }
+  ]
+}

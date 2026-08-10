@@ -1,0 +1,16 @@
+{
+  "name": "真元與五屬性",
+  "icon": "minecraft:experience_bottle",
+  "category": "friday_cultivation:immortal_path",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "真元可用來強化五個屬性：體質每點 +1 生命值上限（防禦已獨立為「肉體防禦」特殊屬性）；筋骨每點 +1 近戰傷害與 +1% 挖掘速度；身法每點 +1% 移動速度與 +0.2% 跳躍高度；法傷每點 +5% 法術基礎傷害；氣海每點 +100 靈氣上限、+1/秒 靈氣回復。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "多數法術傷害不只看基礎值，還會吃到法傷、靈根、功法、手持武器、被動法術與其他加成。若你覺得同一個法術變強了，通常不是錯覺。"
+    }
+  ]
+}

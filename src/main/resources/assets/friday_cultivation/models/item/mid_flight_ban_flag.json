@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "friday_cultivation:block/mid_flight_ban_flag"
+  }
+}

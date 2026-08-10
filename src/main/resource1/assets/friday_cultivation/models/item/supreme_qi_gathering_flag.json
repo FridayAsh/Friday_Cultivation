@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "friday_cultivation:block/supreme_qi_gathering_flag"
+  }
+}

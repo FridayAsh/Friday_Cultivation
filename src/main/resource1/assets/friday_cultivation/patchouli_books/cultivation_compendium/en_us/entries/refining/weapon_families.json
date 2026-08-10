@@ -1,0 +1,16 @@
+{
+  "name": "Spiritual Weapons",
+  "icon": "friday_cultivation:xuan_iron_sword_mid",
+  "category": "friday_cultivation:refining",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Current weapon families include Xuan Iron, Qing Mu, Chi Yan, and Han Bing swords. Different weapons provide different elemental or combat effects such as poison, burn, freeze, or sword-spell synergy."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Weapons are not only melee tools; they can affect final spell scaling. Held weapon modifiers matter for sword spells, Pure spells, and elemental spells."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "friday_cultivation:block/formation_rune_lit",
+    "rune": "friday_cultivation:block/formation_rune/west_up_down_lit_v0"
+  },
+  "elements": [
+    {
+      "from": [15.5, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "west": { "uv": [0, 0, 16, 16], "texture": "#rune" }
+      }
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": { "min": 3, "max": 6 },
+      "entries": [
+        { "type": "minecraft:item", "name": "minecraft:bread", "weight": 30, "functions": [
+          { "function": "minecraft:set_count", "count": { "min": 1, "max": 4 } } ] },
+        { "type": "minecraft:item", "name": "minecraft:iron_ingot", "weight": 15, "functions": [
+          { "function": "minecraft:set_count", "count": { "min": 1, "max": 3 } } ] },
+        { "type": "minecraft:item", "name": "minecraft:gold_ingot", "weight": 8, "functions": [
+          { "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } } ] },
+        { "type": "minecraft:item", "name": "minecraft:diamond", "weight": 3 },
+        { "type": "minecraft:item", "name": "minecraft:emerald", "weight": 6, "functions": [
+          { "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } } ] },
+        { "type": "minecraft:item", "name": "minecraft:string", "weight": 20, "functions": [
+          { "function": "minecraft:set_count", "count": { "min": 1, "max": 4 } } ] },
+        { "type": "minecraft:item", "name": "minecraft:redstone", "weight": 15, "functions": [
+          { "function": "minecraft:set_count", "count": { "min": 2, "max": 6 } } ] },
+        { "type": "minecraft:item", "name": "minecraft:glowstone_dust", "weight": 10, "functions": [
+          { "function": "minecraft:set_count", "count": { "min": 1, "max": 4 } } ] },
+        { "type": "minecraft:item", "name": "minecraft:paper", "weight": 18, "functions": [
+          { "function": "minecraft:set_count", "count": { "min": 2, "max": 5 } } ] },
+        { "type": "minecraft:item", "name": "minecraft:book", "weight": 8 },
+        { "type": "minecraft:item", "name": "minecraft:ender_pearl", "weight": 4 },
+        { "type": "minecraft:item", "name": "minecraft:experience_bottle", "weight": 5 }
+      ]
+    },
+    {
+      "rolls": { "min": 1, "max": 3 },
+      "entries": [
+        { "type": "minecraft:item", "name": "friday_cultivation:low_spirit_stone", "weight": 50, "functions": [
+          { "function": "minecraft:set_count", "count": { "min": 1, "max": 4 } } ] },
+        { "type": "minecraft:item", "name": "friday_cultivation:mid_spirit_stone", "weight": 20, "functions": [
+          { "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } } ] },
+        { "type": "minecraft:item", "name": "friday_cultivation:high_spirit_stone", "weight": 5 },
+        { "type": "minecraft:item", "name": "friday_cultivation:supreme_spirit_stone", "weight": 1 },
+        { "type": "minecraft:item", "name": "friday_cultivation:divination_compass", "weight": 8 },
+        { "type": "minecraft:item", "name": "friday_cultivation:cushion", "weight": 6 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_fragment", "weight": 25 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_basic_body", "weight": 8 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_basic_mind", "weight": 8 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_iron_skin", "weight": 8 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_metal_sword", "weight": 4 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_wood_spring", "weight": 4 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_deadwood_rebirth", "weight": 4 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_water_stream", "weight": 4 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_fire_yang", "weight": 4 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_earth_mountain", "weight": 4 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_ice_frost", "weight": 4 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_wind_step", "weight": 4 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_shadow_cloak", "weight": 4 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_fire_immortal", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_vajra_body", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_heart_sutra", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_sword_heart", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_nine_abyss", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_demon_slayer", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_turtle_shell", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_divine_forge", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_heavenly_elixir", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_five_element", "weight": 1 },
+        { "type": "minecraft:item", "name": "friday_cultivation:technique_book_celestial_immortal", "weight": 1 },
+        { "type": "minecraft:item", "name": "friday_cultivation:low_spirit_stone_ore", "weight": 5 },
+        { "type": "minecraft:item", "name": "friday_cultivation:mid_spirit_stone_ore", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_qi_shield", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_spirit_vision", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_fireball", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_ice_lance", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_lightning_bolt", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_wind_blade", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_poison_mist", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_wither_touch", "weight": 1 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_arrow_volley", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_earth_spike", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_stone_bullet", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_heaven_piercing_cone", "weight": 1 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_sun_flare", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_shadow_step", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_soaring", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_speed_burst", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_invisibility", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_healing_touch", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_iron_body", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_water_affinity", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_night_eye", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_fire_protection", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_slow_regen", "weight": 2 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_poison_immunity", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_frost_walker", "weight": 3 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_great_fireball", "weight": 1 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_qi_flight", "weight": 1 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_sword_convergence", "weight": 1 },
+        { "type": "minecraft:item", "name": "friday_cultivation:spell_book_time_stasis", "weight": 1 }
+      ]
+    }
+  ]
+}

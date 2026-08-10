@@ -1,0 +1,18 @@
+{
+  "name": "item.friday_cultivation.cultivation_compendium",
+  "landing_text": "patchouli.friday_cultivation.cultivation_compendium.landing",
+  "subtitle": "Xiaoxiang Cultivation World",
+  "version": "1",
+  "use_resource_pack": true,
+  "book_texture": "patchouli:textures/gui/book_cyan.png",
+  "model": "friday_cultivation:cultivation_compendium",
+  "show_progress": true,
+  "show_toasts": true,
+  "use_blocky_font": false,
+  "text_overflow_mode": "resize",
+  "macros": {
+    "$(qi)": "$(#84F0E1)",
+    "$(warn)": "$(#D8A84E)",
+    "$(end)": "$()"
+  }
+}

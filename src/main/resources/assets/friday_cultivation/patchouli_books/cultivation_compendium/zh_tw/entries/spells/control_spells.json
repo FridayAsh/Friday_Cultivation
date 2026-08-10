@@ -1,0 +1,16 @@
+{
+  "name": "控制與反制",
+  "icon": "friday_cultivation:spell_book_spirit_lock",
+  "category": "friday_cultivation:spells",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "鎖靈術可封住實體或靈氣方塊 30 秒，使其無法施放法術或運作。解靈術專門解除鎖靈，即使自身被鎖靈，也可以施放解靈術自救。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "時間停滯可以點按暫停準星目標，或蓄力後展開範圍時間停止。被困在時間停止內時，會時間停滯者可以點按該法術消耗靈氣解除自身停滯。"
+    }
+  ]
+}

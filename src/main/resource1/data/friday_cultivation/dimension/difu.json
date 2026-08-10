@@ -1,0 +1,19 @@
+{
+  "type": "friday_cultivation:difu",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "friday_cultivation:difu",
+    "biome_source": {
+      "type": "minecraft:multi_noise",
+      "biomes": [
+        { "biome": "friday_cultivation:difu_normal", "parameters": { "temperature": 0.0, "humidity": 0.0, "continentalness": 0.0, "erosion": 0.0, "depth": 0.0, "weirdness": 0.0, "offset": 0.0 } },
+        { "biome": "friday_cultivation:difu_soul_canyon", "parameters": { "temperature": -0.65, "humidity": 0.65, "continentalness": 0.0, "erosion": 0.0, "depth": 0.0, "weirdness": 0.0, "offset": 0.0 } },
+        { "biome": "friday_cultivation:difu_soul_canyon", "parameters": { "temperature": -0.85, "humidity": -0.15, "continentalness": 0.0, "erosion": 0.0, "depth": 0.0, "weirdness": 0.0, "offset": 0.0 } },
+        { "biome": "friday_cultivation:difu_chains", "parameters": { "temperature": 0.65, "humidity": -0.65, "continentalness": 0.0, "erosion": 0.0, "depth": 0.0, "weirdness": 0.0, "offset": 0.0 } },
+        { "biome": "friday_cultivation:difu_chains", "parameters": { "temperature": 0.15, "humidity": -0.85, "continentalness": 0.0, "erosion": 0.0, "depth": 0.0, "weirdness": 0.0, "offset": 0.0 } },
+        { "biome": "friday_cultivation:difu_bone", "parameters": { "temperature": 0.65, "humidity": 0.65, "continentalness": 0.0, "erosion": 0.0, "depth": 0.0, "weirdness": 0.0, "offset": 0.0 } },
+        { "biome": "friday_cultivation:difu_bone", "parameters": { "temperature": -0.65, "humidity": -0.65, "continentalness": 0.0, "erosion": 0.0, "depth": 0.0, "weirdness": 0.0, "offset": 0.0 } }
+      ]
+    }
+  }
+}

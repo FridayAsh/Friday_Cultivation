@@ -1,0 +1,17 @@
+{
+  "name": "Cultivating on a Cushion",
+  "icon": "friday_cultivation:cushion",
+  "category": "friday_cultivation:immortal_path",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "The cushion is the earliest cultivation tool. Once a player equips any technique, even while still Mortal, nearby Qi particles can be absorbed automatically; sitting on the cushion improves Cultivation Efficiency. Qi-gathering arrays and qi-producing blocks improve Qi particle generation and block-Qi recovery."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Cultivation depends on the whole environment, not only the cushion. Spirit vein cores, rune conduits, qi-gathering arrays, and qi block specs turn a base into a proper cultivation cave."
+    }
+  ],
+  "advancement": "friday_cultivation:guide/has_cushion"
+}

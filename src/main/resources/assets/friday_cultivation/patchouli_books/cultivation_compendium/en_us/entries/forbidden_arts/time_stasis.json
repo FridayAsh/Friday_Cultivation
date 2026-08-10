@@ -1,0 +1,17 @@
+{
+  "name": "Time Stasis",
+  "icon": "friday_cultivation:spell_book_time_stasis",
+  "category": "friday_cultivation:forbidden_arts",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Time Stasis is an immortal art. Click-cast pauses the targeted entity for 30 seconds; fully charging creates an area time stop where everything stops except the caster and other users of the art."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The time-stop area appears from outside as a grey-black translucent sphere. Projectiles created inside, such as swords, fireballs, and sword aura, freeze first and resume when time restarts."
+    }
+  ],
+  "advancement": "friday_cultivation:guide/has_forbidden_spell"
+}

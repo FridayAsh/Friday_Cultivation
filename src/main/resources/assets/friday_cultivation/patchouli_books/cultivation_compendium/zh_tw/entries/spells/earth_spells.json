@@ -1,0 +1,16 @@
+{
+  "name": "土系投射物",
+  "icon": "friday_cultivation:spell_book_heaven_piercing_cone",
+  "category": "friday_cultivation:spells",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "石彈術是中品土屬性法術，點按消耗少量靈氣，發射滴水石錐造成基礎傷害。穿天錐是極品土屬性法術，點按可快速打斷，蓄力後能高速鑽穿地形。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "穿天錐蓄力越久，速度、傷害、破壞深度與視覺階段越高。高速投射物使用射線檢測來避免穿牆或穿怪。"
+    }
+  ]
+}

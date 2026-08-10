@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "BSB",
+    "SCS",
+    "BSB"
+  ],
+  "key": {
+    "B": { "item": "minecraft:stone" },
+    "S": { "item": "friday_cultivation:supreme_spirit_stone" },
+    "C": { "item": "friday_cultivation:high_spirit_vein_core" }
+  },
+  "result": {
+    "item": "friday_cultivation:supreme_spirit_vein_core",
+    "count": 1
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "陣紋輸靈網路",
+  "icon": "friday_cultivation:formation_inscription_knife",
+  "category": "friday_cultivation:spirit_veins",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "陣紋預設是黯淡的。只有當陣紋網路把靈脈核心連到可儲存靈氣的方塊，例如煉丹核心、煉器核心、陣盤時，網路才會亮起。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "連通後，靈脈核心可以無視原距離限制，把這些目標納入補靈氣候選，仍沿用「靈氣最少者優先」。輸送粒子會沿陣紋旁邊零散出現，而不是從核心直線飛到目標。"
+    }
+  ]
+}

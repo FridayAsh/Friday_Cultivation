@@ -1,0 +1,16 @@
+{
+  "name": "護罩與法術互動",
+  "icon": "friday_cultivation:spell_book_star_fall",
+  "category": "friday_cultivation:sect_barrier",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "法術撞到護罩時，不應穿透到陣法後方繼續破壞。大型法術仍應在撞擊處結算自己的爆炸或範圍效果，但不得傷害護罩內的方塊與生物。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "天星墜、火球、裂天劍氣、佛怒火蓮等大型法術都需要與護宗大陣整合。護罩被打時，玩家頭頂會短暫顯示以陣盤靈氣值為血量的 Boss 血條。"
+    }
+  ]
+}

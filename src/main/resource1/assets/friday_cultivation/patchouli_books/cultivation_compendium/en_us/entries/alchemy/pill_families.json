@@ -1,0 +1,16 @@
+{
+  "name": "Pill Families",
+  "icon": "friday_cultivation:pill_qi_recovery_mid",
+  "category": "friday_cultivation:alchemy",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Main pill families include Qi Recovery, Cultivation, Blood Burn, Clear Mind, Rejuvenation, and Divine Stride. Each has low, mid, high, supreme, and immortal grades."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "The immortal Life Creation pill is a death-saving item, not a normal manual consumable. Qingdi Longevity's substitute-death effect takes priority when available; the pill is consumed only if that is on cooldown."
+    }
+  ]
+}

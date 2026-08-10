@@ -1,0 +1,16 @@
+{
+  "name": "符箓系统规划",
+  "icon": "minecraft:paper",
+  "category": "friday_cultivation:talismans_future",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "符箓系统尚未正式加入。未来它会成为另一条消耗材料、预先制作、战斗时快速使用的修仙科技线。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "本章先保留入口。等符箓加入后，这里会补上符纸、符笔、符墨、符箓分类、制作方式与数据包自定义规则。"
+    }
+  ]
+}

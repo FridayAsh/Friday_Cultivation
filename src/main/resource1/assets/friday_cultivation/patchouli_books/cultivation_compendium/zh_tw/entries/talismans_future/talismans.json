@@ -1,0 +1,16 @@
+{
+  "name": "符籙系統規劃",
+  "icon": "minecraft:paper",
+  "category": "friday_cultivation:talismans_future",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "符籙系統尚未正式加入。未來它會成為另一條消耗材料、預先製作、戰鬥時快速使用的修仙科技線。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "本章先保留入口。等符籙加入後，這裡會補上符紙、符筆、符墨、符籙分類、製作方式與資料包自訂規則。"
+    }
+  ]
+}

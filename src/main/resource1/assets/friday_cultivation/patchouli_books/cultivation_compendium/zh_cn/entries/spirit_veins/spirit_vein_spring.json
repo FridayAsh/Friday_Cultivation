@@ -1,0 +1,17 @@
+{
+  "name": "灵脉泉眼",
+  "icon": "friday_cultivation:spirit_vein_spring",
+  "category": "friday_cultivation:spirit_veins",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "灵脉泉眼会在主世界地下自然生成，非常稀有。它会伴生在各品阶灵石矿附近；灵石矿品阶越高，旁边出现泉眼的概率越高。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "泉眼本身会发出微弱光芒，可以用镐挖下并完整取得。它是制作下品灵脉核心的关键材料。"
+    }
+  ],
+  "advancement": "friday_cultivation:guide/has_spirit_vein"
+}

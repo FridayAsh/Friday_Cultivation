@@ -1,0 +1,17 @@
+{
+  "name": "功法基础",
+  "icon": "friday_cultivation:technique_book_fragment",
+  "category": "friday_cultivation:techniques",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "功法是长期流派的核心。装备功法后，会提供属性法术加成、灵气消耗调整、特殊被动或免死机制。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "功法有品阶限制。境界越高，越能装备高阶功法。部分功法还要求特定灵根或高境界，例如青帝长生诀偏向木属性与高境界修士。"
+    }
+  ],
+  "advancement": "friday_cultivation:guide/has_technique_book"
+}

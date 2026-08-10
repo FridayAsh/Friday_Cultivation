@@ -1,0 +1,80 @@
+buildscript {
+    repositories {
+        maven { url = 'https://files.minecraftforge.net/maven' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '6.+', changing: true
+    }
+}
+apply plugin: 'net.minecraftforge.gradle'
+
+group = 'com.friday'
+version = '0.1.0'
+archivesBaseName = '[修仙]Friday_Cultivation'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.mojang.level', 'debug'
+            mods {
+                friday_cultivation {
+                    source sourceSets.main
+                }
+            }
+        }
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.mojang.level', 'debug'
+            mods {
+                friday_cultivation {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    from(sourceSets.main.resources) {
+        include 'META-INF/**'
+        include 'assets/**'
+        include 'data/**'
+    }
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.20.1-47.2.0'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Specification-Title': 'friday_cultivation',
+                'Specification-Version': project.version,
+                'Implementation-Title': 'Friday Cultivation',
+                'Implementation-Version': project.version
+        )
+    }
+}

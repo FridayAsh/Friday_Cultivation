@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "friday_cultivation:item/spell_book_nascent_soul_out_of_body"
+  }
+}

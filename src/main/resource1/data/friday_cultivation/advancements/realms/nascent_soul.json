@@ -1,0 +1,23 @@
+{
+  "parent": "friday_cultivation:realms/golden_core",
+  "display": {
+    "icon": {
+      "item": "friday_cultivation:realm_token_nascent_soul"
+    },
+    "title": {
+      "translate": "advancements.friday_cultivation.realm.nascent_soul.title"
+    },
+    "description": {
+      "translate": "advancements.friday_cultivation.realm.nascent_soul.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "reached": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

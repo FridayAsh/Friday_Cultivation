@@ -1,0 +1,18 @@
+{
+  "type": "friday_cultivation:alchemy",
+  "translation_key": "recipe.friday_cultivation.youth_pill",
+  "sort_order": 55,
+  "ingredients": [
+    { "item": "friday_cultivation:herb", "count": 4 },
+    { "item": "minecraft:golden_apple", "count": 1 },
+    { "item": "friday_cultivation:mid_spirit_stone", "count": 1 }
+  ],
+  "qi_cost_per_pill": 200,
+  "outputs": {
+    "low": "friday_cultivation:youth_pill",
+    "mid": "friday_cultivation:youth_pill",
+    "high": "friday_cultivation:youth_pill",
+    "supreme": "friday_cultivation:youth_pill",
+    "immortal": "friday_cultivation:youth_pill"
+  }
+}

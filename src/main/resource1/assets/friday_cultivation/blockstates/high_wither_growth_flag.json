@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "friday_cultivation:block/high_wither_growth_flag",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "friday_cultivation:block/high_wither_growth_flag",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "friday_cultivation:block/high_wither_growth_flag",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "friday_cultivation:block/high_wither_growth_flag",
+      "y": 270
+    }
+  }
+}

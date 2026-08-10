@@ -1,0 +1,16 @@
+{
+  "name": "阵盘容量",
+  "icon": "friday_cultivation:immortal_formation_core_plate",
+  "category": "friday_cultivation:formations",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "阵盘分五品阶，灵气容量为 100、1000、10000、100000、1000000。可连接阵旗数量为：下品 1、中品 5、上品 10、极品 30、仙品 50。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "若阵盘已启动，通常不能随意重新连接。规划基地时，建议先决定阵眼位置，再用罗盘逐一接入农田、宗门外墙、灵脉与工坊区。"
+    }
+  ]
+}

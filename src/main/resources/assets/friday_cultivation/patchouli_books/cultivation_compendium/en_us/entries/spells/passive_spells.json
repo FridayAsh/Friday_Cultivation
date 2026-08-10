@@ -1,0 +1,16 @@
+{
+  "name": "Passive Spells",
+  "icon": "friday_cultivation:spell_book_sword_aura",
+  "category": "friday_cultivation:spells",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Passive spells include Qi Shield, Sword Aura, Qi Flight, Soul Mark, Bloodthirst Curse, and more. Once learned and enabled, they participate in combat, movement, or defense automatically."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Sword Aura requires sword-like weapons. Qi Flight maintains flight through qi and supports sprint acceleration. NPCs can also use passive spells they know."
+    }
+  ]
+}

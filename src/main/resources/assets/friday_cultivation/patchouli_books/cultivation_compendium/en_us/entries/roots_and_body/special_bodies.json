@@ -1,0 +1,16 @@
+{
+  "name": "Special Bodies",
+  "icon": "minecraft:deepslate",
+  "category": "friday_cultivation:roots_and_body",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Broken Vein Stone Body is the body-cultivator physique: max Qi is only one tenth of normal, but it can still absorb Qi and break through. It grants max health x2, permanent Resistance I and Regeneration I, and all melee weapon physical damage +100%. Innate Sword Body is the extreme sword physique: sword damage and sword spell costs are greatly improved, while non-sword elemental spells are heavily rejected."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "This points toward a future body-cultivation path. It already changes gameplay, while the full body-cultivation system remains future work."
+    }
+  ]
+}

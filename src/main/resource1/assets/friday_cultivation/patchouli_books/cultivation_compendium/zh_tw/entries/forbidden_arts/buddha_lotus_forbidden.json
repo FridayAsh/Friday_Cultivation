@@ -1,0 +1,16 @@
+{
+  "name": "火蓮風險",
+  "icon": "friday_cultivation:spell_book_buddha_fire_lotus",
+  "category": "friday_cultivation:forbidden_arts",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "佛怒火蓮破壞範圍大、特效重、持續傷害強。它適合清場或打大型敵人，不適合在自家基地內隨便試法。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "若火蓮撞上護宗大陣，會在護罩位置爆炸並由護罩吸收，不破壞陣法內部。這讓宗門護罩可以承受大型仙術測試。"
+    }
+  ]
+}

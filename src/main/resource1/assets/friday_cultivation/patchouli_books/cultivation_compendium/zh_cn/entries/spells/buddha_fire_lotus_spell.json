@@ -1,0 +1,16 @@
+{
+  "name": "佛怒火莲",
+  "icon": "friday_cultivation:spell_book_buddha_fire_lotus",
+  "category": "friday_cultivation:spells",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "佛怒火莲是仙术、主动法术、木火双属性法术。按住施法时，玩家双手凝聚青色与白色火焰，合掌压缩后形成火莲；蓄力 100% 约消耗 10000 灵气。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "放开后火莲会飞向锁定目标，击中后展开巨大火莲、范围燃烧、冲击波、闪电与持续多段伤害。基础伤害从 1000 起跳，并吃正常法术加成；不再直接扣真实血量。"
+    }
+  ]
+}

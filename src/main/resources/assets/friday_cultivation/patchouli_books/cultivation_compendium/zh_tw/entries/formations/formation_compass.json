@@ -1,0 +1,16 @@
+{
+  "name": "陣法羅盤",
+  "icon": "friday_cultivation:formation_compass",
+  "category": "friday_cultivation:formations",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "手持陣法羅盤，蹲下右鍵陣盤可鎖定陣眼 1 分鐘。接著右鍵任意陣旗即可連接到該陣眼。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "手持羅盤進入勘測模式時，會顯示陣旗連向陣盤的發光射線與更清楚的生效邊界。不同陣法會使用不同顏色。"
+    }
+  ]
+}

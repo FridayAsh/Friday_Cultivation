@@ -1,0 +1,16 @@
+{
+  "name": "Fire Lotus Risk",
+  "icon": "friday_cultivation:spell_book_buddha_fire_lotus",
+  "category": "friday_cultivation:forbidden_arts",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Buddha Fire Lotus has large destruction, heavy visuals, and persistent damage. It is excellent for clearing areas or fighting bosses, but dangerous to test inside your own base."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "If the lotus hits a sect dome, it explodes at the barrier and the dome absorbs the effect, protecting the inside. This allows large immortal arts to interact with sect defense."
+    }
+  ]
+}

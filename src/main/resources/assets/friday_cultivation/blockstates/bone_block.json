@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=south": { "model": "friday_cultivation:block/bone_block", "y": 0 },
+    "facing=west":  { "model": "friday_cultivation:block/bone_block", "y": 90 },
+    "facing=north": { "model": "friday_cultivation:block/bone_block", "y": 180 },
+    "facing=east":  { "model": "friday_cultivation:block/bone_block", "y": 270 }
+  }
+}

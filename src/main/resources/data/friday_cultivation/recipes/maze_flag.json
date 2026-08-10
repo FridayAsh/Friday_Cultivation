@@ -1,0 +1,18 @@
+{
+  "type": "friday_cultivation:refining",
+  "translation_key": "recipe.friday_cultivation.maze_flag",
+  "sort_order": 100,
+  "ingredients": [
+    { "item": "friday_cultivation:low_spirit_stone", "count": 1 },
+    { "item": "minecraft:ender_pearl", "count": 4 },
+    { "item": "minecraft:stick", "count": 3 }
+  ],
+  "qi_cost_per_item": 600,
+  "outputs": {
+    "low": "friday_cultivation:low_maze_flag",
+    "mid": "friday_cultivation:mid_maze_flag",
+    "high": "friday_cultivation:high_maze_flag",
+    "supreme": "friday_cultivation:supreme_maze_flag",
+    "immortal": "friday_cultivation:immortal_maze_flag"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "lit=false": { "model": "friday_cultivation:block/refining_core" },
+    "lit=true":  { "model": "friday_cultivation:block/refining_core_lit" }
+  }
+}

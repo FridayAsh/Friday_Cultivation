@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "GAG",
+    "ASA",
+    "GCG"
+  ],
+  "key": {
+    "G": { "item": "minecraft:gold_ingot" },
+    "A": { "item": "minecraft:amethyst_shard" },
+    "S": { "item": "friday_cultivation:mid_spirit_stone" },
+    "C": { "item": "friday_cultivation:low_formation_core_plate" }
+  },
+  "result": {
+    "item": "friday_cultivation:mid_formation_core_plate",
+    "count": 1
+  }
+}

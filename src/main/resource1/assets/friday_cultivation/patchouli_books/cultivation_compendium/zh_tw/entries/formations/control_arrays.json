@@ -1,0 +1,16 @@
+{
+  "name": "回春、禁空、迷蹤",
+  "icon": "friday_cultivation:low_flight_ban_flag",
+  "category": "friday_cultivation:formations",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "回春陣讓友方、持有對應令牌者與合適的 NPC/生物在範圍內獲得生命恢復，離開後效果會消失。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "禁空陣會壓制非友方飛行；高階會拉下空中敵人並附加遲緩。迷蹤陣會施加失明/反胃，高階會在延遲後把入侵者傳送回邊緣外。"
+    }
+  ]
+}

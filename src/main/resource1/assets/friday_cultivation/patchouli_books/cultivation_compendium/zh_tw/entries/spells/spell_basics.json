@@ -1,0 +1,17 @@
+{
+  "name": "法術書與啟用",
+  "icon": "friday_cultivation:spell_book_qi_shield",
+  "category": "friday_cultivation:spells",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "法術分為主動法術與被動法術。主動法術通常由施法按鍵觸發；被動法術需要學會並啟用，之後會在符合條件時自動生效。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "法術也有品階、屬性與類型。境界不足時，不一定能學會高階法術。部分 NPC 會依境界隨機學會對應品階的法術。"
+    }
+  ],
+  "advancement": "friday_cultivation:guide/has_spell_book"
+}

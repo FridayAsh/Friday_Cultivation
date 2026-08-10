@@ -1,0 +1,17 @@
+{
+  "name": "靈氣與靈石",
+  "icon": "friday_cultivation:low_spirit_stone",
+  "category": "friday_cultivation:immortal_path",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "靈氣是施法、突破、陣法、煉丹與煉器的共同資源。靈石可以直接補充靈氣：下品 10、中品 100、上品 1000、極品 10000。"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "靈石礦會在主世界地下生成。概略來說，下品分布最廣；中品偏地下；上品更深；極品多在深層區域。想找高階靈石，往更低的 Y 層探索會更有效。"
+    }
+  ],
+  "advancement": "friday_cultivation:guide/has_spirit_stone"
+}

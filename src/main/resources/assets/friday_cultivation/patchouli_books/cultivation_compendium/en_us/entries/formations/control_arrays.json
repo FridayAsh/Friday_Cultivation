@@ -1,0 +1,16 @@
+{
+  "name": "Rejuvenation, Flight Ban, Maze",
+  "icon": "friday_cultivation:low_flight_ban_flag",
+  "category": "friday_cultivation:formations",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Rejuvenation arrays grant regeneration to allies, linked token holders, and suitable NPCs or creatures inside the range. The effect ends when they leave."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Flight Ban arrays suppress hostile flight; higher tiers pull airborne hostiles down and add slowness. Maze arrays blind or nauseate intruders, and high tiers teleport them outside after a delay."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Alchemy Core and Furnace",
+  "icon": "friday_cultivation:alchemy_core",
+  "category": "friday_cultivation:alchemy",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "Alchemy begins with an Alchemy Core. Place it, build the required furnace structure around it, then right-click the core to open the GUI."
+    },
+    {
+      "type": "patchouli:text",
+      "text": "Alchemy consumes ingredients and qi, and uses the player's alchemy rank for success and rank progress. The output slot must be able to accept the result before crafting can start."
+    }
+  ],
+  "advancement": "friday_cultivation:guide/has_alchemy_core"
+}

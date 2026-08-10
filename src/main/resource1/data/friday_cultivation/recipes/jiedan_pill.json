@@ -1,0 +1,18 @@
+{
+  "type": "friday_cultivation:alchemy",
+  "translation_key": "recipe.friday_cultivation.jiedan_pill",
+  "sort_order": 62,
+  "ingredients": [
+    { "item": "friday_cultivation:herb", "count": 4 },
+    { "item": "minecraft:gold_ingot", "count": 1 },
+    { "item": "friday_cultivation:high_spirit_stone", "count": 1 }
+  ],
+  "qi_cost_per_pill": 800,
+  "outputs": {
+    "low": "friday_cultivation:jiedan_pill",
+    "mid": "friday_cultivation:jiedan_pill",
+    "high": "friday_cultivation:jiedan_pill",
+    "supreme": "friday_cultivation:jiedan_pill",
+    "immortal": "friday_cultivation:jiedan_pill"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "item/handheld",
+  "textures": {
+    "layer0": "friday_cultivation:item/chi_yan_sword_low"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "IRI",
+    "RCR",
+    "ISI"
+  ],
+  "key": {
+    "I": { "item": "minecraft:iron_ingot" },
+    "R": { "item": "minecraft:redstone" },
+    "C": { "item": "minecraft:compass" },
+    "S": { "item": "friday_cultivation:low_spirit_stone" }
+  },
+  "result": {
+    "item": "friday_cultivation:formation_compass",
+    "count": 1
+  }
+}
