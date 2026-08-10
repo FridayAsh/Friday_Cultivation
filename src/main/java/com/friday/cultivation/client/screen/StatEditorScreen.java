@@ -174,7 +174,7 @@ extends Screen {
         }
     }
 
-    public void addEntry(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    public void render(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         int ry;
         this.renderBackground(g);
         g.fill(this.left - 2, this.top - 2, this.left + 268 + 2, this.top + 234 + 2, -3562934);

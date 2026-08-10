@@ -231,7 +231,7 @@ extends Screen {
         });
     }
 
-    public void addEntry(@NotNull GuiGraphics g, int mx, int my, float partial) {
+    public void render(@NotNull GuiGraphics g, int mx, int my, float partial) {
         this.renderBackground(g);
         this.hoveredStarter = ItemStack.EMPTY;
         this.hoveredRootPick = null;
@@ -830,7 +830,7 @@ extends Screen {
             super(x, y, width, height, msg, onPress, DEFAULT_NARRATION);
         }
 
-        protected void getCategory(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        protected void renderWidget(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
             int x = this.getX();
             int y = this.getY();
             int w = this.width;

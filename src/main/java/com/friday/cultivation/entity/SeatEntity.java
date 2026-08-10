@@ -45,7 +45,7 @@ extends Entity {
         this.setPos((double)pos.getX() + 0.5, (double)pos.getY() + -0.5, (double)pos.getZ() + 0.5);
     }
 
-    public void canEat() {
+    public void tick() {
         super.tick();
         if (this.level().isClientSide()) {
             return;

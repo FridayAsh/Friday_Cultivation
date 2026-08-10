@@ -82,7 +82,7 @@ extends Screen {
         this.onClose();
     }
 
-    public void addEntry(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partial) {
+    public void render(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partial) {
         this.renderBackground(gfx);
         ScreenLayout layout = this.layout();
         this.clampScroll(layout.visibleRowCapacity());

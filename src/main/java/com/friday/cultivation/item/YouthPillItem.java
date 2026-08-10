@@ -54,17 +54,17 @@ extends Item {
         super(properties);
     }
 
-    public int defaultDurability(@NotNull ItemStack stack) {
+    public int getUseDuration(@NotNull ItemStack stack) {
         return 32;
     }
 
     @NotNull
-    public UseAnim durability(@NotNull ItemStack stack) {
+    public UseAnim getUseAnimation(@NotNull ItemStack stack) {
         return UseAnim.EAT;
     }
 
     @NotNull
-    public InteractionResultHolder<ItemStack> appendHoverText(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
+    public InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
         ServerPlayer sp;
         ItemStack stack = player.getItemInHand(hand);
         if (!level.isClientSide && player instanceof ServerPlayer && !this.canUseYouthPill(sp = (ServerPlayer)player)) {

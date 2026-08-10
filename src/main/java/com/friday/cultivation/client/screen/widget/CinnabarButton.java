@@ -41,7 +41,7 @@ extends Button {
         super(x, y, width, height, msg, onPress, DEFAULT_NARRATION);
     }
 
-    protected void getCategory(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
+    protected void renderWidget(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         boolean pressed;
         int x = this.getX();
         int y = this.getY();

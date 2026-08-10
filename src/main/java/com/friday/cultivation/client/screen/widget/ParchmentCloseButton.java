@@ -32,7 +32,7 @@ extends Button {
         super(x, y, size, size, (Component)Component.literal((String)"X"), onPress, DEFAULT_NARRATION);
     }
 
-    protected void getCategory(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
+    protected void renderWidget(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         int x = this.getX();
         int y = this.getY();
         int w = this.width;

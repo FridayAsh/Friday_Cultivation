@@ -76,7 +76,7 @@ extends Item {
     }
 
     @NotNull
-    public InteractionResultHolder<ItemStack> appendHoverText(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
+    public InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (level.isClientSide) {
             return InteractionResultHolder.success(stack);

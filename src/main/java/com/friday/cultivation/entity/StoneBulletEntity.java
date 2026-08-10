@@ -84,7 +84,7 @@ extends ThrowableItemProjectile {
         return Items.POINTED_DRIPSTONE;
     }
 
-    public void canEat() {
+    public void tick() {
         if (TimeStasisHandler.pauseEntityTickInStoppedTime((Entity)this)) {
             return;
         }

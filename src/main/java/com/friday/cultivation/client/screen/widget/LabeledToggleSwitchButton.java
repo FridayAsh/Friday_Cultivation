@@ -56,7 +56,7 @@ extends Button {
         this.locked = locked;
     }
 
-    protected void getCategory(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
+    protected void renderWidget(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         int x = this.getX();
         int y = this.getY();
         boolean enabled = this.active && !this.locked;

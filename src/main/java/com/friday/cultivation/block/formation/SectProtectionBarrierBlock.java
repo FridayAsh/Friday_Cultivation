@@ -70,8 +70,8 @@ extends Block {
     }
 
     @NotNull
-    public VoxelShape getShadeBrightness(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext ctx) {
-        return Shapes.empty();
+    public VoxelShape getVisualShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext ctx) {
+        return Shapes.block();
     }
 
     @NotNull
@@ -101,12 +101,12 @@ extends Block {
     }
 
     @NotNull
-    public VoxelShape canSurvive(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext ctx) {
+    public VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos, @NotNull CollisionContext ctx) {
         return Shapes.block();
     }
 
     @NotNull
-    public VoxelShape explosionResistance(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos) {
+    public VoxelShape getBlockSupportShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos) {
         return Shapes.empty();
     }
 

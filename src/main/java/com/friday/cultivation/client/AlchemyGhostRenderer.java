@@ -72,7 +72,7 @@ public final class AlchemyGhostRenderer {
     }
 
     public static void toggleCore(BlockPos corePos) {
-        BlockPos immutable = corePos.east();
+        BlockPos immutable = corePos.immutable();
         if (ACTIVE_CORES.contains(immutable)) {
             ACTIVE_CORES.remove(immutable);
         } else {

@@ -24,7 +24,7 @@ extends Button {
         super(x, y, size, size, (Component)Component.literal((String)"X"), onPress, DEFAULT_NARRATION);
     }
 
-    protected void getCategory(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
+    protected void renderWidget(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         boolean hovered = this.isHoveredOrFocused();
         int color = hovered ? -4703686 : -15067628;
         int x = this.getX();

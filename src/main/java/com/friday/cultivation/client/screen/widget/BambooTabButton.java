@@ -63,7 +63,7 @@ extends Button {
         return textW > (availW = this.width - 2) ? Math.max(0.45f, (float)availW / (float)textW) : 1.0f;
     }
 
-    protected void getCategory(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
+    protected void renderWidget(@NotNull GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         boolean active = this.activeSupplier.get();
         boolean hovered = this.isHoveredOrFocused();
         int x = this.getX();
