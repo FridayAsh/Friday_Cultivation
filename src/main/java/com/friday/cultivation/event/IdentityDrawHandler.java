@@ -54,9 +54,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -67,8 +64,6 @@ import net.minecraftforge.network.PacketDistributor;
 public final class IdentityDrawHandler {
     private static final Map<UUID, IdentityDrawDeck> DECKS = new HashMap<UUID, IdentityDrawDeck>();
     private static final Map<UUID, Boolean> LIFE_CHART_PENDING = new HashMap<UUID, Boolean>();
-    private static final Map<UUID, Boolean> PREVIOUS_INVULNERABLE = new HashMap<UUID, Boolean>();
-    private static final Map<UUID, Boolean> PREVIOUS_INVISIBLE = new HashMap<UUID, Boolean>();
     private static final Random RNG = new Random();
 
     private IdentityDrawHandler() {
@@ -261,7 +256,6 @@ public final class IdentityDrawHandler {
         }
         DECKS.remove(id);
         LIFE_CHART_PENDING.remove(id);
-        IdentityDrawHandler.clearOriginProtection(player);
         CapabilityEvents.syncToClient(player);
         return true;
     }
@@ -308,7 +302,6 @@ public final class IdentityDrawHandler {
         }
         DECKS.remove(player.getUUID());
         LIFE_CHART_PENDING.remove(player.getUUID());
-        IdentityDrawHandler.clearOriginProtection(player);
         CapabilityEvents.syncToClient(player);
         return true;
     }
@@ -353,47 +346,6 @@ public final class IdentityDrawHandler {
         return false;
     }
 
-    @SubscribeEvent(priority=EventPriority.HIGHEST)
-    public static void onLivingAttack(LivingAttackEvent event) {
-        LivingEntity livingEntity = event.getEntity();
-        if (!(livingEntity instanceof ServerPlayer)) {
-            return;
-        }
-        ServerPlayer player = (ServerPlayer)livingEntity;
-        if (IdentityDrawHandler.needsInitialOrigin(player)) {
-            event.setCanceled(true);
-        }
-    }
-
-    @SubscribeEvent(priority=EventPriority.HIGHEST)
-    public static void onLivingHurt(LivingHurtEvent event) {
-        LivingEntity livingEntity = event.getEntity();
-        if (!(livingEntity instanceof ServerPlayer)) {
-            return;
-        }
-        ServerPlayer player = (ServerPlayer)livingEntity;
-        if (IdentityDrawHandler.needsInitialOrigin(player)) {
-            event.setCanceled(true);
-        }
-    }
-
-    @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
-        Player player = event.player;
-        if (!(player instanceof ServerPlayer)) {
-            return;
-        }
-        ServerPlayer player2 = (ServerPlayer)player;
-        if (IdentityDrawHandler.needsInitialOrigin(player2)) {
-            IdentityDrawHandler.applyOriginProtection(player2);
-        } else {
-            IdentityDrawHandler.clearOriginProtection(player2);
-        }
-    }
-
     @SubscribeEvent
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         Player player = event.getEntity();
@@ -401,7 +353,6 @@ public final class IdentityDrawHandler {
             return;
         }
         ServerPlayer player2 = (ServerPlayer)player;
-        IdentityDrawHandler.clearOriginProtection(player2);
         DECKS.remove(player2.getUUID());
         LIFE_CHART_PENDING.remove(player2.getUUID());
     }
@@ -429,7 +380,6 @@ public final class IdentityDrawHandler {
 
     private static void startInitialOriginIfNeeded(ServerPlayer player, CultivationData data) {
         if (data.hasChosenIdentity()) {
-            IdentityDrawHandler.clearOriginProtection(player);
             DECKS.remove(player.getUUID());
             LIFE_CHART_PENDING.remove(player.getUUID());
             return;
@@ -464,39 +414,6 @@ public final class IdentityDrawHandler {
 
     private static boolean isWaitingForOfflineAuth(ServerPlayer player) {
         return ModCommonConfig.offlineAuthEnabled() && !OfflineAuthHandler.isAuthenticated(player);
-    }
-
-    private static void applyOriginProtection(ServerPlayer player) {
-        UUID id = player.getUUID();
-        PREVIOUS_INVULNERABLE.putIfAbsent(id, player.isInvulnerable());
-        player.setInvulnerable(true);
-        player.fallDistance = 0.0f;
-        if (!IdentityDrawHandler.isSingleplayer(player)) {
-            PREVIOUS_INVISIBLE.putIfAbsent(id, player.isInvisible());
-            player.setInvisible(true);
-        } else {
-            IdentityDrawHandler.restoreInvisibleIfNeeded(player);
-        }
-    }
-
-    private static void clearOriginProtection(ServerPlayer player) {
-        UUID id = player.getUUID();
-        Boolean previousInvulnerable = PREVIOUS_INVULNERABLE.remove(id);
-        if (previousInvulnerable != null) {
-            player.setInvulnerable(previousInvulnerable.booleanValue());
-        }
-        IdentityDrawHandler.restoreInvisibleIfNeeded(player);
-    }
-
-    private static void restoreInvisibleIfNeeded(ServerPlayer player) {
-        Boolean previousInvisible = PREVIOUS_INVISIBLE.remove(player.getUUID());
-        if (previousInvisible != null) {
-            player.setInvisible(previousInvisible.booleanValue());
-        }
-    }
-
-    private static boolean isSingleplayer(ServerPlayer player) {
-        return player.getServer() != null && player.getServer().isSingleplayer();
     }
 }
 
