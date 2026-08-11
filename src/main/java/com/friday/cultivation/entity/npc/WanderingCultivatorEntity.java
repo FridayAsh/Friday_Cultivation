@@ -1319,7 +1319,7 @@ extends AbstractVillager {
             case VOID_REFINING, BODY_INTEGRATION -> 0.27f;
             case MAHAYANA, TRIBULATION_TRANSCENDENCE -> 0.3f;
             case TRUE_IMMORTAL, LOOSE_IMMORTAL -> 0.33f;
-            case MORTAL, QI_REFINING -> 0.0f;
+            case MORTAL, BODY_TEMPERING, QI_REFINING -> 0.0f;
         };
     }
 
@@ -1337,7 +1337,7 @@ extends AbstractVillager {
             case VOID_REFINING, BODY_INTEGRATION -> 0.27f;
             case MAHAYANA, TRIBULATION_TRANSCENDENCE -> 0.3f;
             case TRUE_IMMORTAL, LOOSE_IMMORTAL -> 0.33f;
-            case MORTAL, QI_REFINING -> 0.0f;
+            case MORTAL, BODY_TEMPERING, QI_REFINING -> 0.0f;
         };
     }
 
@@ -1476,6 +1476,13 @@ extends AbstractVillager {
                 nArray3[0] = 0;
                 nArray = nArray3;
                 nArray3[1] = 1;
+                break;
+            }
+            case BODY_TEMPERING: {
+                int[] nArrayBody = new int[2];
+                nArrayBody[0] = 0;
+                nArray = nArrayBody;
+                nArrayBody[1] = 1;
                 break;
             }
             case FOUNDATION_BUILDING: {
@@ -1654,7 +1661,7 @@ extends AbstractVillager {
     private Item stoneItemForRealm(Realm realm) {
         return switch (realm) {
             default -> throw new IncompatibleClassChangeError();
-            case MORTAL, QI_REFINING -> (Item)ModItems.LOW_SPIRIT_STONE.get();
+            case MORTAL, BODY_TEMPERING, QI_REFINING -> (Item)ModItems.LOW_SPIRIT_STONE.get();
             case FOUNDATION_BUILDING, GOLDEN_CORE -> (Item)ModItems.MID_SPIRIT_STONE.get();
             case NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, BODY_INTEGRATION -> (Item)ModItems.HIGH_SPIRIT_STONE.get();
             case MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL -> (Item)ModItems.SUPREME_SPIRIT_STONE.get();
@@ -2124,6 +2131,7 @@ extends AbstractVillager {
             case GOLDEN_CORE: 
             case SOUL_FORMATION: 
             case BODY_INTEGRATION: 
+            case BODY_TEMPERING: 
             case QI_REFINING: {
                 int[] nArray3 = new int[2];
                 nArray3[0] = 1;
@@ -2151,6 +2159,7 @@ extends AbstractVillager {
         return switch (realm) {
             default -> throw new IncompatibleClassChangeError();
             case MORTAL -> 2.0;
+            case BODY_TEMPERING -> 3.0;
             case QI_REFINING -> 4.0;
             case FOUNDATION_BUILDING -> 6.0;
             case GOLDEN_CORE -> 8.0;
@@ -3613,6 +3622,7 @@ extends AbstractVillager {
         return switch (realm) {
             default -> throw new IncompatibleClassChangeError();
             case MORTAL -> ChatFormatting.GRAY;
+            case BODY_TEMPERING -> ChatFormatting.DARK_GREEN;
             case QI_REFINING -> ChatFormatting.AQUA;
             case FOUNDATION_BUILDING -> ChatFormatting.GOLD;
             case GOLDEN_CORE -> ChatFormatting.YELLOW;
