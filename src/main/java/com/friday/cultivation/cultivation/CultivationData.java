@@ -2242,7 +2242,7 @@ implements INBTSerializable<CompoundTag> {
             this.realm = Realm.byId(tag.getString("realm"));
         }
         if (tag.contains("subStage", 8)) {
-            this.subStage = SubStage.byId(tag.getString("subStage"));
+            this.subStage = SubStage.byId(tag.getString("subStage"), this.realm);
         }
         this.currentQi = tag.getLong("currentQi");
         this.cultivationProgress = tag.contains("cultivationProgress", 4) ? tag.getLong("cultivationProgress") : this.currentQi;
