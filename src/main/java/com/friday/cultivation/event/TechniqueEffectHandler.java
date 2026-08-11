@@ -276,17 +276,23 @@ public final class TechniqueEffectHandler {
     private static final String TAG_MAX_BODY_TEMPERING_LEVEL = "friday_cultivation_max_body_tempering_level";
 
     /**
-     * 锻体生命加成：按历史最高锻体层数 ×10 计算并持久化。
-     * 突破到练气后仍保留锻体期间提升的生命值，不再归零重置。
+     * 锻体生命加成：
+     * - 锻体期间随当前层数变化（第 n 层 = n×10）；
+     * - 突破到练气及更高境界后，保留锻体期间练满的最高层加成（持久化），不再归零；
+     * - 用境界令牌返回锻体低层时，加成重新按当前层数计算。
      */
     private static double bodyTemperingHpBonus(ServerPlayer sp, CultivationData data) {
-        int currentLevel = data != null && data.getRealm() == Realm.BODY_TEMPERING ? data.getSubStage().level() : 0;
+        if (data == null) {
+            return 0.0;
+        }
+        int currentLevel = data.getRealm() == Realm.BODY_TEMPERING ? data.getSubStage().level() : 0;
         int stored = sp.getPersistentData().getInt(TAG_MAX_BODY_TEMPERING_LEVEL);
         if (currentLevel > stored) {
             stored = currentLevel;
             sp.getPersistentData().putInt(TAG_MAX_BODY_TEMPERING_LEVEL, stored);
         }
-        return (double)stored * 10.0;
+        int effective = data.getRealm() == Realm.BODY_TEMPERING ? currentLevel : stored;
+        return (double)effective * 10.0;
     }
 
     private static void applyAttributeModifier(Player p, Attribute attr, UUID uuid, String name, double value, AttributeModifier.Operation op) {

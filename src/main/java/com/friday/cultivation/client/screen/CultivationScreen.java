@@ -1823,11 +1823,11 @@ extends Screen {
     }
 
     private boolean canChooseFoundationRoute(CultivationData data) {
-        return data != null && data.getRealm() == Realm.QI_REFINING && data.getSubStage().isPeak();
+        return data != null && data.getRealm() == Realm.QI_REFINING && data.getSubStage().isPeakFor(Realm.QI_REFINING);
     }
 
     private boolean canChooseGoldenCoreRoute(CultivationData data) {
-        return data != null && data.getRealm() == Realm.FOUNDATION_BUILDING && data.getSubStage().isPeak();
+        return data != null && data.getRealm() == Realm.FOUNDATION_BUILDING && data.getSubStage().isPeakFor(Realm.FOUNDATION_BUILDING);
     }
 
     private void renderBreakthroughTooltip(GuiGraphics gfx, int mouseX, int mouseY) {
