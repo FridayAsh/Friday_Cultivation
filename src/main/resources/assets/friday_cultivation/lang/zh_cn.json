@@ -1,5 +1,5 @@
 {
-  "itemGroup.friday_cultivation.main": "小翔的修仙世界",
+  "itemGroup.friday_cultivation.main": "修仙世界",
   "item.friday_cultivation.low_spirit_stone": "下品灵石",
   "item.friday_cultivation.mid_spirit_stone": "中品灵石",
   "item.friday_cultivation.high_spirit_stone": "上品灵石",
@@ -563,7 +563,7 @@
   "hud.friday_cultivation.meditating": "● 打坐中 (坐在蒲团上)",
   "hud.friday_cultivation.breakthrough_ready": "★ 可按 K 突破！",
   "hud.friday_cultivation.tribulation": "⚡ 渡劫中：剩 %s 道雷",
-  "key.categories.friday_cultivation": "小翔的修仙世界",
+  "key.categories.friday_cultivation": "修仙世界",
   "key.friday_cultivation.open_screen": "开启修仙弹窗",
   "key.friday_cultivation.spell_wheel": "开启法术轮盘 (选择待施放法术)",
   "key.friday_cultivation.cast_spell": "施放当前法术 / 切换被动",
@@ -1560,7 +1560,7 @@
   "message.friday_cultivation.formation_rune.already": "此处已经有阵纹。",
   "item.friday_cultivation.cultivation_compendium": "修仙通玄录",
   "patchouli.friday_cultivation.cultivation_compendium.subtitle": "可选 Patchouli 修仙手册",
-  "patchouli.friday_cultivation.cultivation_compendium.landing": "给踏上仙途者的一本活书。取得物品、建造核心、学会法术、接触阵法后，新的篇章会逐步解锁。$(br2)小翔的修仙世界即使没有 Patchouli 也能正常游玩；这本书只是游戏内知识索引。",
+  "patchouli.friday_cultivation.cultivation_compendium.landing": "给踏上仙途者的一本活书。取得物品、建造核心、学会法术、接触阵法后，新的篇章会逐步解锁。$(br2)修仙世界即使没有 Patchouli 也能正常游玩；这本书只是游戏内知识索引。",
   "recipe.friday_cultivation.cultivation_compendium": "修仙通玄录",
   "tooltip.friday_cultivation.cultivation_compendium": "记录境界、灵气、炼丹、炼器、阵法与法术的武侠秘笈。",
   "tooltip.friday_cultivation.cultivation_compendium.hint": "右键打开。需要安装 Patchouli。",
@@ -1711,7 +1711,7 @@
   "screen.friday_cultivation.identity_draw.confirm_reconfigure.tooltip": "应用目前选择的身份、灵根与体质，不发放初始物品，也不改变境界。",
   "screen.friday_cultivation.identity_draw.random_anim.title": "天机流转",
   "screen.friday_cultivation.identity_draw.random_anim.waiting": "待定",
-  "screen.friday_cultivation.config.title": "小翔的修仙世界配置",
+  "screen.friday_cultivation.config.title": "修仙世界配置",
   "screen.friday_cultivation.config.hud": "界面显示",
   "screen.friday_cultivation.config.hud.hint": "只影响本机；默认左上角。",
   "screen.friday_cultivation.config.hud_position.left": "修仙 HUD：左上角",
@@ -1877,7 +1877,7 @@
   "config.friday_cultivation.sect_treed_biome_spawn_chance": "宗门非空旷群系生成概率",
   "config.friday_cultivation.sect_worldgen_slow_log_ms": "宗门生成慢速记录毫秒",
   "config.friday_cultivation.npc_corpse_decay_days": "NPC 尸体腐化天数",
-  "message.friday_cultivation.offline_auth.header": "======== 小翔的修仙模组服账号验证 ========",
+  "message.friday_cultivation.offline_auth.header": "======== 修仙的修仙模组服账号验证 ========",
   "message.friday_cultivation.offline_auth.register_hint": "首次进入请输入 /register <密码> 注册；也可用 /注册 <密码>。",
   "message.friday_cultivation.offline_auth.login_hint": "请输入 /login <密码> 登录；也可用 /登录 <密码>。",
   "message.friday_cultivation.offline_auth.name_warning": "当前玩家名：%s。离线模式请固定使用同一个名字，否则会被视为不同账号。",
@@ -2268,5 +2268,6 @@
   "sub_stage.friday_cultivation.9": "第9层",
   "sub_stage.friday_cultivation.10": "第10层",
   "screen.friday_cultivation.breakthrough.body_tempering_hint": "锻体淬炼，突破至炼气期需要十层圆满",
-  "item.friday_cultivation.realm_token_body_tempering": "境界令牌：锻体"
+  "item.friday_cultivation.realm_token_body_tempering": "境界令牌：锻体",
+  "item.friday_cultivation.spawn_egg_cultivator_body_tempering": "刷怪蛋：修士 (锻体)"
 }

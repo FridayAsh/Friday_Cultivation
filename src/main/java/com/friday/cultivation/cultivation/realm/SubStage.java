@@ -50,9 +50,9 @@ public final class SubStage {
         return this == PEAK;
     }
 
-    /** realm 感知：该子阶段是否为所属境界的最高档 */
+    /** realm 感知：该子阶段是否为所属境界的最高档（数字层=最高层；4 档=PEAK） */
     public boolean isPeakFor(Realm realm) {
-        return this.level >= realm.subStageCount() - 1;
+        return realm.usesNumericLevels() ? this.level >= realm.subStageCount() : this.level >= realm.subStageCount() - 1;
     }
 
     /** realm 驱动推进（4 档：EARLY→MIDDLE→LATE→PEAK；数字层：level+1） */
