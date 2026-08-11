@@ -145,7 +145,7 @@ public final class TechniqueEffectHandler {
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_GOLDEN_CORE_HP, "xiaoxiang_golden_core_hp", goldenCoreHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
         double looseImmortalHp = LooseImmortalBonusHelper.maxHpMultiplyTotal((Player)sp);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_LOOSE_IMMORTAL_HP, "xiaoxiang_loose_immortal_hp", looseImmortalHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
-        double bodyTemperingHp = data != null && data.getRealm() == Realm.BODY_TEMPERING ? data.getSubStage().level() * 10.0 : 0.0;
+        double bodyTemperingHp = TechniqueEffectHandler.bodyTemperingHpBonus(sp, data);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BODY_TEMPERING_HP, "xiaoxiang_body_tempering_hp", bodyTemperingHp, AttributeModifier.Operation.ADDITION);
         double zhenyuanSpeed = movementBonusEnabled ? ZhenyuanBonusHelper.agilityMoveSpeedMult((Player)sp) : 0.0;
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MOVEMENT_SPEED, UUID_ZHENYUAN_SPEED, "xiaoxiang_zhenyuan_speed", zhenyuanSpeed, AttributeModifier.Operation.MULTIPLY_BASE);
@@ -271,6 +271,22 @@ public final class TechniqueEffectHandler {
         } else if (isOurInfiniteEffect) {
             sp.removeEffect(effect);
         }
+    }
+
+    private static final String TAG_MAX_BODY_TEMPERING_LEVEL = "friday_cultivation_max_body_tempering_level";
+
+    /**
+     * 锻体生命加成：按历史最高锻体层数 ×10 计算并持久化。
+     * 突破到练气后仍保留锻体期间提升的生命值，不再归零重置。
+     */
+    private static double bodyTemperingHpBonus(ServerPlayer sp, CultivationData data) {
+        int currentLevel = data != null && data.getRealm() == Realm.BODY_TEMPERING ? data.getSubStage().level() : 0;
+        int stored = sp.getPersistentData().getInt(TAG_MAX_BODY_TEMPERING_LEVEL);
+        if (currentLevel > stored) {
+            stored = currentLevel;
+            sp.getPersistentData().putInt(TAG_MAX_BODY_TEMPERING_LEVEL, stored);
+        }
+        return (double)stored * 10.0;
     }
 
     private static void applyAttributeModifier(Player p, Attribute attr, UUID uuid, String name, double value, AttributeModifier.Operation op) {

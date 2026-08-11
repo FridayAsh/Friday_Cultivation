@@ -230,6 +230,9 @@ implements INBTSerializable<CompoundTag> {
     }
 
     public long getMaxQi() {
+        if (this.realm == Realm.BODY_TEMPERING) {
+            return 100L;
+        }
         boolean maxQiBonusEnabled;
         long max;
         long base = this.realm.maxQi(this.subStage);
@@ -291,9 +294,34 @@ implements INBTSerializable<CompoundTag> {
     }
 
     public long getMaxCultivation() {
-        long base = Math.max(1L, (long)this.realm.maxQi(this.subStage));
+        long base = CultivationData.deterministicCultivationRequirement(this.realm, this.subStage);
         double multiplier = PhysiqueBonusHelper.cultivationRequirementMultiplier(this.physique);
         return multiplier == 1.0 ? base : Math.max(1L, Math.round((double)base * multiplier));
+    }
+
+    /**
+     * 确定性伪随机修为上限：同一境界/层数永远生成同一数值（读档、跨端一致），
+     * 数值带随机感（非整齐整数），凡人两位数起步、曲线平缓、高境界达百万量级。
+     */
+    private static long deterministicCultivationRequirement(Realm realm, SubStage sub) {
+        long[] bases = new long[]{60L, 150L, 800L, 2500L, 5000L, 10000L, 20000L, 40000L, 80000L, 160000L, 320000L, 700000L, 1000000L};
+        int ord = realm == null ? 0 : Math.max(0, realm.ordinal());
+        long base = ord < bases.length ? bases[ord] : (long)Math.round(1000000.0 * Math.pow(1.5, (double)(ord - (bases.length - 1))));
+        int count = realm == null ? 1 : Math.max(1, realm.subStageCount());
+        int level = sub == null ? 0 : Math.max(0, sub.level());
+        double frac = 0.0;
+        if (realm != null && realm.usesNumericLevels()) {
+            if (count > 1) {
+                frac = (double)(level - 1) / (double)(count - 1);
+            }
+        } else if (count > 1) {
+            frac = (double)level / (double)(count - 1);
+        }
+        long span = Math.max(1L, base / 4L);
+        long val = Math.max(2L, base + Math.round(frac * (double)span));
+        java.util.Random rnd = new java.util.Random((long)ord * 1000003L + (long)level * 7919L + 104729L);
+        long jitter = 5L + (long)rnd.nextInt((int)Math.max(1L, val / 20L));
+        return Math.max(2L, val - jitter);
     }
 
     public long getCultivationProgress() {
@@ -1833,8 +1861,6 @@ implements INBTSerializable<CompoundTag> {
             this.subStage = this.realm.firstSubStage();
             this.currentQi = 0L;
             this.ensureSpellsForRealm();
-            this.addUnallocatedZhenyuan(5);
-            this.addAllZhenyuanAttributes(5);
             return;
         }
         if (this.subStage.isPeakFor(this.realm)) {
@@ -1863,9 +1889,11 @@ implements INBTSerializable<CompoundTag> {
         }
         this.subStage = this.subStage.nextFor(this.realm);
         this.currentQi = this.getMaxQi() / 2L;
-        int reward = 1 + this.spiritRoot.bonus().extraZhenyuanPerSubLevel() + PhysiqueBonusHelper.extraZhenyuanPerMinor(this.physique);
-        this.addUnallocatedZhenyuan(reward);
-        this.addAllZhenyuanAttributes(1);
+        if (this.realm != Realm.BODY_TEMPERING) {
+            int reward = 1 + this.spiritRoot.bonus().extraZhenyuanPerSubLevel() + PhysiqueBonusHelper.extraZhenyuanPerMinor(this.physique);
+            this.addUnallocatedZhenyuan(reward);
+            this.addAllZhenyuanAttributes(1);
+        }
     }
 
     public int getTotalZhenyuanEarned() {
@@ -1883,16 +1911,22 @@ implements INBTSerializable<CompoundTag> {
             targetRealm = Realm.TRIBULATION_TRANSCENDENCE;
             targetSub = targetRealm.lastSubStage();
         }
-        int majorCount = targetRealm.ordinal();
+        // 大境界突破：每次 +5（凡人→锻体不发，故扣除 1 次）
+        int majorCount = Math.max(0, targetRealm.ordinal() - 1);
         int minorCount = 0;
         for (Realm r : Realm.values()) {
             if (r == targetRealm) {
                 break;
             }
-            minorCount += Math.max(1, r.subStageCount());
+            if (r == Realm.MORTAL || r == Realm.BODY_TEMPERING) {
+                continue;
+            }
+            minorCount += Math.max(0, r.subStageCount() - 1);
         }
-        int subIdx = targetSub == null ? 0 : (targetRealm.usesNumericLevels() ? Math.max(0, targetSub.level() - 1) : targetSub.level());
-        minorCount = minorCount + subIdx - 1;
+        if (targetRealm != Realm.BODY_TEMPERING) {
+            int subIdx = targetSub == null ? 0 : (targetRealm.usesNumericLevels() ? Math.max(0, targetSub.level() - 1) : targetSub.level());
+            minorCount += subIdx;
+        }
         return majorCount * 5 + Math.max(0, minorCount) * (1 + Math.max(0, extraPerMinor));
     }
 
@@ -1907,16 +1941,21 @@ implements INBTSerializable<CompoundTag> {
             targetRealm = Realm.TRIBULATION_TRANSCENDENCE;
             targetSub = targetRealm.lastSubStage();
         }
-        int majorCount = targetRealm.ordinal();
+        int majorCount = Math.max(0, targetRealm.ordinal() - 1);
         int minorCount = 0;
         for (Realm r : Realm.values()) {
             if (r == targetRealm) {
                 break;
             }
-            minorCount += Math.max(1, r.subStageCount());
+            if (r == Realm.MORTAL || r == Realm.BODY_TEMPERING) {
+                continue;
+            }
+            minorCount += Math.max(0, r.subStageCount() - 1);
         }
-        int subIdx = targetSub == null ? 0 : (targetRealm.usesNumericLevels() ? Math.max(0, targetSub.level() - 1) : targetSub.level());
-        minorCount = minorCount + subIdx - 1;
+        if (targetRealm != Realm.BODY_TEMPERING) {
+            int subIdx = targetSub == null ? 0 : (targetRealm.usesNumericLevels() ? Math.max(0, targetSub.level() - 1) : targetSub.level());
+            minorCount += subIdx;
+        }
         return majorCount * 5 + Math.max(0, minorCount) * 1;
     }
 
