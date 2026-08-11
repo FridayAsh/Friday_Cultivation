@@ -375,7 +375,7 @@ public final class RealmPressureHandler {
         if (realm == Realm.TRUE_IMMORTAL) {
             return 100;
         }
-        return realm.ordinal() * 10;
+        return realm.pressureRank();
     }
 
     private static void processExpansionTargets(ServerPlayer player, ExpansionState state, Vec3 center, double radius) {

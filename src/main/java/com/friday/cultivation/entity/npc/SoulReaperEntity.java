@@ -91,12 +91,13 @@ extends PathfinderMob {
     }
 
     public static double healthForRealm(Realm r) {
-        return 20.0 + (double)r.ordinal() * 22.0;
+        return r.baseHealthForNpc();
     }
 
     public static Realm realmForKills(int kills) {
         int idx = Math.min(Realm.TRUE_IMMORTAL.ordinal(), Realm.QI_REFINING.ordinal() + Math.max(0, kills));
-        return Realm.values()[idx];
+        Realm r = Realm.values()[idx];
+        return r == Realm.BODY_TEMPERING ? Realm.QI_REFINING : r;
     }
 
     public Realm getRealm() {

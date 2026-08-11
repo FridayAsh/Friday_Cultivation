@@ -115,6 +115,12 @@ public final class CultivationRandomPools {
                 pillTierArray = new PillTier[]{};
                 break;
             }
+            case BODY_TEMPERING: {
+                PillTier[] pillTierBody = new PillTier[1];
+                pillTierBody[0] = PillTier.LOW;
+                pillTierArray = pillTierBody;
+                break;
+            }
             case QI_REFINING: {
                 PillTier[] pillTierArray2 = new PillTier[1];
                 pillTierArray = pillTierArray2;
@@ -171,7 +177,7 @@ public final class CultivationRandomPools {
     public static ItemTier techniqueTierForRealm(Realm realm) {
         return switch (realm) {
             default -> throw new IncompatibleClassChangeError();
-            case MORTAL, QI_REFINING, FOUNDATION_BUILDING -> ItemTier.LOW;
+            case MORTAL, BODY_TEMPERING, QI_REFINING, FOUNDATION_BUILDING -> ItemTier.LOW;
             case GOLDEN_CORE, NASCENT_SOUL -> ItemTier.MID;
             case SOUL_FORMATION, VOID_REFINING -> ItemTier.HIGH;
             case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE -> ItemTier.SUPREME;
@@ -182,7 +188,7 @@ public final class CultivationRandomPools {
     public static ItemTier spellTierForRealm(Realm realm) {
         return switch (realm) {
             default -> throw new IncompatibleClassChangeError();
-            case MORTAL, QI_REFINING, FOUNDATION_BUILDING -> ItemTier.LOW;
+            case MORTAL, BODY_TEMPERING, QI_REFINING, FOUNDATION_BUILDING -> ItemTier.LOW;
             case GOLDEN_CORE, NASCENT_SOUL -> ItemTier.MID;
             case SOUL_FORMATION, VOID_REFINING -> ItemTier.HIGH;
             case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL -> ItemTier.SUPREME;
@@ -192,7 +198,7 @@ public final class CultivationRandomPools {
     public static ItemTier weaponTierForRealm(Realm realm) {
         return switch (realm) {
             default -> throw new IncompatibleClassChangeError();
-            case MORTAL, QI_REFINING, FOUNDATION_BUILDING -> ItemTier.LOW;
+            case MORTAL, BODY_TEMPERING, QI_REFINING, FOUNDATION_BUILDING -> ItemTier.LOW;
             case GOLDEN_CORE, NASCENT_SOUL -> ItemTier.MID;
             case SOUL_FORMATION, VOID_REFINING -> ItemTier.HIGH;
             case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE -> ItemTier.SUPREME;

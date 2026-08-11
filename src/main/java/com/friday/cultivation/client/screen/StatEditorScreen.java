@@ -63,7 +63,7 @@ extends Screen {
     private static int enumMax(int j) {
         return switch (j) {
             case 0 -> Realm.values().length - 1;
-            case 1 -> SubStage.values().length - 1;
+            case 1 -> 20;
             case 2 -> RefiningRank.values().length - 1;
             default -> AlchemyRank.values().length - 1;
         };
@@ -72,10 +72,16 @@ extends Screen {
     private Component enumValue(int j) {
         return switch (j) {
             case 0 -> Realm.values()[this.enumIdx[0]].displayName();
-            case 1 -> SubStage.values()[this.enumIdx[1]].displayName();
+            case 1 -> this.enumSubStageValue();
             case 2 -> RefiningRank.values()[this.enumIdx[2]].displayName();
             default -> AlchemyRank.values()[this.enumIdx[3]].displayName();
         };
+    }
+
+    private Component enumSubStageValue() {
+        Realm realm = this.enumIdx[0] >= 0 && this.enumIdx[0] < Realm.values().length ? Realm.values()[this.enumIdx[0]] : Realm.MORTAL;
+        SubStage sub = realm.subStageAt(this.enumIdx[1]);
+        return sub != null ? sub.displayName() : Component.literal("?");
     }
 
     protected void init() {
@@ -91,7 +97,7 @@ extends Screen {
                 this.intVals[4] = d.getAttrQiSea();
                 this.intVals[5] = d.getDefense();
                 this.enumIdx[0] = StatEditorScreen.clamp(d.getRealm().ordinal(), 0, StatEditorScreen.enumMax(0));
-                this.enumIdx[1] = StatEditorScreen.clamp(d.getSubStage().ordinal(), 0, StatEditorScreen.enumMax(1));
+                this.enumIdx[1] = StatEditorScreen.clamp(d.getSubStage().level(), 0, StatEditorScreen.enumMax(1));
                 this.enumIdx[2] = StatEditorScreen.clamp(d.getRefining(), 0, StatEditorScreen.enumMax(2));
                 this.enumIdx[3] = StatEditorScreen.clamp(d.getAlchemy(), 0, StatEditorScreen.enumMax(3));
                 this.boneAgeYears = StatEditorScreen.clamp((int)Math.floor(d.getBoneAge()), 0, 1000000);

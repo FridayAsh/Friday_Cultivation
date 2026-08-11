@@ -1166,7 +1166,9 @@ extends Screen {
         y += 13;
         int boneAge = LifespanHelper.displayBoneAge(data);
         boolean hasBloodTalisman = this.hasBloodTransformationTalisman(player);
-        if (this.canChooseFoundationRoute(data)) {
+        if (realm == Realm.BODY_TEMPERING) {
+            y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.body_tempering_hint"), cx, y, width - 8, -9807288) + 4;
+        } else if (this.canChooseFoundationRoute(data)) {
             y = this.renderFoundationBreakthroughOptions(gfx, x, rightX, y, data, boneAge, mouseX, mouseY);
         } else if (realm == Realm.QI_REFINING) {
             y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_locked_stage"), cx, y, width - 8, -9807288) + 4;
@@ -1667,12 +1669,12 @@ extends Screen {
         if (realm == Realm.MORTAL) {
             return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_mortal");
         }
-        if (realm == Realm.QI_REFINING && sub == SubStage.PEAK) {
+        if (realm == Realm.QI_REFINING && sub.isPeakFor(realm)) {
             int waves = this.foundationTribulationWaves(this.selectedFoundationDao);
             int damage = waves > 0 ? Realm.QI_REFINING.tribulationStrikeDamage() : 0;
             return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_foundation", (Object[])new Object[]{Component.translatable((String)this.selectedFoundationDao.translationKey()), Realm.formatTribulationCount(waves, 1), damage});
         }
-        if (realm == Realm.FOUNDATION_BUILDING && sub == SubStage.PEAK) {
+        if (realm == Realm.FOUNDATION_BUILDING && sub.isPeakFor(realm)) {
             return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_golden_core", (Object[])new Object[]{Component.translatable((String)this.selectedGoldenCoreDao.translationKey()), Realm.formatTribulationCount(this.selectedGoldenCoreDao.tribulationStrikes(), 1), this.selectedGoldenCoreDao.tribulationDamage()});
         }
         int strikes = realm.tribulationCount(sub);
@@ -1745,10 +1747,10 @@ extends Screen {
     }
 
     private boolean isSelectedBreakthroughReady(CultivationData data, LocalPlayer player) {
-        if (data.getRealm() == Realm.QI_REFINING && data.getSubStage() == SubStage.PEAK) {
-            return data.isEligibleFoundationDao(this.selectedFoundationDao, LifespanHelper.displayBoneAge(data));
+        if (data.getRealm() == Realm.QI_REFINING && data.getSubStage().isPeakFor(Realm.QI_REFINING)) {
+            return true;
         }
-        if (data.getRealm() == Realm.FOUNDATION_BUILDING && data.getSubStage() == SubStage.PEAK) {
+        if (data.getRealm() == Realm.FOUNDATION_BUILDING && data.getSubStage().isPeakFor(Realm.FOUNDATION_BUILDING)) {
             return data.isEligibleGoldenCoreDao(this.selectedGoldenCoreDao, LifespanHelper.displayBoneAge(data), this.hasBloodTransformationTalisman(player));
         }
         return true;
@@ -1821,11 +1823,11 @@ extends Screen {
     }
 
     private boolean canChooseFoundationRoute(CultivationData data) {
-        return data != null && data.getRealm() == Realm.QI_REFINING && data.getSubStage().isPeak();
+        return data != null && data.getRealm() == Realm.QI_REFINING && data.getSubStage().isPeakFor(Realm.QI_REFINING);
     }
 
     private boolean canChooseGoldenCoreRoute(CultivationData data) {
-        return data != null && data.getRealm() == Realm.FOUNDATION_BUILDING && data.getSubStage().isPeak();
+        return data != null && data.getRealm() == Realm.FOUNDATION_BUILDING && data.getSubStage().isPeakFor(Realm.FOUNDATION_BUILDING);
     }
 
     private void renderBreakthroughTooltip(GuiGraphics gfx, int mouseX, int mouseY) {

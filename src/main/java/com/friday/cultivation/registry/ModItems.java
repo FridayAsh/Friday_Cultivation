@@ -314,6 +314,13 @@ public final class ModItems {
                 nArray2[1] = 3816000;
                 break;
             }
+            case BODY_TEMPERING: {
+                int[] nArrayBody = new int[2];
+                nArrayBody[0] = 0x9A8A6A;
+                nArray = nArrayBody;
+                nArrayBody[1] = 3682366;
+                break;
+            }
             case QI_REFINING: {
                 int[] nArray3 = new int[2];
                 nArray3[0] = 6014919;
@@ -397,7 +404,7 @@ public final class ModItems {
     private static Rarity realmEggRarity(Realm realm) {
         return switch (realm) {
             default -> throw new IncompatibleClassChangeError();
-            case MORTAL, QI_REFINING -> Rarity.COMMON;
+            case MORTAL, BODY_TEMPERING, QI_REFINING -> Rarity.COMMON;
             case FOUNDATION_BUILDING, GOLDEN_CORE -> Rarity.UNCOMMON;
             case NASCENT_SOUL, SOUL_FORMATION -> Rarity.RARE;
             case VOID_REFINING, BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL -> Rarity.EPIC;

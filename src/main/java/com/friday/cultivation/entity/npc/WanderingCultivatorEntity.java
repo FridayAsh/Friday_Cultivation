@@ -548,7 +548,7 @@ extends AbstractVillager {
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DATA_REALM_ORD, Realm.MORTAL.ordinal());
-        this.entityData.define(DATA_SUB_STAGE_ORD, SubStage.EARLY.ordinal());
+        this.entityData.define(DATA_SUB_STAGE_ORD, SubStage.EARLY.level());
         this.entityData.define(DATA_LOOSE_IMMORTAL_TRIBULATIONS, 0);
         this.entityData.define(DATA_TECHNIQUE_ID, "");
         this.entityData.define(DATA_SKIN_VARIANT, 0);
@@ -893,9 +893,10 @@ extends AbstractVillager {
     }
 
     public SubStage getSubStage() {
-        int ord = (Integer)this.entityData.get(DATA_SUB_STAGE_ORD);
-        SubStage[] vals = SubStage.values();
-        return vals[Math.floorMod(ord, vals.length)];
+        int level = (Integer)this.entityData.get(DATA_SUB_STAGE_ORD);
+        Realm realm = this.getRealm();
+        SubStage sub = realm.subStageAt(level);
+        return sub != null ? sub : realm.firstSubStage();
     }
 
     public int getLooseImmortalTribulations() {
@@ -1144,15 +1145,15 @@ extends AbstractVillager {
         if (difu) {
             this.setDifuReaper(true);
         }
-        Realm realm = difu ? Realm.values()[1 + this.random.nextInt(Realm.TRIBULATION_TRANSCENDENCE.ordinal())] : (dataTag != null && dataTag.contains("forcedRealmId") ? ((forced = Realm.byId(id = dataTag.getString("forcedRealmId"))) != null ? forced : CultivatorRealmRoller.roll(this.random)) : CultivatorRealmRoller.roll(this.random));
+        Realm realm = difu ? Realm.values()[Realm.QI_REFINING.ordinal() + this.random.nextInt(Math.max(1, Realm.TRIBULATION_TRANSCENDENCE.ordinal() - Realm.QI_REFINING.ordinal() + 1))] : (dataTag != null && dataTag.contains("forcedRealmId") ? ((forced = Realm.byId(id = dataTag.getString("forcedRealmId"))) != null ? forced : CultivatorRealmRoller.roll(this.random)) : CultivatorRealmRoller.roll(this.random));
         int looseImmortalTribulations = 0;
         if (realm == Realm.LOOSE_IMMORTAL) {
             looseImmortalTribulations = dataTag != null && dataTag.contains("forcedLooseImmortalTribulations", 3) ? dataTag.getInt("forcedLooseImmortalTribulations") : 1 + this.random.nextInt(9);
             looseImmortalTribulations = Math.max(1, Math.min(9, looseImmortalTribulations));
         }
-        SubStage sub = SubStage.values()[this.random.nextInt(SubStage.values().length)];
+        SubStage sub = realm.subStageAt(1 + this.random.nextInt(Math.max(1, realm.subStageCount())));
         this.entityData.set(DATA_REALM_ORD, realm.ordinal());
-        this.entityData.set(DATA_SUB_STAGE_ORD, sub.ordinal());
+        this.entityData.set(DATA_SUB_STAGE_ORD, sub.level());
         this.entityData.set(DATA_LOOSE_IMMORTAL_TRIBULATIONS, looseImmortalTribulations);
         int rolledGender = this.random.nextBoolean() ? 1 : 2;
         this.entityData.set(DATA_GENDER, rolledGender);
@@ -1318,7 +1319,7 @@ extends AbstractVillager {
             case VOID_REFINING, BODY_INTEGRATION -> 0.27f;
             case MAHAYANA, TRIBULATION_TRANSCENDENCE -> 0.3f;
             case TRUE_IMMORTAL, LOOSE_IMMORTAL -> 0.33f;
-            case MORTAL, QI_REFINING -> 0.0f;
+            case MORTAL, BODY_TEMPERING, QI_REFINING -> 0.0f;
         };
     }
 
@@ -1336,7 +1337,7 @@ extends AbstractVillager {
             case VOID_REFINING, BODY_INTEGRATION -> 0.27f;
             case MAHAYANA, TRIBULATION_TRANSCENDENCE -> 0.3f;
             case TRUE_IMMORTAL, LOOSE_IMMORTAL -> 0.33f;
-            case MORTAL, QI_REFINING -> 0.0f;
+            case MORTAL, BODY_TEMPERING, QI_REFINING -> 0.0f;
         };
     }
 
@@ -1475,6 +1476,13 @@ extends AbstractVillager {
                 nArray3[0] = 0;
                 nArray = nArray3;
                 nArray3[1] = 1;
+                break;
+            }
+            case BODY_TEMPERING: {
+                int[] nArrayBody = new int[2];
+                nArrayBody[0] = 0;
+                nArray = nArrayBody;
+                nArrayBody[1] = 1;
                 break;
             }
             case FOUNDATION_BUILDING: {
@@ -1653,7 +1661,7 @@ extends AbstractVillager {
     private Item stoneItemForRealm(Realm realm) {
         return switch (realm) {
             default -> throw new IncompatibleClassChangeError();
-            case MORTAL, QI_REFINING -> (Item)ModItems.LOW_SPIRIT_STONE.get();
+            case MORTAL, BODY_TEMPERING, QI_REFINING -> (Item)ModItems.LOW_SPIRIT_STONE.get();
             case FOUNDATION_BUILDING, GOLDEN_CORE -> (Item)ModItems.MID_SPIRIT_STONE.get();
             case NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, BODY_INTEGRATION -> (Item)ModItems.HIGH_SPIRIT_STONE.get();
             case MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL -> (Item)ModItems.SUPREME_SPIRIT_STONE.get();
@@ -2123,6 +2131,7 @@ extends AbstractVillager {
             case GOLDEN_CORE: 
             case SOUL_FORMATION: 
             case BODY_INTEGRATION: 
+            case BODY_TEMPERING: 
             case QI_REFINING: {
                 int[] nArray3 = new int[2];
                 nArray3[0] = 1;
@@ -2150,6 +2159,7 @@ extends AbstractVillager {
         return switch (realm) {
             default -> throw new IncompatibleClassChangeError();
             case MORTAL -> 2.0;
+            case BODY_TEMPERING -> 3.0;
             case QI_REFINING -> 4.0;
             case FOUNDATION_BUILDING -> 6.0;
             case GOLDEN_CORE -> 8.0;
@@ -3599,7 +3609,7 @@ extends AbstractVillager {
         Component realmDisplay = realm == Realm.LOOSE_IMMORTAL ? Component.translatable((String)("realm.friday_cultivation.loose_immortal.level." + this.getLooseImmortalTribulations())) : realm.displayName();
         MutableComponent realmText = realm.npcCategoryName().copy().append((Component)Component.literal((String)" ")).append((Component)this.getCultivatorName()).append((Component)Component.literal((String)" (")).append(realmDisplay);
         if (realm != Realm.LOOSE_IMMORTAL) {
-            realmText.append((Component)Component.literal((String)" ")).append((Component)Component.translatable((String)("sub_stage.friday_cultivation." + sub.name().toLowerCase())));
+            realmText.append((Component)Component.literal((String)" ")).append((Component)sub.displayName());
         }
         realmText.append((Component)Component.literal((String)")")).withStyle(WanderingCultivatorEntity.realmColor(realm));
         ChatFormatting qiColor = this.maxQi == 0L ? ChatFormatting.GRAY : (this.currentQi * 100L / Math.max(1L, this.maxQi) >= 50L ? ChatFormatting.GREEN : (this.currentQi * 100L / Math.max(1L, this.maxQi) >= 20L ? ChatFormatting.YELLOW : ChatFormatting.RED));
@@ -3612,6 +3622,7 @@ extends AbstractVillager {
         return switch (realm) {
             default -> throw new IncompatibleClassChangeError();
             case MORTAL -> ChatFormatting.GRAY;
+            case BODY_TEMPERING -> ChatFormatting.DARK_GREEN;
             case QI_REFINING -> ChatFormatting.AQUA;
             case FOUNDATION_BUILDING -> ChatFormatting.GOLD;
             case GOLDEN_CORE -> ChatFormatting.YELLOW;

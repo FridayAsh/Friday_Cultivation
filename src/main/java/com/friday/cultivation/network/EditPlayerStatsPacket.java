@@ -89,9 +89,11 @@ public class EditPlayerStatsPacket {
                 data.setAttrQiSea(EditPlayerStatsPacket.clamp(m.qiSea, 0, 9999));
                 data.setDefense(EditPlayerStatsPacket.clamp(m.defense, 0, 9999));
                 Realm[] realms = Realm.values();
-                SubStage[] subs = SubStage.values();
                 Realm newRealm = realms[EditPlayerStatsPacket.clamp(m.realmOrd, 0, realms.length - 1)];
-                SubStage newSub = subs[EditPlayerStatsPacket.clamp(m.subOrd, 0, subs.length - 1)];
+                SubStage newSub = newRealm.subStageAt(m.subOrd);
+                if (newSub == null) {
+                    newSub = newRealm.firstSubStage();
+                }
                 boolean realmChanged = data.getRealm() != newRealm || data.getSubStage() != newSub;
                 data.setRealm(newRealm);
                 data.setSubStage(newSub);

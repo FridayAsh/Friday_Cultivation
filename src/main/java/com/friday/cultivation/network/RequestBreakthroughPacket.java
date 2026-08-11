@@ -75,7 +75,7 @@ public class RequestBreakthroughPacket {
                 int boltsPerWave = data.getRealm().tribulationBoltsPerWave(data.getSubStage());
                 int damage = data.getRealm().tribulationStrikeDamage();
                 int boneAge = LifespanHelper.displayBoneAge(data);
-                if (data.getRealm() == Realm.QI_REFINING && data.getSubStage() == SubStage.PEAK) {
+                if (data.getRealm() == Realm.QI_REFINING && data.getSubStage().isPeakFor(Realm.QI_REFINING)) {
                     FoundationDao selected = FoundationDao.byId(msg.foundationDaoId);
                     if (selected == FoundationDao.NONE) {
                         selected = data.bestEligibleFoundationDao(boneAge);
@@ -89,7 +89,7 @@ public class RequestBreakthroughPacket {
                     boltsPerWave = 1;
                     damage = waves > 0 ? Realm.QI_REFINING.tribulationStrikeDamage() : 0;
                     player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.foundation.dao_chosen", (Object[])new Object[]{Component.translatable((String)selected.translationKey())}), false);
-                } else if (data.getRealm() == Realm.FOUNDATION_BUILDING && data.getSubStage() == SubStage.PEAK) {
+                } else if (data.getRealm() == Realm.FOUNDATION_BUILDING && data.getSubStage().isPeakFor(Realm.FOUNDATION_BUILDING)) {
                     boolean hasBloodTalisman = RequestBreakthroughPacket.hasItem(player, (Item)ModItems.BLOOD_TRANSFORMATION_TALISMAN.get());
                     GoldenCoreDao selected = GoldenCoreDao.byId(msg.goldenCoreDaoId);
                     if (selected == GoldenCoreDao.NONE) {
