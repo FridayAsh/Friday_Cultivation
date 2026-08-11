@@ -2255,5 +2255,17 @@
   "screen.friday_cultivation.sect.book.task_board_count": "\u53ef\u7f34 %s \u00b7 \u8fdb\u884c %s",
   "screen.friday_cultivation.sect.book.turn_done": "\u5df2\u8fbe\u6210",
   "screen.friday_cultivation.sect.book.turn_progress": "\u7f34\u4ea4\u8fdb\u5ea6",
-  "screen.friday_cultivation.sect.member_meta_contribution": "\u8d21\u732e %s"
+  "screen.friday_cultivation.sect.member_meta_contribution": "\u8d21\u732e %s",
+  "realm.friday_cultivation.body_tempering": "\u953b\u4f53",
+  "sub_stage.friday_cultivation.1": "\u7b2c1\u5c42",
+  "sub_stage.friday_cultivation.2": "\u7b2c2\u5c42",
+  "sub_stage.friday_cultivation.3": "\u7b2c3\u5c42",
+  "sub_stage.friday_cultivation.4": "\u7b2c4\u5c42",
+  "sub_stage.friday_cultivation.5": "\u7b2c5\u5c42",
+  "sub_stage.friday_cultivation.6": "\u7b2c6\u5c42",
+  "sub_stage.friday_cultivation.7": "\u7b2c7\u5c42",
+  "sub_stage.friday_cultivation.8": "\u7b2c8\u5c42",
+  "sub_stage.friday_cultivation.9": "\u7b2c9\u5c42",
+  "sub_stage.friday_cultivation.10": "\u7b2c10\u5c42",
+  "screen.friday_cultivation.breakthrough.body_tempering_hint": "\u953b\u4f53\u6dec\u70bc\uff0c\u7a81\u7834\u81f3\u70bc\u6c14\u671f\u9700\u8981\u5341\u5c42\u5706\u6ee1"
 }

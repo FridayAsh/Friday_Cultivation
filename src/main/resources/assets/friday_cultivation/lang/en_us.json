@@ -2255,5 +2255,17 @@
   "screen.friday_cultivation.sect.book.task_board_count": "Ready %s \u00b7 Active %s",
   "screen.friday_cultivation.sect.book.turn_done": "Done",
   "screen.friday_cultivation.sect.book.turn_progress": "Turn-in",
-  "screen.friday_cultivation.sect.member_meta_contribution": "Cont. %s"
+  "screen.friday_cultivation.sect.member_meta_contribution": "Cont. %s",
+  "realm.friday_cultivation.body_tempering": "Body Tempering",
+  "sub_stage.friday_cultivation.1": "Layer 1",
+  "sub_stage.friday_cultivation.2": "Layer 2",
+  "sub_stage.friday_cultivation.3": "Layer 3",
+  "sub_stage.friday_cultivation.4": "Layer 4",
+  "sub_stage.friday_cultivation.5": "Layer 5",
+  "sub_stage.friday_cultivation.6": "Layer 6",
+  "sub_stage.friday_cultivation.7": "Layer 7",
+  "sub_stage.friday_cultivation.8": "Layer 8",
+  "sub_stage.friday_cultivation.9": "Layer 9",
+  "sub_stage.friday_cultivation.10": "Layer 10",
+  "screen.friday_cultivation.breakthrough.body_tempering_hint": "Temper the body; reach the 10th layer to break through to Qi Refining"
 }

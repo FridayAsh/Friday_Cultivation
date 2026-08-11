@@ -7,10 +7,12 @@
 package com.friday.cultivation.entity.npc;
 
 import com.friday.cultivation.cultivation.realm.Realm;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import net.minecraft.util.RandomSource;
 
 public final class CultivatorRealmRoller {
-    private static final int[] WEIGHTS = new int[]{1000, 500, 250, 125, 60, 30, 15, 8, 4, 2, 1};
+    private static final Map<Realm, Integer> WEIGHTS = new LinkedHashMap<Realm, Integer>();
     private static final int TOTAL_WEIGHT;
 
     private CultivatorRealmRoller() {
@@ -19,20 +21,30 @@ public final class CultivatorRealmRoller {
     public static Realm roll(RandomSource random) {
         int roll = random.nextInt(TOTAL_WEIGHT);
         int acc = 0;
-        Realm[] vals = Realm.values();
-        for (int i = 0; i < WEIGHTS.length && i < vals.length; ++i) {
-            if (roll >= (acc += WEIGHTS[i])) continue;
-            return vals[i];
+        for (Map.Entry<Realm, Integer> e : WEIGHTS.entrySet()) {
+            if (roll >= (acc += e.getValue().intValue())) continue;
+            return e.getKey();
         }
         return Realm.MORTAL;
     }
 
     static {
         int sum = 0;
-        for (int w : WEIGHTS) {
+        WEIGHTS.put(Realm.MORTAL, 1000);
+        WEIGHTS.put(Realm.BODY_TEMPERING, 750);
+        WEIGHTS.put(Realm.QI_REFINING, 500);
+        WEIGHTS.put(Realm.FOUNDATION_BUILDING, 250);
+        WEIGHTS.put(Realm.GOLDEN_CORE, 125);
+        WEIGHTS.put(Realm.NASCENT_SOUL, 60);
+        WEIGHTS.put(Realm.SOUL_FORMATION, 30);
+        WEIGHTS.put(Realm.VOID_REFINING, 15);
+        WEIGHTS.put(Realm.BODY_INTEGRATION, 8);
+        WEIGHTS.put(Realm.MAHAYANA, 4);
+        WEIGHTS.put(Realm.TRIBULATION_TRANSCENDENCE, 2);
+        WEIGHTS.put(Realm.TRUE_IMMORTAL, 1);
+        for (int w : WEIGHTS.values()) {
             sum += w;
         }
         TOTAL_WEIGHT = sum;
     }
 }
-

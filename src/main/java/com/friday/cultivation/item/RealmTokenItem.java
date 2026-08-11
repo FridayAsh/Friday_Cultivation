@@ -69,7 +69,7 @@ extends Item {
             ServerPlayer sp = (ServerPlayer)player;
             CultivationCapability.get((Player)sp).ifPresent(data -> {
                 data.setRealm(this.realm);
-                data.setSubStage(SubStage.EARLY);
+                data.setSubStage(this.realm.firstSubStage());
                 int looseLevel = this.targetLooseImmortalLevel();
                 if (looseLevel > 0) {
                     data.setSoulState(false);
@@ -79,7 +79,7 @@ extends Item {
                     data.setLooseImmortalTribulations(looseLevel);
                     data.setNextLooseImmortalTribulationTick(looseLevel >= 9 ? -1L : level.getGameTime() + 12000000L);
                 }
-                CultivationData.ZhenyuanBaselineResult zhenyuan = data.syncZhenyuanToRealmBaseline(this.realm, SubStage.EARLY);
+                CultivationData.ZhenyuanBaselineResult zhenyuan = data.syncZhenyuanToRealmBaseline(this.realm, this.realm.firstSubStage());
                 data.setCurrentQi(data.getMaxQi() / 2L);
                 data.setCultivationProgress(0L);
                 CapabilityEvents.syncToClient(sp);

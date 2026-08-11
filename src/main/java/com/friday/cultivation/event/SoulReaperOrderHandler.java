@@ -487,7 +487,7 @@ public final class SoulReaperOrderHandler {
     }
 
     private static Component realmComponent(Realm realm, SubStage subStage) {
-        return Component.empty().append(realm.displayName()).append((Component)Component.literal((String)" ")).append((Component)Component.translatable((String)("sub_stage.friday_cultivation." + subStage.name().toLowerCase())));
+        return Component.empty().append(realm.displayName()).append((Component)Component.literal((String)" ")).append((Component)subStage.displayName());
     }
 
     private static Component locationComponent(Entity entity) {

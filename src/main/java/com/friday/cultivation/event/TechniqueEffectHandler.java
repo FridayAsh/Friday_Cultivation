@@ -41,6 +41,7 @@ package com.friday.cultivation.event;
 import com.friday.cultivation.cultivation.CultivationBonusCategory;
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
+import com.friday.cultivation.cultivation.realm.Realm;
 import com.friday.cultivation.cultivation.FoundationDaoBonusHelper;
 import com.friday.cultivation.cultivation.GoldenCoreDaoBonusHelper;
 import com.friday.cultivation.cultivation.LooseImmortalBonusHelper;
@@ -107,6 +108,7 @@ public final class TechniqueEffectHandler {
     private static final UUID UUID_FOUNDATION_HP = UUID.nameUUIDFromBytes("xiaoxiang.foundation.hp".getBytes());
     private static final UUID UUID_GOLDEN_CORE_HP = UUID.nameUUIDFromBytes("xiaoxiang.goldenCore.hp".getBytes());
     private static final UUID UUID_LOOSE_IMMORTAL_HP = UUID.nameUUIDFromBytes("xiaoxiang.looseImmortal.hp".getBytes());
+    private static final UUID UUID_BODY_TEMPERING_HP = UUID.nameUUIDFromBytes("xiaoxiang.bodyTempering.hp".getBytes());
 
     private TechniqueEffectHandler() {
     }
@@ -143,6 +145,8 @@ public final class TechniqueEffectHandler {
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_GOLDEN_CORE_HP, "xiaoxiang_golden_core_hp", goldenCoreHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
         double looseImmortalHp = LooseImmortalBonusHelper.maxHpMultiplyTotal((Player)sp);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_LOOSE_IMMORTAL_HP, "xiaoxiang_loose_immortal_hp", looseImmortalHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
+        double bodyTemperingHp = data != null && data.getRealm() == Realm.BODY_TEMPERING ? data.getSubStage().level() * 10.0 : 0.0;
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BODY_TEMPERING_HP, "xiaoxiang_body_tempering_hp", bodyTemperingHp, AttributeModifier.Operation.ADDITION);
         double zhenyuanSpeed = movementBonusEnabled ? ZhenyuanBonusHelper.agilityMoveSpeedMult((Player)sp) : 0.0;
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MOVEMENT_SPEED, UUID_ZHENYUAN_SPEED, "xiaoxiang_zhenyuan_speed", zhenyuanSpeed, AttributeModifier.Operation.MULTIPLY_BASE);
         TechniqueEffectHandler.syncInfiniteEffect(sp, MobEffects.NIGHT_VISION, bonus.nightVision);

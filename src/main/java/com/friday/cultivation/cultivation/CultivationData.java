@@ -109,6 +109,7 @@ implements INBTSerializable<CompoundTag> {
     private int zhujiDanEaten = 0;
     private int bloodPillEaten = 0;
     private int daoFruitEaten = 0;
+    private int daoFruitTotalEaten = 0;
     private boolean zhujiSecretUsed = false;
     private FoundationDao pendingFoundationDao = FoundationDao.NONE;
     private GoldenCoreDao goldenCoreDao = GoldenCoreDao.NONE;
@@ -187,6 +188,43 @@ implements INBTSerializable<CompoundTag> {
         this.subStage = subStage;
     }
 
+    /** 统一层号：数字层境界返回第几层（1-based），4 档境界返回 0-3 */
+    public int getLevel() {
+        return this.subStage.level();
+    }
+
+    /** 当前子阶段是否为该境界最高档 */
+    public boolean isLastSubStage() {
+        return this.subStage.isPeakFor(this.realm);
+    }
+
+    /** 练气极境 gate：练气 9 层且道基果累计服用 27 颗可触发隐藏第 10 层 */
+    public boolean canEnterQiExtreme() {
+        return this.realm == Realm.QI_REFINING && this.subStage.level() >= 9 && this.daoFruitTotalEaten >= 27;
+    }
+
+    /** TODO：进入练气第 10 层极境（预留接口，效果后续实现） */
+    public void advanceToQiExtreme() {
+        // TODO: 练气极境效果（隐藏第 10 层，后续实现）
+    }
+
+    /** 道基果累计服用 +1（极境 gate 计数） */
+    public void incrementDaoFruitTotalEaten() {
+        if (this.daoFruitTotalEaten < Integer.MAX_VALUE) {
+            ++this.daoFruitTotalEaten;
+        }
+    }
+
+    public int getDaoFruitTotalEaten() {
+        return this.daoFruitTotalEaten;
+    }
+
+    /** TODO：练气特殊物品强化灵气（增加法术伤害/灵气量/护盾免伤，后续实现） */
+    private long applyQiRefiningEnhancements(long baseMax) {
+        // TODO: 练气特殊物品强化灵气数值
+        return baseMax;
+    }
+
     public long getCurrentQi() {
         return this.currentQi;
     }
@@ -206,6 +244,7 @@ implements INBTSerializable<CompoundTag> {
                 max = Math.max(1L, Math.round((double)max * physiqueMaxQiMult));
             }
         }
+        max = this.applyQiRefiningEnhancements(max);
         return max;
     }
 
@@ -449,12 +488,12 @@ implements INBTSerializable<CompoundTag> {
 
     public ZhenyuanBaselineResult syncZhenyuanToRealmBaseline(Realm targetRealm, SubStage targetSub) {
         Realm safeRealm = targetRealm == null ? Realm.MORTAL : targetRealm;
-        SubStage safeSub = targetSub == null ? SubStage.EARLY : targetSub;
+        SubStage safeSub = targetSub == null ? safeRealm.firstSubStage() : targetSub;
         int extraPerMinor = this.getSpiritRoot().bonus().extraZhenyuanPerSubLevel() + PhysiqueBonusHelper.extraZhenyuanPerMinor(this.getPhysique());
         boolean loose = safeRealm == Realm.LOOSE_IMMORTAL;
         int looseLevel = loose ? Math.max(1, this.getLooseImmortalTribulations()) : 0;
         Realm zhenyuanRealm = loose ? Realm.TRIBULATION_TRANSCENDENCE : safeRealm;
-        SubStage zhenyuanSub = loose ? SubStage.PEAK : safeSub;
+        SubStage zhenyuanSub = loose ? Realm.TRIBULATION_TRANSCENDENCE.lastSubStage() : safeSub;
         int free = CultivationData.computeTotalZhenyuanEarned(zhenyuanRealm, zhenyuanSub, extraPerMinor);
         int autoPerAttr = CultivationData.computeAutomaticZhenyuanAttrPerStat(zhenyuanRealm, zhenyuanSub);
         if (loose) {
@@ -474,9 +513,9 @@ implements INBTSerializable<CompoundTag> {
 
     private void syncAutomaticZhenyuanAfterRealmDemotion(Realm oldRealm, SubStage oldSub, Realm targetRealm, SubStage targetSub) {
         Realm safeOldRealm = oldRealm == null ? Realm.MORTAL : oldRealm;
-        SubStage safeOldSub = oldSub == null ? SubStage.EARLY : oldSub;
+        SubStage safeOldSub = oldSub == null ? safeOldRealm.firstSubStage() : oldSub;
         Realm safeTargetRealm = targetRealm == null ? Realm.MORTAL : targetRealm;
-        SubStage safeTargetSub = targetSub == null ? SubStage.EARLY : targetSub;
+        SubStage safeTargetSub = targetSub == null ? safeTargetRealm.firstSubStage() : targetSub;
         int oldAuto = CultivationData.computeAutomaticZhenyuanAttrPerStat(safeOldRealm, safeOldSub);
         int targetAuto = CultivationData.computeAutomaticZhenyuanAttrPerStat(safeTargetRealm, safeTargetSub);
         this.unallocatedZhenyuan = Math.max(0, this.unallocatedZhenyuan);
@@ -1259,7 +1298,7 @@ implements INBTSerializable<CompoundTag> {
 
     public void becomeLooseImmortal(long nextTribulationTick) {
         this.realm = Realm.LOOSE_IMMORTAL;
-        this.subStage = SubStage.EARLY;
+        this.subStage = this.realm.firstSubStage();
         this.looseImmortalTribulations = 1;
         this.looseImmortalRewardLevel = 1;
         this.nextLooseImmortalTribulationTick = nextTribulationTick;
@@ -1790,15 +1829,15 @@ implements INBTSerializable<CompoundTag> {
         }
         this.cultivationProgress = 0L;
         if (this.realm == Realm.MORTAL) {
-            this.realm = Realm.QI_REFINING;
-            this.subStage = SubStage.EARLY;
+            this.realm = Realm.BODY_TEMPERING;
+            this.subStage = this.realm.firstSubStage();
             this.currentQi = 0L;
             this.ensureSpellsForRealm();
             this.addUnallocatedZhenyuan(5);
             this.addAllZhenyuanAttributes(5);
             return;
         }
-        if (this.subStage.isPeak()) {
+        if (this.subStage.isPeakFor(this.realm)) {
             Realm n = this.realm.next();
             if (n != this.realm) {
                 this.realm = n;
@@ -1812,7 +1851,7 @@ implements INBTSerializable<CompoundTag> {
                     this.resetGoldenCoreProgress();
                     this.pendingGoldenCoreDao = GoldenCoreDao.NONE;
                 }
-                this.subStage = SubStage.EARLY;
+                this.subStage = n.firstSubStage();
                 this.currentQi = this.getMaxQi() / 2L;
                 this.ensureSpellsForRealm();
                 this.addUnallocatedZhenyuan(5);
@@ -1822,7 +1861,7 @@ implements INBTSerializable<CompoundTag> {
             this.currentQi = this.getMaxQi();
             return;
         }
-        this.subStage = this.subStage.next();
+        this.subStage = this.subStage.nextFor(this.realm);
         this.currentQi = this.getMaxQi() / 2L;
         int reward = 1 + this.spiritRoot.bonus().extraZhenyuanPerSubLevel() + PhysiqueBonusHelper.extraZhenyuanPerMinor(this.physique);
         this.addUnallocatedZhenyuan(reward);
@@ -1842,12 +1881,19 @@ implements INBTSerializable<CompoundTag> {
         }
         if (targetRealm == Realm.LOOSE_IMMORTAL) {
             targetRealm = Realm.TRIBULATION_TRANSCENDENCE;
-            targetSub = SubStage.PEAK;
+            targetSub = targetRealm.lastSubStage();
         }
         int majorCount = targetRealm.ordinal();
-        int realmsFullyTraversed = targetRealm.ordinal() - 1;
-        int minorCount = realmsFullyTraversed * 3 + targetSub.ordinal();
-        return majorCount * 5 + minorCount * (1 + Math.max(0, extraPerMinor));
+        int minorCount = 0;
+        for (Realm r : Realm.values()) {
+            if (r == targetRealm) {
+                break;
+            }
+            minorCount += Math.max(1, r.subStageCount());
+        }
+        int subIdx = targetSub == null ? 0 : (targetRealm.usesNumericLevels() ? Math.max(0, targetSub.level() - 1) : targetSub.level());
+        minorCount = minorCount + subIdx - 1;
+        return majorCount * 5 + Math.max(0, minorCount) * (1 + Math.max(0, extraPerMinor));
     }
 
     public static int computeAutomaticZhenyuanAttrPerStat(Realm targetRealm, SubStage targetSub) {
@@ -1859,12 +1905,19 @@ implements INBTSerializable<CompoundTag> {
         }
         if (targetRealm == Realm.LOOSE_IMMORTAL) {
             targetRealm = Realm.TRIBULATION_TRANSCENDENCE;
-            targetSub = SubStage.PEAK;
+            targetSub = targetRealm.lastSubStage();
         }
         int majorCount = targetRealm.ordinal();
-        int realmsFullyTraversed = targetRealm.ordinal() - 1;
-        int minorCount = realmsFullyTraversed * 3 + targetSub.ordinal();
-        return majorCount * 5 + minorCount * 1;
+        int minorCount = 0;
+        for (Realm r : Realm.values()) {
+            if (r == targetRealm) {
+                break;
+            }
+            minorCount += Math.max(1, r.subStageCount());
+        }
+        int subIdx = targetSub == null ? 0 : (targetRealm.usesNumericLevels() ? Math.max(0, targetSub.level() - 1) : targetSub.level());
+        minorCount = minorCount + subIdx - 1;
+        return majorCount * 5 + Math.max(0, minorCount) * 1;
     }
 
     private static int computeLegacyAutomaticZhenyuanAttrPerStat(Realm targetRealm, SubStage targetSub) {
@@ -1875,9 +1928,16 @@ implements INBTSerializable<CompoundTag> {
             return 0;
         }
         int majorCount = targetRealm.ordinal();
-        int realmsFullyTraversed = targetRealm.ordinal() - 1;
-        int minorCount = realmsFullyTraversed * 3 + targetSub.ordinal();
-        return majorCount + minorCount;
+        int minorCount = 0;
+        for (Realm r : Realm.values()) {
+            if (r == targetRealm) {
+                break;
+            }
+            minorCount += Math.max(1, r.subStageCount());
+        }
+        int subIdx = targetSub == null ? 0 : (targetRealm.usesNumericLevels() ? Math.max(0, targetSub.level() - 1) : targetSub.level());
+        minorCount = minorCount + subIdx - 1;
+        return majorCount + Math.max(0, minorCount);
     }
 
     private static int saturatedAddInt(int value, int delta) {
@@ -1916,17 +1976,18 @@ implements INBTSerializable<CompoundTag> {
         }
         Realm targetRealm = this.realm;
         SubStage targetSub = this.subStage;
-        if (this.subStage == SubStage.EARLY) {
+        SubStage first = this.realm.firstSubStage();
+        if (this.subStage == first || this.subStage.level() <= (this.realm.usesNumericLevels() ? 1 : 0)) {
             Realm p = this.realm.prev();
-            if (p == Realm.MORTAL) {
+            if (p == Realm.MORTAL || p == this.realm) {
                 targetRealm = Realm.MORTAL;
                 targetSub = SubStage.EARLY;
             } else {
                 targetRealm = p;
-                targetSub = SubStage.PEAK;
+                targetSub = p.lastSubStage();
             }
         } else {
-            targetSub = this.subStage.prev();
+            targetSub = this.subStage.prevFor(this.realm);
         }
         this.realm = targetRealm;
         this.subStage = targetSub;
@@ -2144,6 +2205,7 @@ implements INBTSerializable<CompoundTag> {
         tag.putInt("zhujiDanEaten", this.zhujiDanEaten);
         tag.putInt("bloodPillEaten", this.bloodPillEaten);
         tag.putInt("daoFruitEaten", this.daoFruitEaten);
+        tag.putInt("daoFruitTotalEaten", this.daoFruitTotalEaten);
         tag.putBoolean("zhujiSecretUsed", this.zhujiSecretUsed);
         tag.putString("pendingFoundationDao", this.pendingFoundationDao.id());
         tag.putString("goldenCoreDao", this.goldenCoreDao.id());
@@ -2309,6 +2371,7 @@ implements INBTSerializable<CompoundTag> {
         this.zhujiDanEaten = tag.getInt("zhujiDanEaten");
         this.bloodPillEaten = tag.getInt("bloodPillEaten");
         this.daoFruitEaten = tag.getInt("daoFruitEaten");
+        this.daoFruitTotalEaten = tag.contains("daoFruitTotalEaten", 3) ? tag.getInt("daoFruitTotalEaten") : 0;
         this.zhujiSecretUsed = tag.getBoolean("zhujiSecretUsed");
         this.pendingFoundationDao = FoundationDao.byId(tag.getString("pendingFoundationDao"));
         this.goldenCoreDao = GoldenCoreDao.byId(tag.getString("goldenCoreDao"));

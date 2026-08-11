@@ -600,7 +600,7 @@ extends AbstractContainerScreen<WanderingCultivatorMenu> {
         int avCy = y + 6 + avR;
         this.drawCircularAvatar(gfx, avCx, avCy, avR, npc, mouseX, mouseY);
         int txtX = ix + avSize + 12;
-        MutableComponent realm = Component.empty().append(npc.getRealm().displayName()).append(" ").append((Component)Component.translatable((String)("sub_stage.friday_cultivation." + npc.getSubStage().name().toLowerCase()))).copy().withStyle(ChatFormatting.BOLD);
+        MutableComponent realm = Component.empty().append(npc.getRealm().displayName()).append(" ").append((Component)npc.getSubStage().displayName()).copy().withStyle(ChatFormatting.BOLD);
         int realmW = this.font.width((FormattedText)realm);
         this.drawScaledComponent(gfx, (Component)npc.getCultivatorName().copy().withStyle(ChatFormatting.BOLD), txtX, y + 12, 1.3f, -14081252, iw - avSize - 12 - realmW - 6);
         gfx.drawString(this.font, (Component)realm, ix + iw - realmW, y + 14, -7705298, false);
@@ -1319,7 +1319,7 @@ extends AbstractContainerScreen<WanderingCultivatorMenu> {
         gfx.drawString(this.font, (Component)name, x, y, -15067628, false);
         Realm realm = npc.getRealm();
         SubStage sub = npc.getSubStage();
-        MutableComponent realmText = Component.literal((String)"").append(realm.displayName()).append(" ").append((Component)Component.translatable((String)("sub_stage.friday_cultivation." + sub.name().toLowerCase()))).withStyle(s -> s.withColor(-12950192));
+        MutableComponent realmText = Component.literal((String)"").append(realm.displayName()).append(" ").append((Component)sub.displayName()).withStyle(s -> s.withColor(-12950192));
         gfx.drawString(this.font, (Component)realmText, x, y + 12, -12766422, false);
         try {
             InventoryScreen.renderEntityInInventoryFollowsMouse((GuiGraphics)gfx, (int)(x + 80), (int)(y + 102), (int)30, (float)(x + 80 - mouseX), (float)(y + 60 - mouseY), (LivingEntity)npc);
