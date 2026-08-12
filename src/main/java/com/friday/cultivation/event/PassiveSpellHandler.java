@@ -167,19 +167,7 @@ public final class PassiveSpellHandler {
             player.onUpdateAbilities();
         }
         if (shouldAllowFly && player.getAbilities().flying) {
-            if (player.onGround()) {
-                int groundedTicks = GROUNDED_FLIGHT_TICKS.merge(player.getUUID(), 1, Integer::sum);
-                if (groundedTicks >= 4) {
-                    player.getAbilities().flying = false;
-                    player.fallDistance = 0.0f;
-                    player.onUpdateAbilities();
-                    GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
-                }
-            } else {
-                GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
-            }
-        } else {
-            GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
+            player.fallDistance = 0.0f;
         }
         currentlyFlying = player.getAbilities().flying;
         if (qiFlightEnabled && !ghostFlightEnabled && currentlyFlying && hasQi) {
@@ -234,6 +222,12 @@ public final class PassiveSpellHandler {
         player.getAbilities().flying = true;
         player.getAbilities().setFlyingSpeed(0.05f);
         player.fallDistance = 0.0f;
+        // 起飞瞬间若仍在地面，给一个向上速度使其离地，避免 onGround 落地逻辑
+        // 在下一 tick 累积 GROUNDED_FLIGHT_TICKS 立即取消飞行
+        if (player.onGround()) {
+            player.setDeltaMovement(player.getDeltaMovement().add(0.0, 0.6, 0.0));
+            player.hasImpulse = true;
+        }
         player.onUpdateAbilities();
         CapabilityEvents.syncToClient(player);
     }
