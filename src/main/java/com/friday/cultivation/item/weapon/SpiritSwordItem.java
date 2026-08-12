@@ -62,6 +62,7 @@ implements TieredWeapon {
             case HIGH -> Rarity.RARE;
             case SUPREME -> Rarity.EPIC;
             case IMMORTAL -> Rarity.EPIC;
+            case GREAT_EMPEROR -> Rarity.EPIC;
         };
     }
 

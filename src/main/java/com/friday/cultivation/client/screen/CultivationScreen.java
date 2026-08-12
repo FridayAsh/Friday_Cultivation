@@ -2745,6 +2745,7 @@ extends Screen {
             case HIGH -> -12525344;
             case SUPREME -> -2064129;
             case IMMORTAL -> -2068440;
+            case GREAT_EMPEROR -> 16755200;
         };
     }
 

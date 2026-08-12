@@ -478,6 +478,7 @@ public final class ModItems {
                 case HIGH -> Rarity.RARE;
                 case SUPREME -> Rarity.EPIC;
                 case IMMORTAL -> Rarity.EPIC;
+                case GREAT_EMPEROR -> Rarity.EPIC;
             };
             final Spell spellFinal = spell2;
             final Rarity rarityFinal = rarity;
@@ -496,6 +497,7 @@ public final class ModItems {
                 case HIGH -> Rarity.RARE;
                 case SUPREME -> Rarity.EPIC;
                 case IMMORTAL -> Rarity.EPIC;
+                case GREAT_EMPEROR -> Rarity.EPIC;
             };
             final Technique techFinal = tech;
             final Rarity rarityFinal = rarity;

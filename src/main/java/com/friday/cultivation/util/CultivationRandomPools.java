@@ -235,6 +235,7 @@ public final class CultivationRandomPools {
                 yield 2;
             }
             case IMMORTAL -> ruined ? 1 : 1;
+            case GREAT_EMPEROR -> ruined ? 1 : 1;
         };
     }
 
