@@ -1,13 +1,8 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package com.friday.cultivation.client;
 
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.spell.Spell;
-import com.friday.cultivation.network.ModNetwork;
-import com.friday.cultivation.network.QiFlightInputPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
@@ -19,16 +14,13 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * 灵气飞行客户端（参考 DivineArsenal 盔甲套装飞行方案）：
- * - 服务端每 tick 授权 mayfly（灵气飞行启用且灵气>0），玩家按住空格
- *   即自然起飞上升（MC 原生飞行行为）；
- * - 客户端在飞行中每 2 tick 发送输入状态包（跳跃/疾跑/潜行），
- *   服务端据此施加垂直上升/水平加速/减速，实现如创造模式的自由飞行。
+ * 灵气飞行客户端（对照原模组 1:1）。
+ * 服务端授权 mayfly 后，玩家按住空格即按 MC 原生飞行行为起飞上升；
+ * 客户端仅负责飞行速度钳制与疾跑加速。
  */
 @Mod.EventBusSubscriber(modid="friday_cultivation", value={Dist.CLIENT})
 public final class QiFlightClientHandler {
     private static final float VANILLA_FLYING_SPEED = 0.05f;
-    private static int inputTickCounter = 0;
 
     private QiFlightClientHandler() {
     }
@@ -57,27 +49,11 @@ public final class QiFlightClientHandler {
         }
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
-        if (player == null) {
-            return;
-        }
-        if (!QiFlightClientHandler.isQiFlightFlying(player)) {
+        if (player == null || !QiFlightClientHandler.isQiFlightFlying(player)) {
             return;
         }
         if (Math.abs(player.getAbilities().getFlyingSpeed() - 0.05f) > 1.0E-4f) {
             player.getAbilities().setFlyingSpeed(0.05f);
-        }
-        if (mc.options == null || mc.screen != null) {
-            return;
-        }
-        // 每 2 tick 发送输入状态，降低网络开销
-        if (++QiFlightClientHandler.inputTickCounter % 2 != 0) {
-            return;
-        }
-        boolean jump = mc.options.keyJump.isDown();
-        boolean sprint = mc.options.keySprint.isDown();
-        boolean sneak = mc.options.keyShift.isDown();
-        if (jump || sprint || sneak) {
-            ModNetwork.CHANNEL.sendToServer((Object)new QiFlightInputPacket(jump, sprint, sneak));
         }
     }
 

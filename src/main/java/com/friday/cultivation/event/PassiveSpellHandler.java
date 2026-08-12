@@ -71,6 +71,7 @@ public final class PassiveSpellHandler {
     private static final long QI_FLIGHT_DRAIN_PER_SECOND = 25L;
     private static final float QI_FLIGHT_BASE_FLYING_SPEED = 0.05f;
     private static final int QI_FLIGHT_GROUND_RELEASE_TICKS = 4;
+    private static final Map<UUID, Integer> GROUNDED_FLIGHT_TICKS = new ConcurrentHashMap<UUID, Integer>();
     private static final Map<UUID, Integer> QI_FLIGHT_FLYING_TICKS = new ConcurrentHashMap<UUID, Integer>();
     private static final Map<UUID, Integer> BIGU_PAID_UNTIL_TICK = new ConcurrentHashMap<UUID, Integer>();
 
@@ -144,6 +145,9 @@ public final class PassiveSpellHandler {
         boolean ghostFlightEnabled = PassiveSpellHandler.isGhostFlightActive(data);
         boolean hasQi = data.getCurrentQi() > 0L;
         boolean shouldAllowFly = PassiveSpellHandler.hasEnabledPassiveFlight(data);
+        if (player.tickCount % 60 == 0) {
+            System.out.println("[QiFlight] realm=" + data.getRealm() + " enabled=" + qiFlightEnabled + " hasQi=" + hasQi + " shouldAllowFly=" + shouldAllowFly + " mayfly=" + player.getAbilities().mayfly + " flying=" + player.getAbilities().flying);
+        }
         boolean currentlyAllowed = player.getAbilities().mayfly;
         boolean currentlyFlying = player.getAbilities().flying;
         boolean abilitiesDirty = false;
@@ -166,7 +170,19 @@ public final class PassiveSpellHandler {
             player.onUpdateAbilities();
         }
         if (shouldAllowFly && player.getAbilities().flying) {
-            player.fallDistance = 0.0f;
+            if (player.onGround()) {
+                int groundedTicks = GROUNDED_FLIGHT_TICKS.merge(player.getUUID(), 1, Integer::sum);
+                if (groundedTicks >= 4) {
+                    player.getAbilities().flying = false;
+                    player.fallDistance = 0.0f;
+                    player.onUpdateAbilities();
+                    GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
+                }
+            } else {
+                GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
+            }
+        } else {
+            GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
         }
         currentlyFlying = player.getAbilities().flying;
         if (qiFlightEnabled && !ghostFlightEnabled && currentlyFlying && hasQi) {
