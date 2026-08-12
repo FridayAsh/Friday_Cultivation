@@ -99,6 +99,7 @@ import com.friday.cultivation.registry.ModDimensions;
 import com.friday.cultivation.registry.ModItems;
 import com.friday.cultivation.util.CompactNumberFormat;
 import com.friday.cultivation.util.SpellScalingHelper;
+import com.friday.cultivation.util.ShimmerColors;
 import com.friday.cultivation.util.TooltipUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2713,7 +2714,16 @@ extends Screen {
         gfx.blit(t.iconTexture(), iconX, iconY, 16, 16, 0.0f, 0.0f, 32, 32, 32, 32);
         RenderSystem.disableBlend();
         int textX = iconX + iconSize + 4;
-        this.drawSmall(gfx, t.displayName(), textX, y + 4, -4703686);
+        if (t == Technique.IMPERIAL_ART) {
+            CultivationData cap = Minecraft.getInstance().player == null ? null : (CultivationData)CultivationCapability.get((Player)Minecraft.getInstance().player).orElse(null);
+            if (cap != null && cap.hasCreatedImperialArt()) {
+                this.drawSmall(gfx, (Component)ShimmerColors.buildShimmeringName(cap.getImperialArtName(), ShimmerColors.DIVINE_FLAME), textX, y + 4, -4703686);
+            } else {
+                this.drawSmall(gfx, t.displayName(), textX, y + 4, -4703686);
+            }
+        } else {
+            this.drawSmall(gfx, t.displayName(), textX, y + 4, -4703686);
+        }
         this.drawSmall(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.tech.click_to_unequip"), textX, y + 14, -9807288);
         MutableComponent equippedLabel = Component.translatable((String)"screen.friday_cultivation.tech.equipped_label_short");
         int labelW = (int)((float)this.font.width((FormattedText)equippedLabel) * CultivationScreen.effectiveTextScale()) + 4;

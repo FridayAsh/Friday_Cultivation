@@ -24,6 +24,7 @@ import com.friday.cultivation.cultivation.SpiritRootBonusHelper;
 import com.friday.cultivation.cultivation.technique.Technique;
 import com.friday.cultivation.cultivation.technique.TechniqueLoadoutHelper;
 import com.friday.cultivation.event.CapabilityEvents;
+import com.friday.cultivation.util.ShimmerColors;
 import com.friday.cultivation.util.TooltipUtils;
 import java.util.List;
 import net.minecraft.network.chat.Component;
@@ -51,6 +52,39 @@ extends Item {
 
     public Technique technique() {
         return this.technique;
+    }
+
+    private static final String MYSTERY_NAME = "\u7981\u8baf\u2026\u2026\u7981\u8baf"; // 禁讯……禁讯（帝法未自创时的乱码名）
+
+    @NotNull
+    public Component getName(@NotNull ItemStack stack) {
+        if (this.technique == Technique.IMPERIAL_ART) {
+            return ShimmerColors.buildShimmeringName(MYSTERY_NAME, ShimmerColors.DIVINE_MYSTERY);
+        }
+        return Component.translatable((String)this.getDescriptionId(stack));
+    }
+
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
+        if (this.technique == Technique.IMPERIAL_ART) {
+            tooltip.add(ShimmerColors.buildShimmeringName(Component.translatable((String)"item_tier.friday_cultivation.great_emperor").getString(), ShimmerColors.DIVINE_MYSTERY));
+            TooltipUtils.addBlank(tooltip);
+            TooltipUtils.addSection(tooltip, "tooltip.friday_cultivation.section.contents");
+            tooltip.add((Component)TooltipUtils.statsLine((Component)Component.translatable((String)"tooltip.friday_cultivation.technique_book.contains", (Object[])new Object[]{ShimmerColors.buildShimmeringName(MYSTERY_NAME, ShimmerColors.DIVINE_MYSTERY)})));
+            TooltipUtils.addSection(tooltip, "tooltip.friday_cultivation.section.effect");
+            tooltip.add((Component)ShimmerColors.buildShimmeringName(Component.translatable((String)"tooltip.friday_cultivation.technique_book.imperial_art_mystery").getString(), ShimmerColors.DIVINE_MYSTERY));
+            TooltipUtils.addBlank(tooltip);
+            tooltip.add((Component)TooltipUtils.hintLine((Component)Component.translatable((String)"tooltip.friday_cultivation.technique_book.use_hint")));
+            return;
+        }
+        tooltip.add((Component)TooltipUtils.tierElementLine(this.technique.tier(), this.technique.primaryElement()));
+        TooltipUtils.addBlank(tooltip);
+        TooltipUtils.addSection(tooltip, "tooltip.friday_cultivation.section.contents");
+        tooltip.add((Component)TooltipUtils.statsLine((Component)Component.translatable((String)"tooltip.friday_cultivation.technique_book.contains", (Object[])new Object[]{TooltipUtils.tieredName(this.technique.displayName(), this.technique.tier())})));
+        tooltip.add((Component)TooltipUtils.statsLine((Component)Component.translatable((String)"tooltip.friday_cultivation.technique_book.path", (Object[])new Object[]{Component.translatable((String)this.technique.daoPathTranslationKey())})));
+        TooltipUtils.addSection(tooltip, "tooltip.friday_cultivation.section.effect");
+        tooltip.add((Component)TooltipUtils.descriptionLine(this.technique.description()));
+        TooltipUtils.addBlank(tooltip);
+        tooltip.add((Component)TooltipUtils.hintLine((Component)Component.translatable((String)"tooltip.friday_cultivation.technique_book.use_hint")));
     }
 
     @NotNull
@@ -95,18 +129,6 @@ extends Item {
         }
         player.getCooldowns().addCooldown((Item)this, 10);
         return InteractionResultHolder.consume(stack);
-    }
-
-    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
-        tooltip.add((Component)TooltipUtils.tierElementLine(this.technique.tier(), this.technique.primaryElement()));
-        TooltipUtils.addBlank(tooltip);
-        TooltipUtils.addSection(tooltip, "tooltip.friday_cultivation.section.contents");
-        tooltip.add((Component)TooltipUtils.statsLine((Component)Component.translatable((String)"tooltip.friday_cultivation.technique_book.contains", (Object[])new Object[]{TooltipUtils.tieredName(this.technique.displayName(), this.technique.tier())})));
-        tooltip.add((Component)TooltipUtils.statsLine((Component)Component.translatable((String)"tooltip.friday_cultivation.technique_book.path", (Object[])new Object[]{Component.translatable((String)this.technique.daoPathTranslationKey())})));
-        TooltipUtils.addSection(tooltip, "tooltip.friday_cultivation.section.effect");
-        tooltip.add((Component)TooltipUtils.descriptionLine(this.technique.description()));
-        TooltipUtils.addBlank(tooltip);
-        tooltip.add((Component)TooltipUtils.hintLine((Component)Component.translatable((String)"tooltip.friday_cultivation.technique_book.use_hint")));
     }
 }
 
