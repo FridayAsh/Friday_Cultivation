@@ -1157,7 +1157,7 @@
   "spell.friday_cultivation.frost_walker": "寒冰筑路",
   "spell.friday_cultivation.frost_walker.desc": "行走水上时化水为冰，可踏水而行",
   "spell.friday_cultivation.qi_flight": "灵气飞行",
-  "spell.friday_cultivation.qi_flight.desc": "御气翱翔之术。启用后可如创造模式般自由飞行 (双击跳跃键起飞、空白上升、Shift 下降、疾跑键加速)，飞行期间每秒消耗 25 灵气；落地不消耗。灵气耗尽会自动停止飞行。",
+  "spell.friday_cultivation.qi_flight.desc": "御气翱翔之术。启用后可如创造模式般自由飞行：按住空格上升、疾跑键加速、Shift 下降、松开悬停；飞行期间每秒消耗 25 灵气，落地不消耗。灵气耗尽会自动停止飞行。",
   "spell.friday_cultivation.meta": "%s · %s · %s",
   "spell.friday_cultivation.cost": "伤害 %s ／ 灵气 %s",
   "spell.friday_cultivation.cost.charge_100": "伤害 %s 起跳 ／ 100%% 约需 %s 灵气",

@@ -1,17 +1,5 @@
 /*
  * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  net.minecraft.client.Minecraft
- *  net.minecraft.client.player.Input
- *  net.minecraft.client.player.LocalPlayer
- *  net.minecraft.world.entity.player.Player
- *  net.minecraftforge.api.distmarker.Dist
- *  net.minecraftforge.client.event.MovementInputUpdateEvent
- *  net.minecraftforge.event.TickEvent$ClientTickEvent
- *  net.minecraftforge.event.TickEvent$Phase
- *  net.minecraftforge.eventbus.api.SubscribeEvent
- *  net.minecraftforge.fml.common.Mod$EventBusSubscriber
  */
 package com.friday.cultivation.client;
 
@@ -19,7 +7,7 @@ import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.spell.Spell;
 import com.friday.cultivation.network.ModNetwork;
-import com.friday.cultivation.network.QiFlightLaunchPacket;
+import com.friday.cultivation.network.QiFlightInputPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
@@ -30,11 +18,17 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+/**
+ * 灵气飞行客户端（参考 DivineArsenal 盔甲套装飞行方案）：
+ * - 服务端每 tick 授权 mayfly（灵气飞行启用且灵气>0），玩家按住空格
+ *   即自然起飞上升（MC 原生飞行行为）；
+ * - 客户端在飞行中每 2 tick 发送输入状态包（跳跃/疾跑/潜行），
+ *   服务端据此施加垂直上升/水平加速/减速，实现如创造模式的自由飞行。
+ */
 @Mod.EventBusSubscriber(modid="friday_cultivation", value={Dist.CLIENT})
 public final class QiFlightClientHandler {
     private static final float VANILLA_FLYING_SPEED = 0.05f;
-    private static long lastJumpPressTime = 0L;
-    private static boolean wasJumpDown = false;
+    private static int inputTickCounter = 0;
 
     private QiFlightClientHandler() {
     }
@@ -66,55 +60,25 @@ public final class QiFlightClientHandler {
         if (player == null) {
             return;
         }
-        if (QiFlightClientHandler.isQiFlightFlying(player)) {
-            if (Math.abs(player.getAbilities().getFlyingSpeed() - 0.05f) > 1.0E-4f) {
-                player.getAbilities().setFlyingSpeed(0.05f);
-            }
+        if (!QiFlightClientHandler.isQiFlightFlying(player)) {
             return;
         }
-        QiFlightClientHandler.tickDoubleJumpLaunch(mc, player);
-    }
-
-    /**
-     * 双击空格起飞：灵气飞行被动开启且未在飞行时，检测两次空格按下
-     * （间隔 ≤ 400ms），立即进入飞行状态（mayfly 由服务端已授权）。
-     */
-    private static void tickDoubleJumpLaunch(Minecraft mc, LocalPlayer player) {
+        if (Math.abs(player.getAbilities().getFlyingSpeed() - 0.05f) > 1.0E-4f) {
+            player.getAbilities().setFlyingSpeed(0.05f);
+        }
         if (mc.options == null || mc.screen != null) {
-            QiFlightClientHandler.wasJumpDown = mc.options != null && mc.options.keyJump.isDown();
             return;
         }
-        boolean jumpDown = mc.options.keyJump.isDown();
-        if (jumpDown && !QiFlightClientHandler.wasJumpDown) {
-            long now = System.currentTimeMillis();
-            long last = QiFlightClientHandler.lastJumpPressTime;
-            if (last > 0L && now - last <= 400L) {
-                QiFlightClientHandler.tryLaunch(player);
-                QiFlightClientHandler.lastJumpPressTime = 0L;
-            } else {
-                QiFlightClientHandler.lastJumpPressTime = now;
-            }
-        }
-        QiFlightClientHandler.wasJumpDown = jumpDown;
-    }
-
-    private static void tryLaunch(LocalPlayer player) {
-        if (player.isCreative() || player.isSpectator()) {
+        // 每 2 tick 发送输入状态，降低网络开销
+        if (++QiFlightClientHandler.inputTickCounter % 2 != 0) {
             return;
         }
-        CultivationData data = CultivationCapability.get((Player)player).orElse(null);
-        if (data == null) {
-            return;
+        boolean jump = mc.options.keyJump.isDown();
+        boolean sprint = mc.options.keySprint.isDown();
+        boolean sneak = mc.options.keyShift.isDown();
+        if (jump || sprint || sneak) {
+            ModNetwork.CHANNEL.sendToServer((Object)new QiFlightInputPacket(jump, sprint, sneak));
         }
-        if (!data.isSpellEnabled(Spell.QI_FLIGHT) || data.getCurrentQi() <= 0L) {
-            return;
-        }
-        // 客户端立即起飞（视觉响应），服务端包负责授权 mayfly+flying 并同步
-        player.getAbilities().mayfly = true;
-        player.getAbilities().flying = true;
-        player.getAbilities().setFlyingSpeed(0.05f);
-        player.onUpdateAbilities();
-        ModNetwork.CHANNEL.sendToServer((Object)new QiFlightLaunchPacket());
     }
 
     private static boolean isQiFlightFlying(LocalPlayer player) {
@@ -136,4 +100,3 @@ public final class QiFlightClientHandler {
         return input != null && (input.hasForwardImpulse() || input.leftImpulse != 0.0f || input.jumping || input.shiftKeyDown);
     }
 }
-

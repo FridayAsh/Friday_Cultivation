@@ -45,7 +45,7 @@ import com.friday.cultivation.network.OpenSectScreenPacket;
 import com.friday.cultivation.network.OriginRandomizedPacket;
 import com.friday.cultivation.network.PalmThunderVisualPacket;
 import com.friday.cultivation.network.QiAbsorbedPacket;
-import com.friday.cultivation.network.QiFlightLaunchPacket;
+import com.friday.cultivation.network.QiFlightInputPacket;
 import com.friday.cultivation.network.QiShieldHitPacket;
 import com.friday.cultivation.network.RealmPressureVisualPacket;
 import com.friday.cultivation.network.ReincarnationChoicePacket;
@@ -194,7 +194,7 @@ public final class ModNetwork {
         CHANNEL.registerMessage(id++, SectTaskActionPacket.class, SectTaskActionPacket::encode, SectTaskActionPacket::decode, SectTaskActionPacket::handle);
         CHANNEL.registerMessage(id++, TrackSectTaskIssuerPacket.class, TrackSectTaskIssuerPacket::encode, TrackSectTaskIssuerPacket::decode, TrackSectTaskIssuerPacket::handle);
         CHANNEL.registerMessage(id++, CreateImperialArtPacket.class, CreateImperialArtPacket::encode, CreateImperialArtPacket::decode, CreateImperialArtPacket::handle);
-        CHANNEL.registerMessage(id++, QiFlightLaunchPacket.class, QiFlightLaunchPacket::encode, QiFlightLaunchPacket::decode, QiFlightLaunchPacket::handle);
+        CHANNEL.registerMessage(id++, QiFlightInputPacket.class, QiFlightInputPacket::encode, QiFlightInputPacket::decode, QiFlightInputPacket::handle);
     }
 }
 

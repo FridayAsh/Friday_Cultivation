@@ -71,7 +71,6 @@ public final class PassiveSpellHandler {
     private static final long QI_FLIGHT_DRAIN_PER_SECOND = 25L;
     private static final float QI_FLIGHT_BASE_FLYING_SPEED = 0.05f;
     private static final int QI_FLIGHT_GROUND_RELEASE_TICKS = 4;
-    private static final Map<UUID, Integer> GROUNDED_FLIGHT_TICKS = new ConcurrentHashMap<UUID, Integer>();
     private static final Map<UUID, Integer> QI_FLIGHT_FLYING_TICKS = new ConcurrentHashMap<UUID, Integer>();
     private static final Map<UUID, Integer> BIGU_PAID_UNTIL_TICK = new ConcurrentHashMap<UUID, Integer>();
 
@@ -203,35 +202,8 @@ public final class PassiveSpellHandler {
     }
 
     /**
-     * 灵气飞行起飞（由客户端双击空格包触发）：授权飞行并清空落地计数，
-     * 避免起飞瞬间被 onGround 落地逻辑立即取消。
+     * 灵气飞行起飞（由客户端输入包触发）：授权飞行。
      */
-    public static void launchQiFlight(ServerPlayer player, CultivationData data) {
-        if (player == null || player.isCreative() || player.isSpectator()) {
-            return;
-        }
-        if (!PassiveSpellHandler.hasEnabledPassiveFlight(data)) {
-            return;
-        }
-        if (data.isSwordFlightActive() || data.isVoidEscapeActive()) {
-            return;
-        }
-        GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
-        QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
-        player.getAbilities().mayfly = true;
-        player.getAbilities().flying = true;
-        player.getAbilities().setFlyingSpeed(0.05f);
-        player.fallDistance = 0.0f;
-        // 起飞瞬间若仍在地面，给一个向上速度使其离地，避免 onGround 落地逻辑
-        // 在下一 tick 累积 GROUNDED_FLIGHT_TICKS 立即取消飞行
-        if (player.onGround()) {
-            player.setDeltaMovement(player.getDeltaMovement().add(0.0, 0.6, 0.0));
-            player.hasImpulse = true;
-        }
-        player.onUpdateAbilities();
-        CapabilityEvents.syncToClient(player);
-    }
-
     private static void revokeQiFlight(ServerPlayer player) {
         if (player.isCreative() || player.isSpectator()) {
             return;

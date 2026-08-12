@@ -1155,7 +1155,7 @@
   "spell.friday_cultivation.poison_immunity": "Poison Immunity",
   "spell.friday_cultivation.poison_immunity.desc": "Inner Qi neutralizes all poisons.",
   "spell.friday_cultivation.qi_flight": "Qi Flight",
-  "spell.friday_cultivation.qi_flight.desc": "Soar on Qi. While enabled, fly exactly like creative mode (double-tap jump to take off, space to ascend, sneak to descend, sprint to accelerate). Drains 25 Qi/sec while actively flying; no cost when grounded. Auto-disables when Qi runs out.",
+  "spell.friday_cultivation.qi_flight.desc": "Ride the qi and soar. While enabled, fly freely like in Creative: hold jump to ascend, sprint to accelerate, shift to descend, release to hover; drains 25 qi per second while airborne, free when grounded. Stops automatically when qi runs out.",
   "spell.friday_cultivation.frost_walker": "Frost Walker",
   "spell.friday_cultivation.frost_walker.desc": "Walking on water freezes it under your feet.",
   "spell.friday_cultivation.meta": "%s · %s · %s",
