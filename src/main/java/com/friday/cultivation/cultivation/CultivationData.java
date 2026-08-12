@@ -1846,6 +1846,9 @@ implements INBTSerializable<CompoundTag> {
         if (this.realm == Realm.TRUE_IMMORTAL && this.subStage.isPeakFor(this.realm)) {
             return false;
         }
+        if (this.realm == Realm.GREAT_EMPEROR && this.subStage.isPeakFor(this.realm)) {
+            return false;
+        }
         if (this.isInTribulation()) {
             return false;
         }
@@ -1868,6 +1871,10 @@ implements INBTSerializable<CompoundTag> {
         }
         if (this.subStage.isPeakFor(this.realm)) {
             if (this.realm == Realm.TRUE_IMMORTAL) {
+                this.currentQi = this.getMaxQi();
+                return;
+            }
+            if (this.realm == Realm.GREAT_EMPEROR) {
                 this.currentQi = this.getMaxQi();
                 return;
             }

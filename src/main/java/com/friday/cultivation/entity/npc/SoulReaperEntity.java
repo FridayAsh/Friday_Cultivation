@@ -95,7 +95,7 @@ extends PathfinderMob {
     }
 
     public static Realm realmForKills(int kills) {
-        int idx = Math.min(Realm.TRUE_IMMORTAL.ordinal(), Realm.QI_REFINING.ordinal() + Math.max(0, kills));
+        int idx = Math.min(Realm.GREAT_EMPEROR.ordinal(), Realm.QI_REFINING.ordinal() + Math.max(0, kills));
         Realm r = Realm.values()[idx];
         return r == Realm.BODY_TEMPERING ? Realm.QI_REFINING : r;
     }

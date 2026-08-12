@@ -24,7 +24,8 @@ public enum Realm {
     MAHAYANA("mahayana"),
     TRIBULATION_TRANSCENDENCE("tribulation_transcendence"),
     TRUE_IMMORTAL("true_immortal"),
-    LOOSE_IMMORTAL("loose_immortal");
+    LOOSE_IMMORTAL("loose_immortal"),
+    GREAT_EMPEROR("great_emperor");
 
     private final String id;
 
@@ -49,13 +50,14 @@ public enum Realm {
             case GOLDEN_CORE -> 9;
             case BODY_INTEGRATION -> 5;
             case TRUE_IMMORTAL -> 9;
+            case GREAT_EMPEROR -> 9;
             case FOUNDATION_BUILDING, NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, MAHAYANA, TRIBULATION_TRANSCENDENCE -> 4;
         };
     }
 
     /** 是否使用数字层（1-based） */
     public boolean usesNumericLevels() {
-        return this == BODY_TEMPERING || this == QI_REFINING || this == GOLDEN_CORE || this == BODY_INTEGRATION || this == TRUE_IMMORTAL;
+        return this == BODY_TEMPERING || this == QI_REFINING || this == GOLDEN_CORE || this == BODY_INTEGRATION || this == TRUE_IMMORTAL || this == GREAT_EMPEROR;
     }
 
     /** 获取该境界第 level 层的 SubStage（数字层 1-based；4 档 0-3；越界返回 null） */
@@ -81,6 +83,9 @@ public enum Realm {
         }
         if (this == TRUE_IMMORTAL) {
             return level >= 1 && level <= 9 ? new SubStage("heaven_" + level, level) : null;
+        }
+        if (this == GREAT_EMPEROR) {
+            return level >= 1 && level <= 9 ? new SubStage("emperor_" + level, level) : null;
         }
         if (this == MORTAL || this == LOOSE_IMMORTAL) {
             return SubStage.EARLY;
@@ -156,6 +161,10 @@ public enum Realm {
             int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
             return 19000 + lvl * 200;
         }
+        if (this == GREAT_EMPEROR) {
+            int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
+            return 25000 + lvl * 300;
+        }
         if (this == LOOSE_IMMORTAL) {
             return 18000;
         }
@@ -190,6 +199,7 @@ public enum Realm {
             case TRIBULATION_TRANSCENDENCE -> 600000;
             case LOOSE_IMMORTAL -> 1000000;
             case TRUE_IMMORTAL -> 1000000;
+            case GREAT_EMPEROR -> 10000000;
         };
     }
 
@@ -230,6 +240,7 @@ public enum Realm {
             case TRIBULATION_TRANSCENDENCE -> 10;
             case TRUE_IMMORTAL -> 11;
             case LOOSE_IMMORTAL -> 12;
+            case GREAT_EMPEROR -> 13;
         };
     }
 
@@ -259,6 +270,7 @@ public enum Realm {
             case TRIBULATION_TRANSCENDENCE -> 240.0;
             case TRUE_IMMORTAL -> 262.0;
             case LOOSE_IMMORTAL -> 284.0;
+            case GREAT_EMPEROR -> 400.0;
         };
     }
 
@@ -277,6 +289,7 @@ public enum Realm {
             case TRIBULATION_TRANSCENDENCE -> 95;
             case TRUE_IMMORTAL -> 100;
             case LOOSE_IMMORTAL -> 95;
+            case GREAT_EMPEROR -> 100;
         };
     }
 
@@ -332,6 +345,13 @@ public enum Realm {
                 }
                 yield 0;
             }
+            // 大帝九帝界：每个帝界突破均渡劫，第一帝界 5 波起每界 +1（5~13 波）
+            case GREAT_EMPEROR -> {
+                if (stage != null && stage.level() >= 1 && stage.level() <= 9) {
+                    yield 4 + stage.level();
+                }
+                yield 9;
+            }
         };
     }
 
@@ -361,6 +381,8 @@ public enum Realm {
             case TRIBULATION_TRANSCENDENCE -> 9;
             // 真仙渡劫每波 9 道（配合 tribulationCount：3重天 3波、6重天 6波、9重天 9波 → 27/54/81 道）
             case TRUE_IMMORTAL -> 9;
+            // 大帝渡劫每波 9 道（配合 tribulationCount：5~13 波 → 45~117 道）
+            case GREAT_EMPEROR -> 9;
             default -> 1;
         };
     }
@@ -379,6 +401,7 @@ public enum Realm {
             case MAHAYANA -> 0;
             case TRIBULATION_TRANSCENDENCE -> 150;
             case TRUE_IMMORTAL -> 180;
+            case GREAT_EMPEROR -> 200;
             case LOOSE_IMMORTAL -> 0;
         };
     }

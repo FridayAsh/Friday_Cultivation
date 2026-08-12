@@ -396,6 +396,13 @@ public final class ModItems {
                 nArray13[0] = 13227775;
                 nArray = nArray13;
                 nArray13[1] = 4926056;
+                break;
+            }
+            case GREAT_EMPEROR: {
+                int[] nArray14 = new int[2];
+                nArray14[0] = 16755200;
+                nArray = nArray14;
+                nArray14[1] = 32896;
             }
         }
         return nArray;
@@ -407,7 +414,7 @@ public final class ModItems {
             case MORTAL, BODY_TEMPERING, QI_REFINING -> Rarity.COMMON;
             case FOUNDATION_BUILDING, GOLDEN_CORE -> Rarity.UNCOMMON;
             case NASCENT_SOUL, SOUL_FORMATION -> Rarity.RARE;
-            case VOID_REFINING, BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL -> Rarity.EPIC;
+            case VOID_REFINING, BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> Rarity.EPIC;
         };
     }
 
