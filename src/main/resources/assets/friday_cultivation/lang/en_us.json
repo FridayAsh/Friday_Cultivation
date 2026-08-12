@@ -547,7 +547,7 @@
   "realm.friday_cultivation.great_emperor": "Great Emperor",
   "spell.friday_cultivation.great_emperor_self_destruct": "Great Emperor Detonation",
   "item.friday_cultivation.realm_token_great_emperor": "Realm Token: Great Emperor",
-  "item.friday_cultivation.spawn_egg_cultivator_great_emperor": "Spawn Egg: Immortal (Great Emperor)",
+  "item.friday_cultivation.spawn_egg_cultivator_great_emperor": "Spawn Egg: Great Emperor",
   "hud.friday_cultivation.realm": "Realm: %s",
   "hud.friday_cultivation.realm_full": "Realm: %s %s",
   "hud.friday_cultivation.cultivation": "Cult %s/%s",
@@ -2320,5 +2320,9 @@
   "message.friday_cultivation.imperial_art.created": "You created the Imperial Art \"%s\" and equipped it",
   "message.friday_cultivation.imperial_art.locked": "Cannot create Imperial Art now",
   "technique.friday_cultivation.imperial_art": "Imperial Art",
-  "technique.friday_cultivation.imperial_art.desc": "Self-created Imperial Art. Atk+20/Def+20/Crit+30/Max HP+100/Cultivation x15/Half Qi cost/Half damage."
+  "technique.friday_cultivation.imperial_art.desc": "Self-created Imperial Art. Atk+20/Def+20/Crit+30/Max HP+100/Cultivation x15/Half Qi cost/Half damage.",
+  "item.friday_cultivation.xuan_iron_sword_great_emperor": "Xuan Iron Emperor Weapon",
+  "item.friday_cultivation.qing_mu_sword_great_emperor": "Greenwood Emperor Weapon",
+  "item.friday_cultivation.chi_yan_sword_great_emperor": "Crimson Flame Emperor Weapon",
+  "item.friday_cultivation.han_bing_sword_great_emperor": "Frost Emperor Weapon"
 }

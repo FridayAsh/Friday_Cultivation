@@ -547,7 +547,7 @@
   "realm.friday_cultivation.great_emperor": "大帝",
   "spell.friday_cultivation.great_emperor_self_destruct": "大帝自爆",
   "item.friday_cultivation.realm_token_great_emperor": "境界令牌：大帝",
-  "item.friday_cultivation.spawn_egg_cultivator_great_emperor": "刷怪蛋：仙人 (大帝)",
+  "item.friday_cultivation.spawn_egg_cultivator_great_emperor": "刷怪蛋：大帝",
   "hud.friday_cultivation.realm": "境界：%s",
   "hud.friday_cultivation.realm_full": "境界：%s %s",
   "hud.friday_cultivation.cultivation": "修为 %s/%s",
@@ -2320,5 +2320,9 @@
   "message.friday_cultivation.imperial_art.created": "你自创了帝法「%s」并已自动装备",
   "message.friday_cultivation.imperial_art.locked": "当前无法自创帝法",
   "technique.friday_cultivation.imperial_art": "帝法",
-  "technique.friday_cultivation.imperial_art.desc": "自创帝法，威能盖世。攻击+20/防御+20/暴击+30/最大生命+100/修炼效率×15/灵气消耗减半/伤害减半。"
+  "technique.friday_cultivation.imperial_art.desc": "自创帝法，威能盖世。攻击+20/防御+20/暴击+30/最大生命+100/修炼效率×15/灵气消耗减半/伤害减半。",
+  "item.friday_cultivation.xuan_iron_sword_great_emperor": "玄铁帝兵",
+  "item.friday_cultivation.qing_mu_sword_great_emperor": "青木帝兵",
+  "item.friday_cultivation.chi_yan_sword_great_emperor": "赤焰帝兵",
+  "item.friday_cultivation.han_bing_sword_great_emperor": "寒冰帝兵"
 }
