@@ -1073,7 +1073,7 @@ extends Screen {
         Realm realm = data.getRealm();
         boolean soul = data.isSoulState();
         MutableComponent race = Component.translatable((String)(soul ? "race.friday_cultivation.ghost" : "race.friday_cultivation.human"));
-        String subKey = realm == Realm.MORTAL ? (soul ? "race_sub.friday_cultivation.ghost_mortal" : "race_sub.friday_cultivation.mortal") : (realm.ordinal() >= Realm.TRUE_IMMORTAL.ordinal() ? (soul ? "race_sub.friday_cultivation.ghost_immortal" : "race_sub.friday_cultivation.immortal") : (soul ? "race_sub.friday_cultivation.ghost_cultivator" : "race_sub.friday_cultivation.cultivator"));
+        String subKey = realm == Realm.MORTAL ? (soul ? "race_sub.friday_cultivation.ghost_mortal" : "race_sub.friday_cultivation.mortal") : (realm == Realm.GREAT_EMPEROR ? (soul ? "race_sub.friday_cultivation.ghost_great_emperor" : "race_sub.friday_cultivation.great_emperor") : (realm.ordinal() >= Realm.TRUE_IMMORTAL.ordinal() ? (soul ? "race_sub.friday_cultivation.ghost_immortal" : "race_sub.friday_cultivation.immortal") : (soul ? "race_sub.friday_cultivation.ghost_cultivator" : "race_sub.friday_cultivation.cultivator")));
         return Component.translatable((String)"screen.friday_cultivation.attr.id.race_value", (Object[])new Object[]{race, Component.translatable((String)subKey)});
     }
 

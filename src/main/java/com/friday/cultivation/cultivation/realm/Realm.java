@@ -212,7 +212,7 @@ public enum Realm {
     }
 
     public String npcCategoryTranslationKey() {
-        String category = this == MORTAL ? "mortal" : (this.ordinal() >= TRUE_IMMORTAL.ordinal() ? "immortal" : "cultivator");
+        String category = this == MORTAL ? "mortal" : (this == GREAT_EMPEROR ? "great_emperor" : (this.ordinal() >= TRUE_IMMORTAL.ordinal() ? "immortal" : "cultivator"));
         return "npc_category.friday_cultivation." + category;
     }
 
