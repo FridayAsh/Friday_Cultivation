@@ -163,7 +163,8 @@ public final class CultivationRandomPools {
                 break;
             }
             case TRUE_IMMORTAL: 
-            case LOOSE_IMMORTAL: {
+            case LOOSE_IMMORTAL:
+            case GREAT_EMPEROR: {
                 PillTier[] pillTierArray7 = new PillTier[3];
                 pillTierArray7[0] = PillTier.SUPREME;
                 pillTierArray7[1] = PillTier.SUPREME;
@@ -181,7 +182,7 @@ public final class CultivationRandomPools {
             case GOLDEN_CORE, NASCENT_SOUL -> ItemTier.MID;
             case SOUL_FORMATION, VOID_REFINING -> ItemTier.HIGH;
             case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE -> ItemTier.SUPREME;
-            case TRUE_IMMORTAL, LOOSE_IMMORTAL -> ItemTier.IMMORTAL;
+            case TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> ItemTier.IMMORTAL;
         };
     }
 
@@ -191,7 +192,7 @@ public final class CultivationRandomPools {
             case MORTAL, BODY_TEMPERING, QI_REFINING, FOUNDATION_BUILDING -> ItemTier.LOW;
             case GOLDEN_CORE, NASCENT_SOUL -> ItemTier.MID;
             case SOUL_FORMATION, VOID_REFINING -> ItemTier.HIGH;
-            case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL -> ItemTier.SUPREME;
+            case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> ItemTier.SUPREME;
         };
     }
 
@@ -202,7 +203,7 @@ public final class CultivationRandomPools {
             case GOLDEN_CORE, NASCENT_SOUL -> ItemTier.MID;
             case SOUL_FORMATION, VOID_REFINING -> ItemTier.HIGH;
             case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE -> ItemTier.SUPREME;
-            case TRUE_IMMORTAL, LOOSE_IMMORTAL -> ItemTier.IMMORTAL;
+            case TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> ItemTier.IMMORTAL;
         };
     }
 
@@ -234,6 +235,7 @@ public final class CultivationRandomPools {
                 yield 2;
             }
             case IMMORTAL -> ruined ? 1 : 1;
+            case GREAT_EMPEROR -> ruined ? 1 : 1;
         };
     }
 

@@ -23,6 +23,8 @@ import net.minecraft.network.chat.TextColor;
 public final class TooltipUtils {
     public static final int IMMORTAL_RED_GOLD_RGB = 16726559;
     public static final Style IMMORTAL_RED_GOLD = Style.EMPTY.withColor(TextColor.fromRgb((int)16726559)).withBold(Boolean.valueOf(true));
+    public static final int GREAT_EMPEROR_GOLD_RGB = 16755200;
+    public static final Style GREAT_EMPEROR_GOLD = Style.EMPTY.withColor(TextColor.fromRgb((int)16755200)).withBold(Boolean.valueOf(true));
     private static final String INDENT = "  ";
     private static final String WARN_MARK = "  ! ";
 
@@ -37,10 +39,14 @@ public final class TooltipUtils {
             case HIGH -> ChatFormatting.AQUA;
             case SUPREME -> ChatFormatting.GOLD;
             case IMMORTAL -> ChatFormatting.RED;
+            case GREAT_EMPEROR -> ChatFormatting.YELLOW;
         };
     }
 
     public static MutableComponent tieredName(Component baseName, ItemTier tier) {
+        if (tier == ItemTier.GREAT_EMPEROR) {
+            return ShimmerColors.buildShimmeringName(baseName.getString(), ShimmerColors.DIVINE_FLAME);
+        }
         if (tier == ItemTier.IMMORTAL) {
             return Component.empty().append((Component)baseName.copy().withStyle(IMMORTAL_RED_GOLD));
         }
@@ -78,7 +84,10 @@ public final class TooltipUtils {
 
     public static MutableComponent tierBadge(ItemTier tier) {
         MutableComponent badge = Component.literal((String)"[").append((Component)tier.displayName().copy().withStyle(TooltipUtils.tierFormatting(tier))).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
-        if (tier == ItemTier.IMMORTAL) {
+        if (tier == ItemTier.GREAT_EMPEROR) {
+            // 帝法品阶：金红流动（最高阶，高于仙阶的静态红）
+            badge = Component.literal((String)"[").withStyle(ChatFormatting.DARK_GRAY).append(ShimmerColors.buildShimmeringName(tier.displayName().getString(), ShimmerColors.DIVINE_FLAME)).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
+        } else if (tier == ItemTier.IMMORTAL) {
             badge = Component.literal((String)"[").append((Component)tier.displayName().copy().withStyle(IMMORTAL_RED_GOLD)).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
         }
         return badge;
