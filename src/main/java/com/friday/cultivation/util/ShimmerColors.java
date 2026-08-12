@@ -17,6 +17,10 @@ public final class ShimmerColors {
     }
 
     public static MutableComponent buildShimmeringName(String text, int[] colors) {
+        return ShimmerColors.buildShimmeringName(text, colors, false);
+    }
+
+    public static MutableComponent buildShimmeringName(String text, int[] colors, boolean obfuscated) {
         long time = System.currentTimeMillis();
         double t = (double)(time % 1000L) / 1000.0;
         MutableComponent result = Component.empty();
@@ -32,7 +36,11 @@ public final class ShimmerColors {
             int g = (int)((double)(c1 >> 8 & 0xFF) * (1.0 - frac) + (double)(c2 >> 8 & 0xFF) * frac);
             int b = (int)((double)(c1 & 0xFF) * (1.0 - frac) + (double)(c2 & 0xFF) * frac);
             int rgb = r << 16 | g << 8 | b;
-            result.append(Component.literal(String.valueOf(c)).withStyle(style -> style.withColor(rgb).withBold(true)));
+            if (obfuscated) {
+                result.append(Component.literal(String.valueOf(c)).withStyle(style -> style.withColor(rgb).withBold(true).withObfuscated(true)));
+            } else {
+                result.append(Component.literal(String.valueOf(c)).withStyle(style -> style.withColor(rgb).withBold(true)));
+            }
         }
         return result;
     }

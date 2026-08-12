@@ -54,12 +54,12 @@ extends Item {
         return this.technique;
     }
 
-    private static final String MYSTERY_NAME = "\u7981\u8baf\u2026\u2026\u7981\u8baf"; // 禁讯……禁讯（帝法未自创时的乱码名）
+    private static final String MYSTERY_NAME = "????????"; // 帝法未自创：乱码动态闪烁（§k 混淆 + 金红流动色）
 
     @NotNull
     public Component getName(@NotNull ItemStack stack) {
         if (this.technique == Technique.IMPERIAL_ART) {
-            return ShimmerColors.buildShimmeringName(MYSTERY_NAME, ShimmerColors.DIVINE_MYSTERY);
+            return ShimmerColors.buildShimmeringName(MYSTERY_NAME, ShimmerColors.DIVINE_MYSTERY, true);
         }
         return Component.translatable((String)this.getDescriptionId(stack));
     }
@@ -69,7 +69,7 @@ extends Item {
             tooltip.add(ShimmerColors.buildShimmeringName(Component.translatable((String)"item_tier.friday_cultivation.great_emperor").getString(), ShimmerColors.DIVINE_MYSTERY));
             TooltipUtils.addBlank(tooltip);
             TooltipUtils.addSection(tooltip, "tooltip.friday_cultivation.section.contents");
-            tooltip.add((Component)TooltipUtils.statsLine((Component)Component.translatable((String)"tooltip.friday_cultivation.technique_book.contains", (Object[])new Object[]{ShimmerColors.buildShimmeringName(MYSTERY_NAME, ShimmerColors.DIVINE_MYSTERY)})));
+            tooltip.add((Component)TooltipUtils.statsLine((Component)Component.translatable((String)"tooltip.friday_cultivation.technique_book.contains", (Object[])new Object[]{ShimmerColors.buildShimmeringName(MYSTERY_NAME, ShimmerColors.DIVINE_MYSTERY, true)})));
             TooltipUtils.addSection(tooltip, "tooltip.friday_cultivation.section.effect");
             tooltip.add((Component)ShimmerColors.buildShimmeringName(Component.translatable((String)"tooltip.friday_cultivation.technique_book.imperial_art_mystery").getString(), ShimmerColors.DIVINE_MYSTERY));
             TooltipUtils.addBlank(tooltip);

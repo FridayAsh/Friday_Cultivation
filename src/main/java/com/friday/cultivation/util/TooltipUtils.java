@@ -45,7 +45,7 @@ public final class TooltipUtils {
 
     public static MutableComponent tieredName(Component baseName, ItemTier tier) {
         if (tier == ItemTier.GREAT_EMPEROR) {
-            return Component.empty().append((Component)baseName.copy().withStyle(GREAT_EMPEROR_GOLD));
+            return ShimmerColors.buildShimmeringName(baseName.getString(), ShimmerColors.DIVINE_FLAME);
         }
         if (tier == ItemTier.IMMORTAL) {
             return Component.empty().append((Component)baseName.copy().withStyle(IMMORTAL_RED_GOLD));
@@ -85,7 +85,8 @@ public final class TooltipUtils {
     public static MutableComponent tierBadge(ItemTier tier) {
         MutableComponent badge = Component.literal((String)"[").append((Component)tier.displayName().copy().withStyle(TooltipUtils.tierFormatting(tier))).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
         if (tier == ItemTier.GREAT_EMPEROR) {
-            badge = Component.literal((String)"[").append((Component)tier.displayName().copy().withStyle(GREAT_EMPEROR_GOLD)).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
+            // 帝法品阶：金红流动（最高阶，高于仙阶的静态红）
+            badge = Component.literal((String)"[").withStyle(ChatFormatting.DARK_GRAY).append(ShimmerColors.buildShimmeringName(tier.displayName().getString(), ShimmerColors.DIVINE_FLAME)).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
         } else if (tier == ItemTier.IMMORTAL) {
             badge = Component.literal((String)"[").append((Component)tier.displayName().copy().withStyle(IMMORTAL_RED_GOLD)).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
         }

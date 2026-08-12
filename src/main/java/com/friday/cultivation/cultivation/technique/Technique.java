@@ -104,6 +104,10 @@ public enum Technique {
         if (this == IMMORTAL_INCANTATION) {
             return new ResourceLocation("friday_cultivation", "textures/gui/technique_immortal_body.png");
         }
+        if (this == IMPERIAL_ART) {
+            // 帝法未自创时复用残篇图标
+            return new ResourceLocation("friday_cultivation", "textures/gui/technique_fragment.png");
+        }
         return new ResourceLocation("friday_cultivation", "textures/gui/technique_" + this.id + ".png");
     }
 
