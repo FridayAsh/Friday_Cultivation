@@ -552,7 +552,11 @@ extends Screen {
         }
         if (this.currentTab == Tab.TECHNIQUES && this.hoveredTechniqueId != null && (ht = Technique.byId(this.hoveredTechniqueId)) != null) {
             ArrayList<Component> lines3 = new ArrayList<Component>();
-            lines3.add((Component)TooltipUtils.tieredName(ht.displayName(), ht.tier()));
+            if (ht == Technique.IMPERIAL_ART && data.hasCreatedImperialArt()) {
+                lines3.add((Component)ShimmerColors.buildShimmeringName(data.getImperialArtName(), ShimmerColors.DIVINE_FLAME));
+            } else {
+                lines3.add((Component)TooltipUtils.tieredName(ht.displayName(), ht.tier()));
+            }
             lines3.add((Component)TooltipUtils.tierElementLine(ht.tier(), ht.primaryElement()));
             lines3.add((Component)TooltipUtils.statsLine((Component)Component.translatable((String)"tooltip.friday_cultivation.technique.path", (Object[])new Object[]{Component.translatable((String)ht.daoPathTranslationKey())})));
             TooltipUtils.addBlank(lines3);
