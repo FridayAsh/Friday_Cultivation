@@ -71,6 +71,13 @@ public class RequestBreakthroughPacket {
                     TribulationHandler.completeBreakthroughWithoutTribulation(player, data);
                     return;
                 }
+                if (data.getRealm() == Realm.TRUE_IMMORTAL && data.getSubStage().isPeakFor(Realm.TRUE_IMMORTAL)) {
+                    // 突破大帝前置：须曾亲手击杀过一位大帝生灵（条件之一，后续可扩展）
+                    if (!data.hasKilledGreatEmperor()) {
+                        player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.breakthrough.great_emperor_requirement"), false);
+                        return;
+                    }
+                }
                 int waves = data.getRealm().tribulationCount(data.getSubStage());
                 int boltsPerWave = data.getRealm().tribulationBoltsPerWave(data.getSubStage());
                 int damage = data.getRealm().tribulationStrikeDamage();

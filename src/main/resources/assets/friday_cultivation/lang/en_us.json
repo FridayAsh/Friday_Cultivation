@@ -2309,5 +2309,8 @@
   "item_tier.friday_cultivation.great_emperor": "Imperial Art",
   "npc_category.friday_cultivation.great_emperor": "Emperor",
   "race_sub.friday_cultivation.great_emperor": "Emperor",
-  "race_sub.friday_cultivation.ghost_great_emperor": "Ghost Emperor"
+  "race_sub.friday_cultivation.ghost_great_emperor": "Ghost Emperor",
+  "screen.friday_cultivation.breakthrough.great_emperor_requirement": "Requirement: have personally slain a Great Emperor being",
+  "screen.friday_cultivation.breakthrough.great_emperor_requirement_met": "Requirement met: personally slain a Great Emperor being",
+  "message.friday_cultivation.breakthrough.great_emperor_requirement": "To break through to Great Emperor, you must first personally slay a Great Emperor being"
 }

@@ -126,6 +126,8 @@ implements INBTSerializable<CompoundTag> {
     private boolean reincarnationPending = false;
     private boolean reincarnationReady = false;
     private int soulReaperKills = 0;
+    /** 是否曾亲手击杀过大帝生灵（突破大帝的前置条件） */
+    private boolean killedGreatEmperor = false;
     private int nextReaperTick = -1;
     private boolean soulDeathChoicePending = false;
     private boolean soulReaperPursuitEnabled = false;
@@ -1190,6 +1192,14 @@ implements INBTSerializable<CompoundTag> {
         this.soulReaperKills = Math.max(0, v);
     }
 
+    public boolean hasKilledGreatEmperor() {
+        return this.killedGreatEmperor;
+    }
+
+    public void setKilledGreatEmperor(boolean v) {
+        this.killedGreatEmperor = v;
+    }
+
     public int getNextReaperTick() {
         return this.nextReaperTick;
     }
@@ -1843,9 +1853,6 @@ implements INBTSerializable<CompoundTag> {
         if (this.realm == Realm.LOOSE_IMMORTAL) {
             return false;
         }
-        if (this.realm == Realm.TRUE_IMMORTAL && this.subStage.isPeakFor(this.realm)) {
-            return false;
-        }
         if (this.realm == Realm.GREAT_EMPEROR && this.subStage.isPeakFor(this.realm)) {
             return false;
         }
@@ -1870,10 +1877,6 @@ implements INBTSerializable<CompoundTag> {
             return;
         }
         if (this.subStage.isPeakFor(this.realm)) {
-            if (this.realm == Realm.TRUE_IMMORTAL) {
-                this.currentQi = this.getMaxQi();
-                return;
-            }
             if (this.realm == Realm.GREAT_EMPEROR) {
                 this.currentQi = this.getMaxQi();
                 return;
@@ -2140,6 +2143,7 @@ implements INBTSerializable<CompoundTag> {
         this.reincarnationPending = other.reincarnationPending;
         this.reincarnationReady = other.reincarnationReady;
         this.soulReaperKills = other.soulReaperKills;
+        this.killedGreatEmperor = other.killedGreatEmperor;
         this.nextReaperTick = other.nextReaperTick;
         this.soulDeathChoicePending = other.soulDeathChoicePending;
         this.soulReaperPursuitEnabled = other.soulReaperPursuitEnabled;
@@ -2275,6 +2279,7 @@ implements INBTSerializable<CompoundTag> {
         tag.putBoolean("reincarnationPending", this.reincarnationPending);
         tag.putBoolean("reincarnationReady", this.reincarnationReady);
         tag.putInt("soulReaperKills", this.soulReaperKills);
+        tag.putBoolean("killedGreatEmperor", this.killedGreatEmperor);
         tag.putInt("nextReaperTick", this.nextReaperTick);
         tag.putBoolean("soulDeathChoicePending", this.soulDeathChoicePending);
         tag.putBoolean("soulReaperPursuitEnabled", this.soulReaperPursuitEnabled);
@@ -2445,6 +2450,7 @@ implements INBTSerializable<CompoundTag> {
         this.reincarnationPending = tag.getBoolean("reincarnationPending");
         this.reincarnationReady = tag.getBoolean("reincarnationReady");
         this.soulReaperKills = tag.getInt("soulReaperKills");
+        this.killedGreatEmperor = tag.getBoolean("killedGreatEmperor");
         this.nextReaperTick = tag.contains("nextReaperTick") ? tag.getInt("nextReaperTick") : -1;
         boolean bl = this.soulDeathChoicePending = tag.contains("soulDeathChoicePending", 1) && tag.getBoolean("soulDeathChoicePending");
         boolean bl2 = tag.contains("soulReaperPursuitEnabled", 1) ? tag.getBoolean("soulReaperPursuitEnabled") : (this.soulReaperPursuitEnabled = this.soulState && this.nextReaperTick >= 0);

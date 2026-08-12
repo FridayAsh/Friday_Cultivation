@@ -130,6 +130,7 @@ import com.friday.cultivation.entity.npc.ai.CultivatorSpellAttackGoal;
 import com.friday.cultivation.event.NpcPassiveSpellHandler;
 import com.friday.cultivation.event.RealmPressureHandler;
 import com.friday.cultivation.event.SoulHookHandler;
+import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.event.SoulStateHandler;
 import com.friday.cultivation.event.SpiritLockHandler;
 import com.friday.cultivation.event.TimeStasisHandler;
@@ -162,6 +163,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import net.minecraft.ChatFormatting;
+import com.friday.cultivation.worldgen.GreatEmperorTracker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
@@ -454,6 +456,28 @@ extends AbstractVillager {
         this.setTarget(attacker);
         if (this.canStartNpcSwordFlightForCombat() && this.shouldStartNpcSwordFlight(attacker)) {
             this.startNpcSwordFlight();
+        }
+    }
+
+    /**
+     * 大帝 NPC 死亡：释放全存档大帝名额；若为玩家亲手击杀则记录击杀者。
+     */
+    public void die(@NotNull DamageSource source) {
+        boolean wasGreatEmperor = this.getRealm() == Realm.GREAT_EMPEROR;
+        super.die(source);
+        if (!this.level().isClientSide && wasGreatEmperor && this.level() instanceof ServerLevel) {
+            ServerLevel serverLevel = (ServerLevel)this.level();
+            GreatEmperorTracker tracker = GreatEmperorTracker.get(serverLevel);
+            tracker.releaseEmperor();
+            Entity killer = source.getEntity();
+            if (killer instanceof ServerPlayer) {
+                ServerPlayer sp = (ServerPlayer)killer;
+                tracker.recordEmperorSlayer(killer.getUUID());
+                CultivationCapability.get((Player)sp).ifPresent(data -> {
+                    data.setKilledGreatEmperor(true);
+                    CapabilityEvents.syncToClient(sp);
+                });
+            }
         }
     }
 
@@ -1146,6 +1170,12 @@ extends AbstractVillager {
             this.setDifuReaper(true);
         }
         Realm realm = difu ? Realm.values()[Realm.QI_REFINING.ordinal() + this.random.nextInt(Math.max(1, Realm.TRIBULATION_TRANSCENDENCE.ordinal() - Realm.QI_REFINING.ordinal() + 1))] : (dataTag != null && dataTag.contains("forcedRealmId") ? ((forced = Realm.byId(id = dataTag.getString("forcedRealmId"))) != null ? forced : CultivatorRealmRoller.roll(this.random)) : CultivatorRealmRoller.roll(this.random));
+        if (realm == Realm.GREAT_EMPEROR) {
+            if (level.getLevel() instanceof ServerLevel && !GreatEmperorTracker.get((ServerLevel)level.getLevel()).claimEmperor()) {
+                // 全存档大帝已达上限（10），本次生成降级为散仙
+                realm = Realm.LOOSE_IMMORTAL;
+            }
+        }
         int looseImmortalTribulations = 0;
         if (realm == Realm.LOOSE_IMMORTAL) {
             looseImmortalTribulations = dataTag != null && dataTag.contains("forcedLooseImmortalTribulations", 3) ? dataTag.getInt("forcedLooseImmortalTribulations") : 1 + this.random.nextInt(9);

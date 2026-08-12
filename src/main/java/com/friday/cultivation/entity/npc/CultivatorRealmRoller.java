@@ -42,6 +42,8 @@ public final class CultivatorRealmRoller {
         WEIGHTS.put(Realm.MAHAYANA, 4);
         WEIGHTS.put(Realm.TRIBULATION_TRANSCENDENCE, 2);
         WEIGHTS.put(Realm.TRUE_IMMORTAL, 1);
+        // 大帝：极稀有（权重仅 1），且受全存档上限 10 约束（finalizeSpawn 中拦截降级）
+        WEIGHTS.put(Realm.GREAT_EMPEROR, 1);
         for (int w : WEIGHTS.values()) {
             sum += w;
         }

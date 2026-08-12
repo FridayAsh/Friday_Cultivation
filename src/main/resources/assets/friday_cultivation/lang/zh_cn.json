@@ -2309,5 +2309,8 @@
   "item_tier.friday_cultivation.great_emperor": "帝法",
   "npc_category.friday_cultivation.great_emperor": "帝",
   "race_sub.friday_cultivation.great_emperor": "帝",
-  "race_sub.friday_cultivation.ghost_great_emperor": "鬼帝"
+  "race_sub.friday_cultivation.ghost_great_emperor": "鬼帝",
+  "screen.friday_cultivation.breakthrough.great_emperor_requirement": "条件：曾亲手击杀过一位大帝生灵",
+  "screen.friday_cultivation.breakthrough.great_emperor_requirement_met": "条件已满足：曾亲手击杀过一位大帝生灵",
+  "message.friday_cultivation.breakthrough.great_emperor_requirement": "突破大帝需先亲手击杀过一位大帝生灵"
 }

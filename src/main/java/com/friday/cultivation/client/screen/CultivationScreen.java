@@ -1177,6 +1177,13 @@ extends Screen {
             this.drawBreakthroughCentered(gfx, (Component)current, cx, y, width - 8, -12950192, false);
             y += 13;
             y = this.canChooseGoldenCoreRoute(data) ? this.renderGoldenCoreBreakthroughOptions(gfx, x, rightX, y, data, boneAge, hasBloodTalisman, mouseX, mouseY) : (y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_locked_stage"), cx, y, width - 8, -9807288) + 4);
+        } else if (realm == Realm.TRUE_IMMORTAL && sub.isPeakFor(Realm.TRUE_IMMORTAL)) {
+            boolean killedEmperor = data.hasKilledGreatEmperor();
+            MutableComponent reqLine = killedEmperor ? Component.translatable((String)"screen.friday_cultivation.breakthrough.great_emperor_requirement_met").withStyle(ChatFormatting.GREEN) : Component.translatable((String)"screen.friday_cultivation.breakthrough.great_emperor_requirement").withStyle(ChatFormatting.RED);
+            y += this.drawBreakthroughParagraphCentered(gfx, (Component)reqLine, cx, y, width - 8, killedEmperor ? 5635925 : -9807288) + 4;
+            if (!killedEmperor) {
+                y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_locked_stage"), cx, y, width - 8, -9807288) + 4;
+            }
         } else if (realm.ordinal() >= Realm.GOLDEN_CORE.ordinal()) {
             y = this.renderBreakthroughHistoryButton(gfx, x, rightX, y, data, mouseX, mouseY);
             y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_waiting"), cx, y, width - 8, -9807288) + 4;
