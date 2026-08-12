@@ -2305,5 +2305,6 @@
   "sub_stage.friday_cultivation.10": "第十层",
   "screen.friday_cultivation.breakthrough.body_tempering_hint": "锻体淬炼，突破至炼气期需要十层圆满",
   "item.friday_cultivation.realm_token_body_tempering": "境界令牌：锻体",
-  "item.friday_cultivation.spawn_egg_cultivator_body_tempering": "刷怪蛋：修士 (锻体)"
+  "item.friday_cultivation.spawn_egg_cultivator_body_tempering": "刷怪蛋：修士 (锻体)",
+  "item_tier.friday_cultivation.great_emperor": "帝法"
 }

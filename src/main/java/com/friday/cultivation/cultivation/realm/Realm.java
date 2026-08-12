@@ -345,10 +345,10 @@ public enum Realm {
                 }
                 yield 0;
             }
-            // 大帝九帝界：每个帝界突破均渡劫，第一帝界 5 波起每界 +1（5~13 波）
+            // 大帝九帝界：每个帝界突破均渡劫，第一帝界 9 波起每界 +1（9~17 波）
             case GREAT_EMPEROR -> {
                 if (stage != null && stage.level() >= 1 && stage.level() <= 9) {
-                    yield 4 + stage.level();
+                    yield 8 + stage.level();
                 }
                 yield 9;
             }

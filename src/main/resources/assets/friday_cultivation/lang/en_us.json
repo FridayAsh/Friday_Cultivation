@@ -2305,5 +2305,6 @@
   "sub_stage.friday_cultivation.10": "Layer 10",
   "screen.friday_cultivation.breakthrough.body_tempering_hint": "Temper the body; reach the 10th layer to break through to Qi Refining",
   "item.friday_cultivation.realm_token_body_tempering": "Realm Token: Body Tempering",
-  "item.friday_cultivation.spawn_egg_cultivator_body_tempering": "Spawn Egg: Body Tempering Cultivator"
+  "item.friday_cultivation.spawn_egg_cultivator_body_tempering": "Spawn Egg: Body Tempering Cultivator",
+  "item_tier.friday_cultivation.great_emperor": "Imperial Art"
 }
