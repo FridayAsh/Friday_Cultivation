@@ -25,7 +25,9 @@ import com.friday.cultivation.item.weapon.TieredWeapon;
 import com.friday.cultivation.util.ShimmerColors;
 import com.friday.cultivation.util.TooltipUtils;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
@@ -112,7 +114,9 @@ implements TieredWeapon {
 
     public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
         if (this.tier == ItemTier.GREAT_EMPEROR) {
-            tooltip.add(ShimmerColors.buildShimmeringName(Component.translatable((String)"item_tier.friday_cultivation.great_emperor").getString(), ShimmerColors.DIVINE_FLAME));
+            // [帝兵] [元素]：帝兵品阶用金红流动，元素标签保留
+            MutableComponent tierBadge = Component.literal((String)"[").withStyle(ChatFormatting.DARK_GRAY).append(ShimmerColors.buildShimmeringName(Component.translatable((String)"item_tier.friday_cultivation.great_emperor_weapon").getString(), ShimmerColors.DIVINE_FLAME)).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.empty().append((Component)tierBadge).append((Component)Component.literal((String)" ")).append((Component)TooltipUtils.elementBadge(this.element)));
         } else {
             tooltip.add((Component)TooltipUtils.tierElementLine(this.tier, this.element));
         }

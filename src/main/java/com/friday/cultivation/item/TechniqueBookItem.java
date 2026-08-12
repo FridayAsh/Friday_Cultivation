@@ -27,7 +27,9 @@ import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.util.ShimmerColors;
 import com.friday.cultivation.util.TooltipUtils;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -66,7 +68,9 @@ extends Item {
 
     public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
         if (this.technique == Technique.IMPERIAL_ART) {
-            tooltip.add(ShimmerColors.buildShimmeringName(Component.translatable((String)"item_tier.friday_cultivation.great_emperor").getString(), ShimmerColors.DIVINE_MYSTERY));
+            // [帝法] [无]：帝法品阶用金红流动，元素为无属性
+            MutableComponent tierBadge = Component.literal((String)"[").withStyle(ChatFormatting.DARK_GRAY).append(ShimmerColors.buildShimmeringName(Component.translatable((String)"item_tier.friday_cultivation.great_emperor").getString(), ShimmerColors.DIVINE_MYSTERY)).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.empty().append((Component)tierBadge).append((Component)Component.literal((String)" ")).append((Component)Component.translatable((String)"spell_element.friday_cultivation.none").withStyle(style -> style.withColor(0xE8E8E2))));
             TooltipUtils.addBlank(tooltip);
             TooltipUtils.addSection(tooltip, "tooltip.friday_cultivation.section.contents");
             tooltip.add((Component)TooltipUtils.statsLine((Component)Component.translatable((String)"tooltip.friday_cultivation.technique_book.contains", (Object[])new Object[]{ShimmerColors.buildShimmeringName(MYSTERY_NAME, ShimmerColors.DIVINE_MYSTERY, true)})));

@@ -2325,5 +2325,6 @@
   "item.friday_cultivation.qing_mu_sword_great_emperor": "Greenwood Emperor Weapon",
   "item.friday_cultivation.chi_yan_sword_great_emperor": "Crimson Flame Emperor Weapon",
   "item.friday_cultivation.han_bing_sword_great_emperor": "Frost Emperor Weapon",
-  "tooltip.friday_cultivation.technique_book.imperial_art_mystery": "A not-yet-created Imperial Art; its script is as obscure as heavenly secrets..."
+  "tooltip.friday_cultivation.technique_book.imperial_art_mystery": "A not-yet-created Imperial Art; its script is as obscure as heavenly secrets...",
+  "item_tier.friday_cultivation.great_emperor_weapon": "Emperor Weapon"
 }
