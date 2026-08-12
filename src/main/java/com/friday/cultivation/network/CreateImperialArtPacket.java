@@ -65,12 +65,38 @@ public class CreateImperialArtPacket {
         return data.hasKilledGreatEmperor();
     }
 
-    private static final String[] NAME_PREFIX = new String[]{"天", "帝", "万", "玄", "太", "九", "混", "乾", "坤", "圣"};
-    private static final String[] NAME_CORE = new String[]{"皇", "极", "道", "尊", "古", "初", "灵", "真", "冥", "虚"};
-    private static final String[] NAME_SUFFIX = new String[]{"决", "经", "典", "录", "章", "篇", "书", "谱", "法", "诀"};
+    private static final String[] NAME_PREFIX = new String[]{
+        "天", "帝", "万", "玄", "太", "九", "混", "乾", "坤", "圣",
+        "鸿", "元", "苍", "荒", "宇", "宙", "神", "仙", "灵", "真",
+        "冥", "虚", "无", "极", "至", "大", "道", "龙", "凤", "星",
+        "月", "日", "天", "紫", "青", "金", "玉", "赤", "墨", "幽",
+        "雷", "电", "风", "云", "冰", "炎", "镇", "破", "灭", "斩"
+    };
+    private static final String[] NAME_CORE = new String[]{
+        "皇", "尊", "古", "初", "道", "圣", "神", "龙", "凤", "冥",
+        "虚", "极", "无", "真", "元", "玄", "灵", "命", "魂", "心",
+        "乾", "坤", "荒", "宇", "宙", "星", "月", "日", "雷", "炎",
+        "河", "山", "海", "渊", "界", "天", "地", "人", "神", "魔",
+        "凤", "凰", "麒", "麟", "蟒", "蛟", "鲲", "鹏", "麟", "刹"
+    };
+    private static final String[] NAME_SUFFIX = new String[]{"诀", "卷", "法", "功", "典", "经", "录", "章", "谱", "术"};
 
     private static String rollName() {
         Random rnd = new Random();
-        return NAME_PREFIX[rnd.nextInt(NAME_PREFIX.length)] + NAME_CORE[rnd.nextInt(NAME_CORE.length)] + NAME_SUFFIX[rnd.nextInt(NAME_SUFFIX.length)];
+        int length = 3 + rnd.nextInt(3); // 3~5 字（含结尾字）
+        StringBuilder sb = new StringBuilder();
+        int remaining = length - 1; // 结尾字占 1 字，其余为前置修饰
+        while (remaining > 0) {
+            int take = Math.min(2, remaining);
+            if (take == 2) {
+                sb.append(NAME_PREFIX[rnd.nextInt(NAME_PREFIX.length)]);
+                sb.append(NAME_CORE[rnd.nextInt(NAME_CORE.length)]);
+            } else {
+                sb.append(rnd.nextBoolean() ? NAME_PREFIX[rnd.nextInt(NAME_PREFIX.length)] : NAME_CORE[rnd.nextInt(NAME_CORE.length)]);
+            }
+            remaining -= take;
+        }
+        sb.append(NAME_SUFFIX[rnd.nextInt(NAME_SUFFIX.length)]);
+        return sb.toString();
     }
 }
