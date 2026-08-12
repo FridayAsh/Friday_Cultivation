@@ -3819,7 +3819,8 @@ extends Screen {
         MID("item_tier.friday_cultivation.mid"),
         HIGH("item_tier.friday_cultivation.high"),
         SUPREME("item_tier.friday_cultivation.supreme"),
-        IMMORTAL("item_tier.friday_cultivation.immortal");
+        IMMORTAL("item_tier.friday_cultivation.immortal"),
+        GREAT_EMPEROR("item_tier.friday_cultivation.great_emperor");
 
         final String key;
 
@@ -3862,6 +3863,12 @@ extends Screen {
                 }
                 case IMMORTAL -> {
                     if (tier == ItemTier.IMMORTAL) {
+                        yield true;
+                    }
+                    yield false;
+                }
+                case GREAT_EMPEROR -> {
+                    if (tier == ItemTier.GREAT_EMPEROR) {
                         yield true;
                     }
                     yield false;
