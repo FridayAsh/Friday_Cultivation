@@ -310,6 +310,7 @@ public final class IdentityDrawHandler {
         int difuReincarnationEntries = data.getDifuReincarnationEntries();
         data.copyFrom(new CultivationData());
         data.setDifuReincarnationEntries(difuReincarnationEntries);
+        TechniqueEffectHandler.clearBodyTemperingHpBonus(player);
         player.stopRiding();
         player.getInventory().clearContent();
         player.removeAllEffects();

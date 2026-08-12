@@ -185,7 +185,7 @@ implements INBTSerializable<CompoundTag> {
     }
 
     public void setSubStage(SubStage subStage) {
-        this.subStage = subStage;
+        this.subStage = subStage != null ? subStage : this.realm.firstSubStage();
     }
 
     /** 统一层号：数字层境界返回第几层（1-based），4 档境界返回 0-3 */

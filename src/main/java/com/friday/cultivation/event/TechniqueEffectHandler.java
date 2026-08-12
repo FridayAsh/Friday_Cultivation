@@ -276,6 +276,15 @@ public final class TechniqueEffectHandler {
     private static final String TAG_MAX_BODY_TEMPERING_LEVEL = "friday_cultivation_max_body_tempering_level";
 
     /**
+     * 清除锻体最高层数记录（转世重生时调用，重生后为全新凡人）。
+     */
+    public static void clearBodyTemperingHpBonus(ServerPlayer sp) {
+        if (sp != null) {
+            sp.getPersistentData().remove(TAG_MAX_BODY_TEMPERING_LEVEL);
+        }
+    }
+
+    /**
      * 锻体生命加成：
      * - 锻体期间随当前层数变化（第 n 层 = n×10）；
      * - 突破到练气及更高境界后，保留锻体期间练满的最高层加成（持久化），不再归零；

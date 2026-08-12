@@ -1151,7 +1151,7 @@ extends AbstractVillager {
             looseImmortalTribulations = dataTag != null && dataTag.contains("forcedLooseImmortalTribulations", 3) ? dataTag.getInt("forcedLooseImmortalTribulations") : 1 + this.random.nextInt(9);
             looseImmortalTribulations = Math.max(1, Math.min(9, looseImmortalTribulations));
         }
-        SubStage sub = realm.subStageAt(1 + this.random.nextInt(Math.max(1, realm.subStageCount())));
+        SubStage sub = realm.subStageAt(realm.usesNumericLevels() ? 1 + this.random.nextInt(realm.subStageCount()) : this.random.nextInt(realm.subStageCount()));
         this.entityData.set(DATA_REALM_ORD, realm.ordinal());
         this.entityData.set(DATA_SUB_STAGE_ORD, sub.level());
         this.entityData.set(DATA_LOOSE_IMMORTAL_TRIBULATIONS, looseImmortalTribulations);
