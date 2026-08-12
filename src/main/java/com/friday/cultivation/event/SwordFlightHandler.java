@@ -124,9 +124,7 @@ public final class SwordFlightHandler {
         data.clearSwordFlight();
         SwordFlightHandler.returnSword(player, sword, originalSlot);
         if (!(player.isCreative() || player.isSpectator() || !RealmPressureHandler.isSuppressed((LivingEntity)player) && (data.isSpellEnabled(Spell.QI_FLIGHT) || data.isVoidEscapeActive() || data.isSoulState()))) {
-            player.getAbilities().mayfly = false;
-            player.getAbilities().flying = false;
-            player.onUpdateAbilities();
+            player.setNoGravity(false);
         }
         player.fallDistance = 0.0f;
         player.containerMenu.broadcastChanges();
@@ -137,11 +135,10 @@ public final class SwordFlightHandler {
     }
 
     private static void enableFlight(ServerPlayer player) {
-        player.getAbilities().flying = true;
-        player.getAbilities().mayfly = true;
-        if (Math.abs(player.getAbilities().getFlyingSpeed() - 0.05f) > 1.0E-4f) {
-            player.getAbilities().setFlyingSpeed(0.05f);
-        }
+        // 自写飞行：不依赖 mayfly/flying（绕过 Caelus 飞行管理），
+        // 用 setNoGravity 悬浮 + FlightInputPacket 控制运动
+        player.setNoGravity(true);
+        player.fallDistance = 0.0f;
         player.onUpdateAbilities();
     }
 

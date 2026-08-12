@@ -32,6 +32,7 @@ import com.friday.cultivation.network.ExecuteCultivatorTradePacket;
 import com.friday.cultivation.network.ExecuteRefiningPacket;
 import com.friday.cultivation.network.ExecuteSundryTradePacket;
 import com.friday.cultivation.network.FireSwordAuraPacket;
+import com.friday.cultivation.network.FlightInputPacket;
 import com.friday.cultivation.network.JoinSectPacket;
 import com.friday.cultivation.network.LifeBalanceVisualPacket;
 import com.friday.cultivation.network.LooseImmortalChoicePacket;
@@ -193,6 +194,7 @@ public final class ModNetwork {
         CHANNEL.registerMessage(id++, SectTaskActionPacket.class, SectTaskActionPacket::encode, SectTaskActionPacket::decode, SectTaskActionPacket::handle);
         CHANNEL.registerMessage(id++, TrackSectTaskIssuerPacket.class, TrackSectTaskIssuerPacket::encode, TrackSectTaskIssuerPacket::decode, TrackSectTaskIssuerPacket::handle);
         CHANNEL.registerMessage(id++, CreateImperialArtPacket.class, CreateImperialArtPacket::encode, CreateImperialArtPacket::decode, CreateImperialArtPacket::handle);
+        CHANNEL.registerMessage(id++, FlightInputPacket.class, FlightInputPacket::encode, FlightInputPacket::decode, FlightInputPacket::handle);
     }
 }
 

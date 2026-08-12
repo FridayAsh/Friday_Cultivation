@@ -71,7 +71,6 @@ public final class PassiveSpellHandler {
     private static final long QI_FLIGHT_DRAIN_PER_SECOND = 25L;
     private static final float QI_FLIGHT_BASE_FLYING_SPEED = 0.05f;
     private static final int QI_FLIGHT_GROUND_RELEASE_TICKS = 4;
-    private static final Map<UUID, Integer> GROUNDED_FLIGHT_TICKS = new ConcurrentHashMap<UUID, Integer>();
     private static final Map<UUID, Integer> QI_FLIGHT_FLYING_TICKS = new ConcurrentHashMap<UUID, Integer>();
     private static final Map<UUID, Integer> BIGU_PAID_UNTIL_TICK = new ConcurrentHashMap<UUID, Integer>();
 
@@ -88,6 +87,8 @@ public final class PassiveSpellHandler {
             return;
         }
         ServerPlayer player2 = (ServerPlayer)player;
+        if (player2.tickCount % 100 == 0) {
+        }
         CultivationData data = CultivationCapability.get((Player)player2).orElse(null);
         if (data == null) {
             return;
@@ -144,65 +145,36 @@ public final class PassiveSpellHandler {
         boolean qiFlightEnabled = data.isSpellEnabled(Spell.QI_FLIGHT);
         boolean ghostFlightEnabled = PassiveSpellHandler.isGhostFlightActive(data);
         boolean hasQi = data.getCurrentQi() > 0L;
-        boolean shouldAllowFly = PassiveSpellHandler.hasEnabledPassiveFlight(data);
-        if (player.tickCount % 60 == 0) {
-            System.out.println("[QiFlight] realm=" + data.getRealm() + " enabled=" + qiFlightEnabled + " hasQi=" + hasQi + " shouldAllowFly=" + shouldAllowFly + " mayfly=" + player.getAbilities().mayfly + " flying=" + player.getAbilities().flying);
-        }
-        boolean currentlyAllowed = player.getAbilities().mayfly;
-        boolean currentlyFlying = player.getAbilities().flying;
-        boolean abilitiesDirty = false;
-        if (shouldAllowFly != currentlyAllowed) {
-            player.getAbilities().mayfly = shouldAllowFly;
-            if (!shouldAllowFly && currentlyFlying) {
-                player.getAbilities().flying = false;
-            }
-            abilitiesDirty = true;
-        }
-        if (shouldAllowFly && Math.abs(player.getAbilities().getFlyingSpeed() - 0.05f) > 1.0E-4f) {
-            player.getAbilities().setFlyingSpeed(0.05f);
-            abilitiesDirty = true;
-        }
-        if (abilitiesDirty) {
-            player.onUpdateAbilities();
-        }
-        if (!shouldAllowFly && player.getAbilities().flying) {
-            player.getAbilities().flying = false;
-            player.onUpdateAbilities();
-        }
-        if (shouldAllowFly && player.getAbilities().flying) {
-            if (player.onGround()) {
-                int groundedTicks = GROUNDED_FLIGHT_TICKS.merge(player.getUUID(), 1, Integer::sum);
-                if (groundedTicks >= 4) {
-                    player.getAbilities().flying = false;
-                    player.fallDistance = 0.0f;
-                    player.onUpdateAbilities();
-                    GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
-                }
-            } else {
-                GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
-            }
-        } else {
-            GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
-        }
-        currentlyFlying = player.getAbilities().flying;
-        if (qiFlightEnabled && !ghostFlightEnabled && currentlyFlying && hasQi) {
-            int flyingTicks = QI_FLIGHT_FLYING_TICKS.merge(player.getUUID(), 1, Integer::sum);
-            if (flyingTicks < 20) {
-                return;
-            }
-            QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
-            long base = TechniqueBonusHelper.applySpellQiCostMultiplier((Player)player, Spell.QI_FLIGHT, 25L);
-            long drain = Math.min(base, data.getCurrentQi());
-            data.setCurrentQi(data.getCurrentQi() - drain);
-            CapabilityEvents.syncToClient(player);
-            if (data.getCurrentQi() <= 0L) {
-                player.getAbilities().mayfly = false;
-                player.getAbilities().flying = false;
+        // 自写飞行：不依赖 mayfly/flying（绕过 Caelus 飞行管理），
+        // 灵气飞行启用且有灵气时悬浮（setNoGravity），客户端输入包控制运动
+        boolean shouldHover = qiFlightEnabled || ghostFlightEnabled;
+        if (shouldHover && hasQi) {
+            if (!player.isNoGravity()) {
+                player.setNoGravity(true);
                 player.onUpdateAbilities();
-                CapabilityEvents.syncToClient(player);
+            }
+            player.fallDistance = 0.0f;
+            if (qiFlightEnabled && !ghostFlightEnabled) {
+                int flyingTicks = QI_FLIGHT_FLYING_TICKS.merge(player.getUUID(), 1, Integer::sum);
+                if (flyingTicks >= 20) {
+                    QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
+                    long base = TechniqueBonusHelper.applySpellQiCostMultiplier((Player)player, Spell.QI_FLIGHT, 25L);
+                    long drain = Math.min(base, data.getCurrentQi());
+                    data.setCurrentQi(data.getCurrentQi() - drain);
+                    CapabilityEvents.syncToClient(player);
+                    if (data.getCurrentQi() <= 0L) {
+                        player.setNoGravity(false);
+                        player.onUpdateAbilities();
+                        CapabilityEvents.syncToClient(player);
+                    }
+                }
             }
         } else {
             QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
+            if (player.isNoGravity() && !SwordFlightHandler.isActive(data) && !data.isVoidEscapeActive()) {
+                player.setNoGravity(false);
+                player.onUpdateAbilities();
+            }
         }
     }
 
@@ -224,9 +196,8 @@ public final class PassiveSpellHandler {
         if (player.isCreative() || player.isSpectator()) {
             return;
         }
-        if (player.getAbilities().mayfly || player.getAbilities().flying) {
-            player.getAbilities().mayfly = false;
-            player.getAbilities().flying = false;
+        if (player.isNoGravity()) {
+            player.setNoGravity(false);
             player.onUpdateAbilities();
         }
         QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
