@@ -2312,5 +2312,13 @@
   "race_sub.friday_cultivation.ghost_great_emperor": "鬼帝",
   "screen.friday_cultivation.breakthrough.great_emperor_requirement": "条件：曾亲手击杀过一位大帝生灵",
   "screen.friday_cultivation.breakthrough.great_emperor_requirement_met": "条件已满足：曾亲手击杀过一位大帝生灵",
-  "message.friday_cultivation.breakthrough.great_emperor_requirement": "突破大帝需先亲手击杀过一位大帝生灵"
+  "message.friday_cultivation.breakthrough.great_emperor_requirement": "突破大帝需先亲手击杀过一位大帝生灵",
+  "screen.friday_cultivation.breakthrough.create_imperial_art": "自创帝法",
+  "screen.friday_cultivation.breakthrough.imperial_art_requirement": "条件：自创并装备一门帝法（仅可自创，无法获得）",
+  "screen.friday_cultivation.breakthrough.imperial_art_not_equipped": "条件：已自创帝法「%s」，请装备",
+  "screen.friday_cultivation.breakthrough.imperial_art_met": "条件已满足：已装备自创帝法「%s」",
+  "message.friday_cultivation.imperial_art.created": "你自创了帝法「%s」并已自动装备",
+  "message.friday_cultivation.imperial_art.locked": "当前无法自创帝法",
+  "technique.friday_cultivation.imperial_art": "帝法",
+  "technique.friday_cultivation.imperial_art.desc": "自创帝法，威能盖世。攻击+20/防御+20/暴击+30/最大生命+100/修炼效率×15/灵气消耗减半/伤害减半。"
 }

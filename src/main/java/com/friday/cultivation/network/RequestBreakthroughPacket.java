@@ -72,8 +72,8 @@ public class RequestBreakthroughPacket {
                     return;
                 }
                 if (data.getRealm() == Realm.TRUE_IMMORTAL && data.getSubStage().isPeakFor(Realm.TRUE_IMMORTAL)) {
-                    // 突破大帝前置：须曾亲手击杀过一位大帝生灵（条件之一，后续可扩展）
-                    if (!data.hasKilledGreatEmperor()) {
+                    // 突破大帝前置：击杀过大帝生灵 + 装备自创帝法功法（后续条件可扩展）
+                    if (!data.canBreakthroughToGreatEmperor()) {
                         player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.breakthrough.great_emperor_requirement"), false);
                         return;
                     }

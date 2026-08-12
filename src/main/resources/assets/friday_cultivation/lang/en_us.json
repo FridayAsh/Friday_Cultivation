@@ -2312,5 +2312,13 @@
   "race_sub.friday_cultivation.ghost_great_emperor": "Ghost Emperor",
   "screen.friday_cultivation.breakthrough.great_emperor_requirement": "Requirement: have personally slain a Great Emperor being",
   "screen.friday_cultivation.breakthrough.great_emperor_requirement_met": "Requirement met: personally slain a Great Emperor being",
-  "message.friday_cultivation.breakthrough.great_emperor_requirement": "To break through to Great Emperor, you must first personally slay a Great Emperor being"
+  "message.friday_cultivation.breakthrough.great_emperor_requirement": "To break through to Great Emperor, you must first personally slay a Great Emperor being",
+  "screen.friday_cultivation.breakthrough.create_imperial_art": "Create Imperial Art",
+  "screen.friday_cultivation.breakthrough.imperial_art_requirement": "Requirement: create and equip your own Imperial Art (cannot be obtained, only self-created)",
+  "screen.friday_cultivation.breakthrough.imperial_art_not_equipped": "Requirement: created Imperial Art \"%s\", please equip it",
+  "screen.friday_cultivation.breakthrough.imperial_art_met": "Requirement met: equipped self-created Imperial Art \"%s\"",
+  "message.friday_cultivation.imperial_art.created": "You created the Imperial Art \"%s\" and equipped it",
+  "message.friday_cultivation.imperial_art.locked": "Cannot create Imperial Art now",
+  "technique.friday_cultivation.imperial_art": "Imperial Art",
+  "technique.friday_cultivation.imperial_art.desc": "Self-created Imperial Art. Atk+20/Def+20/Crit+30/Max HP+100/Cultivation x15/Half Qi cost/Half damage."
 }
