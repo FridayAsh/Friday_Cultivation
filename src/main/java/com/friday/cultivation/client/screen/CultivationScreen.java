@@ -3100,6 +3100,7 @@ extends Screen {
         }
         this.toggleSpellBtn.visible = true;
         boolean enabled = data.isSpellEnabled(sel);
+        this.toggleSpellBtn.setMessage((Component)Component.translatable((String)(enabled ? "screen.friday_cultivation.spell.toggle.disable" : "screen.friday_cultivation.spell.toggle.enable")));
     }
 
     private void updateSpellTerrainDestructionBtn(CultivationData data) {

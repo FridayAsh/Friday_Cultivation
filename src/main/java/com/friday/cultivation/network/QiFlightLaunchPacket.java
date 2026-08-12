@@ -33,20 +33,7 @@ public class QiFlightLaunchPacket {
                 return;
             }
             CultivationCapability.get((Player)player).ifPresent(data -> {
-                if (!PassiveSpellHandler.hasEnabledPassiveFlight(data)) {
-                    return;
-                }
-                if (!data.isSpellEnabled(Spell.QI_FLIGHT) || data.getCurrentQi() <= 0L) {
-                    return;
-                }
-                if (data.isSwordFlightActive() || data.isVoidEscapeActive()) {
-                    return;
-                }
-                player.getAbilities().mayfly = true;
-                player.getAbilities().flying = true;
-                player.getAbilities().setFlyingSpeed(0.05f);
-                player.fallDistance = 0.0f;
-                player.onUpdateAbilities();
+                PassiveSpellHandler.launchQiFlight(player, data);
             });
         });
         ctx.setPacketHandled(true);

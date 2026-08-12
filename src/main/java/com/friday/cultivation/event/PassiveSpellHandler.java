@@ -214,6 +214,30 @@ public final class PassiveSpellHandler {
         return PassiveSpellHandler.isGhostFlightActive(data) || data.isSpellEnabled(Spell.QI_FLIGHT) && data.getCurrentQi() > 0L;
     }
 
+    /**
+     * 灵气飞行起飞（由客户端双击空格包触发）：授权飞行并清空落地计数，
+     * 避免起飞瞬间被 onGround 落地逻辑立即取消。
+     */
+    public static void launchQiFlight(ServerPlayer player, CultivationData data) {
+        if (player == null || player.isCreative() || player.isSpectator()) {
+            return;
+        }
+        if (!PassiveSpellHandler.hasEnabledPassiveFlight(data)) {
+            return;
+        }
+        if (data.isSwordFlightActive() || data.isVoidEscapeActive()) {
+            return;
+        }
+        GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
+        QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
+        player.getAbilities().mayfly = true;
+        player.getAbilities().flying = true;
+        player.getAbilities().setFlyingSpeed(0.05f);
+        player.fallDistance = 0.0f;
+        player.onUpdateAbilities();
+        CapabilityEvents.syncToClient(player);
+    }
+
     private static void revokeQiFlight(ServerPlayer player) {
         if (player.isCreative() || player.isSpectator()) {
             return;

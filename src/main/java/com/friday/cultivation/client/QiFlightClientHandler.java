@@ -109,10 +109,8 @@ public final class QiFlightClientHandler {
         if (!data.isSpellEnabled(Spell.QI_FLIGHT) || data.getCurrentQi() <= 0L) {
             return;
         }
-        if (!player.getAbilities().mayfly) {
-            return;
-        }
-        // 客户端立即起飞（视觉响应），服务端同步确认
+        // 客户端立即起飞（视觉响应），服务端包负责授权 mayfly+flying 并同步
+        player.getAbilities().mayfly = true;
         player.getAbilities().flying = true;
         player.getAbilities().setFlyingSpeed(0.05f);
         player.onUpdateAbilities();
