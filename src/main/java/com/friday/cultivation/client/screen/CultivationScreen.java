@@ -645,7 +645,7 @@ extends Screen {
         this.breakthroughBtn.setX(splitX + 24);
         this.breakthroughBtn.setY(topY + 200 - 26);
         this.breakthroughBtn.setWidth(breakthroughW);
-        this.breakthroughBtn.visible = this.currentTab == Tab.BREAKTHROUGH && data.getRealm() != Realm.TRUE_IMMORTAL;
+        this.breakthroughBtn.visible = this.currentTab == Tab.BREAKTHROUGH && data.getRealm() != Realm.LOOSE_IMMORTAL;
         this.breakthroughBtn.active = data.canBreakthrough() && !data.isInTribulation() && this.isSelectedBreakthroughReady(data, player);
     }
 
@@ -674,7 +674,7 @@ extends Screen {
         FoundationDao fdao = data.getFoundationDao();
         String displayName = data.getCustomName().isEmpty() ? player.getName().getString() : data.getCustomName();
         MutableComponent genderVal = Component.translatable((String)(data.getGender() == 2 ? "screen.friday_cultivation.gender.female" : "screen.friday_cultivation.gender.male"));
-        MutableComponent realmValue = data.isLooseImmortal() ? Component.translatable((String)("realm.friday_cultivation.loose_immortal.level." + data.getLooseImmortalTribulations())) : (realm == Realm.MORTAL || realm == Realm.TRUE_IMMORTAL ? realm.displayName().copy() : Component.translatable((String)"screen.friday_cultivation.attr.id.realm_combined", (Object[])new Object[]{realm.displayName(), sub.displayName()}));
+        MutableComponent realmValue = data.isLooseImmortal() ? Component.translatable((String)("realm.friday_cultivation.loose_immortal.level." + data.getLooseImmortalTribulations())) : (realm == Realm.MORTAL ? realm.displayName().copy() : Component.translatable((String)"screen.friday_cultivation.attr.id.realm_combined", (Object[])new Object[]{realm.displayName(), sub.displayName()}));
         MutableComponent foundationVal = fdao == FoundationDao.NONE ? Component.literal((String)"\u2014") : Component.translatable((String)fdao.translationKey());
         String yearUnit = Component.translatable((String)"screen.friday_cultivation.attr.year_unit").getString();
         boolean nearImmortal = LifespanHelper.isNearImmortal(data);
@@ -1153,7 +1153,7 @@ extends Screen {
         int cx = x + width / 2;
         Realm realm = data.getRealm();
         SubStage sub = data.getSubStage();
-        MutableComponent realmValue = data.isLooseImmortal() ? Component.translatable((String)("realm.friday_cultivation.loose_immortal.level." + data.getLooseImmortalTribulations())) : (realm == Realm.MORTAL || realm == Realm.TRUE_IMMORTAL ? realm.displayName().copy() : Component.translatable((String)"screen.friday_cultivation.attr.id.realm_combined", (Object[])new Object[]{realm.displayName(), sub.displayName()}));
+        MutableComponent realmValue = data.isLooseImmortal() ? Component.translatable((String)("realm.friday_cultivation.loose_immortal.level." + data.getLooseImmortalTribulations())) : (realm == Realm.MORTAL ? realm.displayName().copy() : Component.translatable((String)"screen.friday_cultivation.attr.id.realm_combined", (Object[])new Object[]{realm.displayName(), sub.displayName()}));
         this.drawSmallCentered(gfx, (Component)realmValue, cx, y, -4703686);
         y += 12;
         if (data.isLooseImmortal()) {

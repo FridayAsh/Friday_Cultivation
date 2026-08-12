@@ -90,7 +90,7 @@ public final class CultivationHud {
         int x = CultivationHud.hudX(screenWidth);
         int y = 6;
         Realm realm = data.getRealm();
-        MutableComponent realmLine = data.isLooseImmortal() ? Component.translatable((String)"hud.friday_cultivation.realm", (Object[])new Object[]{Component.translatable((String)("realm.friday_cultivation.loose_immortal.level." + data.getLooseImmortalTribulations()))}) : (realm == Realm.MORTAL || realm == Realm.TRUE_IMMORTAL ? Component.translatable((String)"hud.friday_cultivation.realm", (Object[])new Object[]{realm.displayName()}) : Component.translatable((String)"hud.friday_cultivation.realm_full", (Object[])new Object[]{realm.displayName(), data.getSubStage().displayName()}));
+        MutableComponent realmLine = data.isLooseImmortal() ? Component.translatable((String)"hud.friday_cultivation.realm", (Object[])new Object[]{Component.translatable((String)("realm.friday_cultivation.loose_immortal.level." + data.getLooseImmortalTribulations()))}) : (realm == Realm.MORTAL ? Component.translatable((String)"hud.friday_cultivation.realm", (Object[])new Object[]{realm.displayName()}) : Component.translatable((String)"hud.friday_cultivation.realm_full", (Object[])new Object[]{realm.displayName(), data.getSubStage().displayName()}));
         long curQi = data.getCurrentQi();
         long maxQi = data.getMaxQi();
         long curCult = data.getCultivationProgress();

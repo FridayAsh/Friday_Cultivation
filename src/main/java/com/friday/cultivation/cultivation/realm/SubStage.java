@@ -90,22 +90,36 @@ public final class SubStage {
         return EARLY;
     }
 
-    /** realm 感知 byId：支持数字层 id（"1".."10"） */
+    /** realm 感知 byId：支持数字层 id（"1".."10"）及命名 id（"turn_1"/"heaven_1"/"dao_*"） */
     public static SubStage byId(String id, Realm realm) {
         if ("early".equals(id)) return EARLY;
         if ("middle".equals(id)) return MIDDLE;
         if ("late".equals(id)) return LATE;
         if ("peak".equals(id)) return PEAK;
-        try {
-            int lvl = Integer.parseInt(id);
-            SubStage s = realm.subStageAt(lvl);
-            if (s != null) return s;
+        if (realm != null) {
+            try {
+                if (id != null && (id.startsWith("turn_") || id.startsWith("heaven_"))) {
+                    int lvl = Integer.parseInt(id.substring(id.indexOf('_') + 1));
+                    SubStage s = realm.subStageAt(lvl);
+                    if (s != null) return s;
+                }
+                if (id != null && id.startsWith("dao_")) {
+                    for (int i = 1; i <= realm.subStageCount(); ++i) {
+                        SubStage s = realm.subStageAt(i);
+                        if (s != null && id.equals(s.id())) return s;
+                    }
+                }
+                int lvl = Integer.parseInt(id);
+                SubStage s = realm.subStageAt(lvl);
+                if (s != null) return s;
+            }
+            catch (NumberFormatException numberFormatException) {
+                // ignore
+            }
+            SubStage first = realm.firstSubStage();
+            return first != null ? first : EARLY;
         }
-        catch (NumberFormatException numberFormatException) {
-            // ignore
-        }
-        SubStage first = realm.firstSubStage();
-        return first != null ? first : EARLY;
+        return EARLY;
     }
 
     public boolean equals(Object o) {

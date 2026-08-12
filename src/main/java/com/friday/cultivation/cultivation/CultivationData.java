@@ -1840,7 +1840,10 @@ implements INBTSerializable<CompoundTag> {
     }
 
     public boolean canBreakthrough() {
-        if (this.realm == Realm.TRUE_IMMORTAL || this.realm == Realm.LOOSE_IMMORTAL) {
+        if (this.realm == Realm.LOOSE_IMMORTAL) {
+            return false;
+        }
+        if (this.realm == Realm.TRUE_IMMORTAL && this.subStage.isPeakFor(this.realm)) {
             return false;
         }
         if (this.isInTribulation()) {
@@ -1864,6 +1867,10 @@ implements INBTSerializable<CompoundTag> {
             return;
         }
         if (this.subStage.isPeakFor(this.realm)) {
+            if (this.realm == Realm.TRUE_IMMORTAL) {
+                this.currentQi = this.getMaxQi();
+                return;
+            }
             Realm n = this.realm.next();
             if (n != this.realm) {
                 this.realm = n;

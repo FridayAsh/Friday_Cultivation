@@ -43,16 +43,19 @@ public enum Realm {
     /** 该境界的子阶段档数 */
     public int subStageCount() {
         return switch (this) {
-            case MORTAL, TRUE_IMMORTAL, LOOSE_IMMORTAL -> 1;
+            case MORTAL, LOOSE_IMMORTAL -> 1;
             case BODY_TEMPERING -> 10;
             case QI_REFINING -> 9;
-            case FOUNDATION_BUILDING, GOLDEN_CORE, NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE -> 4;
+            case GOLDEN_CORE -> 9;
+            case BODY_INTEGRATION -> 5;
+            case TRUE_IMMORTAL -> 9;
+            case FOUNDATION_BUILDING, NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, MAHAYANA, TRIBULATION_TRANSCENDENCE -> 4;
         };
     }
 
     /** 是否使用数字层（1-based） */
     public boolean usesNumericLevels() {
-        return this == BODY_TEMPERING || this == QI_REFINING;
+        return this == BODY_TEMPERING || this == QI_REFINING || this == GOLDEN_CORE || this == BODY_INTEGRATION || this == TRUE_IMMORTAL;
     }
 
     /** 获取该境界第 level 层的 SubStage（数字层 1-based；4 档 0-3；越界返回 null） */
@@ -63,7 +66,23 @@ public enum Realm {
         if (this == QI_REFINING) {
             return level >= 1 && level <= 9 ? new SubStage(Integer.toString(level), level) : null;
         }
-        if (this == MORTAL || this == TRUE_IMMORTAL || this == LOOSE_IMMORTAL) {
+        if (this == GOLDEN_CORE) {
+            return level >= 1 && level <= 9 ? new SubStage("turn_" + level, level) : null;
+        }
+        if (this == BODY_INTEGRATION) {
+            return switch (level) {
+                case 1 -> new SubStage("dao_entry", 1);
+                case 2 -> new SubStage("dao_imperial", 2);
+                case 3 -> new SubStage("dao_union", 3);
+                case 4 -> new SubStage("dao_domain", 4);
+                case 5 -> new SubStage("dao_boundary", 5);
+                default -> null;
+            };
+        }
+        if (this == TRUE_IMMORTAL) {
+            return level >= 1 && level <= 9 ? new SubStage("heaven_" + level, level) : null;
+        }
+        if (this == MORTAL || this == LOOSE_IMMORTAL) {
             return SubStage.EARLY;
         }
         return switch (level) {
@@ -93,9 +112,6 @@ public enum Realm {
         if (this == MORTAL) {
             return 0;
         }
-        if (this == TRUE_IMMORTAL) {
-            return 37;
-        }
         if (this == LOOSE_IMMORTAL) {
             return 38;
         }
@@ -104,7 +120,11 @@ public enum Realm {
             if (r == this) {
                 break;
             }
-            acc += Math.max(1, r.subStageCount());
+            if (r == MORTAL || r == LOOSE_IMMORTAL) {
+                acc += 1;
+            } else {
+                acc += r.subStageCount();
+            }
         }
         int idx = subStage == null ? 0 : subStage.level();
         if (this.usesNumericLevels()) {
@@ -124,8 +144,17 @@ public enum Realm {
             int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
             return 100 * lvl;
         }
+        if (this == GOLDEN_CORE) {
+            int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
+            return 2200 + 1000 + (lvl - 1) * 100;
+        }
+        if (this == BODY_INTEGRATION) {
+            int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
+            return 7400 + 1000 + (lvl - 1) * 100;
+        }
         if (this == TRUE_IMMORTAL) {
-            return 20900;
+            int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
+            return 19000 + lvl * 200;
         }
         if (this == LOOSE_IMMORTAL) {
             return 18000;
@@ -278,16 +307,39 @@ public enum Realm {
                 }
                 yield 1;
             }
-            case GOLDEN_CORE, NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, BODY_INTEGRATION, TRIBULATION_TRANSCENDENCE -> 9;
+            case GOLDEN_CORE, NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, TRIBULATION_TRANSCENDENCE -> 9;
+            // 合道五境按小境界分配波数：入境 5 波起，每境 +1 波（入境5/御境6/合境7/域境8/界境9）
+            case BODY_INTEGRATION -> {
+                if (stage != null && stage.level() >= 1 && stage.level() <= 5) {
+                    yield 4 + stage.level();
+                }
+                yield 9;
+            }
             case MAHAYANA -> 0;
-            case LOOSE_IMMORTAL, TRUE_IMMORTAL -> -1;
+            case LOOSE_IMMORTAL -> -1;
+            case TRUE_IMMORTAL -> {
+                // 真仙每 3 重天渡劫一次：三重天→四重天 3波×9道，六重天→七重天 6波×9道
+                // 九重天圆满 9波×9道：当前九重天封顶无法突破，暂不生效；
+                // 预留接口——后续接入新境界（放开 canBreakthrough/advanceOnSuccess 封顶）后自动生效
+                if (stage != null && stage.level() == 3) {
+                    yield 3;
+                }
+                if (stage != null && stage.level() == 6) {
+                    yield 6;
+                }
+                if (stage != null && stage.level() == 9) {
+                    yield 9;
+                }
+                yield 0;
+            }
         };
     }
 
     public int tribulationBoltsPerWave(SubStage stage) {
         return switch (this) {
             case GOLDEN_CORE -> {
-                if (stage != null && stage == SubStage.PEAK) {
+                // 金丹九转（圆满）时每波 3 道，其余各转每波 1 道
+                if (stage != null && stage.isPeakFor(this)) {
                     yield 3;
                 }
                 yield 1;
@@ -307,6 +359,8 @@ public enum Realm {
             }
             case BODY_INTEGRATION -> 8;
             case TRIBULATION_TRANSCENDENCE -> 9;
+            // 真仙渡劫每波 9 道（配合 tribulationCount：3重天 3波、6重天 6波、9重天 9波 → 27/54/81 道）
+            case TRUE_IMMORTAL -> 9;
             default -> 1;
         };
     }
@@ -324,7 +378,8 @@ public enum Realm {
             case BODY_INTEGRATION -> 90;
             case MAHAYANA -> 0;
             case TRIBULATION_TRANSCENDENCE -> 150;
-            case LOOSE_IMMORTAL, TRUE_IMMORTAL -> 0;
+            case TRUE_IMMORTAL -> 180;
+            case LOOSE_IMMORTAL -> 0;
         };
     }
 
