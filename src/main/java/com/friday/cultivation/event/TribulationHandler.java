@@ -49,7 +49,6 @@ import com.friday.cultivation.event.LooseImmortalHandler;
 import com.friday.cultivation.event.NascentSoulOutOfBodyHandler;
 import com.friday.cultivation.event.SectProtectionDomeHandler;
 import com.friday.cultivation.event.SpiritLockHandler;
-import com.friday.cultivation.event.SwordFlightHandler;
 import com.friday.cultivation.event.TimeStasisHandler;
 import com.friday.cultivation.event.VoidEscapeHandler;
 import com.friday.cultivation.network.ModNetwork;
@@ -416,7 +415,6 @@ public final class TribulationHandler {
         data.clearCharging();
         data.setMeditating(false);
         NascentSoulOutOfBodyHandler.stopIfActive(player, false);
-        SwordFlightHandler.stopIfActive(player, data, false);
         SpiritLockHandler.clearEntityLock((Entity)player);
         TimeStasisHandler.clearEntityRuntime((Entity)player);
     }

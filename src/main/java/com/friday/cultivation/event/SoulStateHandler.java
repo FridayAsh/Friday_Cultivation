@@ -68,7 +68,6 @@ import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.event.LooseImmortalHandler;
 import com.friday.cultivation.event.SoulHookHandler;
 import com.friday.cultivation.event.SoulReaperOrderHandler;
-import com.friday.cultivation.event.SwordFlightHandler;
 import com.friday.cultivation.event.TribulationHandler;
 import com.friday.cultivation.network.DeathChoicePacket;
 import com.friday.cultivation.network.ModNetwork;
@@ -819,7 +818,6 @@ public final class SoulStateHandler {
         boolean requiresDeathChoice = showDeathSequence && player.level().dimension() != ModDimensions.DIFU;
         player.stopRiding();
         data.setMeditating(false);
-        SwordFlightHandler.stopIfActive(player, data, false);
         data.setSoulState(true);
         TechniqueLoadoutHelper.NormalizationResult techniqueResult = TechniqueLoadoutHelper.normalizeForCurrentState(data, player.getRandom());
         TechniqueLoadoutHelper.notifyNormalization(player, data, techniqueResult);
@@ -1023,7 +1021,6 @@ public final class SoulStateHandler {
             player2.setHealth(player2.getMaxHealth());
         }
         boolean inDifu = player2.level().dimension() == ModDimensions.DIFU;
-        SwordFlightHandler.stopIfActive(player2, data, false);
         SoulStateHandler.handleSoulPhaseMovement(player2, inDifu, data);
         if (player2.tickCount % 20 == 0) {
             SoulStateHandler.clearHostileAggro(player2);
