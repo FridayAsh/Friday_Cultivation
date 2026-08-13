@@ -142,15 +142,19 @@ public final class PassiveSpellHandler {
             QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
             return;
         }
-        boolean qiFlightEnabled = data.isQiFlightActive();
+        boolean qiFlightEnabled = data.isSpellEnabled(Spell.QI_FLIGHT) && data.isQiFlightActive();
         boolean ghostFlightEnabled = PassiveSpellHandler.isGhostFlightActive(data);
         boolean hasQi = data.getCurrentQi() > 0L;
-        // 自写飞行：不依赖 mayfly/flying（绕过 Caelus 飞行管理），
-        // 灵气飞行已显式激活（双击空格）且有灵气时悬浮（setNoGravity），客户端输入包控制运动
-        boolean shouldHover = qiFlightEnabled || ghostFlightEnabled;
-        if (shouldHover && hasQi) {
-            if (!player.isNoGravity()) {
-                player.setNoGravity(true);
+        // DivineArsenal 式飞行：灵气飞行已显式激活且有灵气时每 tick 强制授权 mayfly，
+        // 玩家按空格即自然起飞上升（MC 原生飞行行为）；取消/灵气耗尽时移除
+        boolean shouldFly = (qiFlightEnabled || ghostFlightEnabled) && hasQi;
+        if (shouldFly) {
+            if (!player.getAbilities().mayfly) {
+                player.getAbilities().mayfly = true;
+                player.onUpdateAbilities();
+            }
+            if (Math.abs(player.getAbilities().getFlyingSpeed() - 0.05f) > 1.0E-4f) {
+                player.getAbilities().setFlyingSpeed(0.05f);
                 player.onUpdateAbilities();
             }
             player.fallDistance = 0.0f;
@@ -163,7 +167,8 @@ public final class PassiveSpellHandler {
                     data.setCurrentQi(data.getCurrentQi() - drain);
                     CapabilityEvents.syncToClient(player);
                     if (data.getCurrentQi() <= 0L) {
-                        player.setNoGravity(false);
+                        player.getAbilities().mayfly = false;
+                        player.getAbilities().flying = false;
                         player.onUpdateAbilities();
                         CapabilityEvents.syncToClient(player);
                     }
@@ -171,8 +176,9 @@ public final class PassiveSpellHandler {
             }
         } else {
             QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
-            if (player.isNoGravity() && !SwordFlightHandler.isActive(data) && !data.isVoidEscapeActive()) {
-                player.setNoGravity(false);
+            if (!player.isCreative() && !player.isSpectator() && player.getAbilities().mayfly && !SwordFlightHandler.isActive(data) && !data.isVoidEscapeActive()) {
+                player.getAbilities().mayfly = false;
+                player.getAbilities().flying = false;
                 player.onUpdateAbilities();
             }
         }
