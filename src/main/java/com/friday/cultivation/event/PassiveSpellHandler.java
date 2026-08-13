@@ -142,7 +142,7 @@ public final class PassiveSpellHandler {
             QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
             return;
         }
-        boolean qiFlightEnabled = data.isSpellEnabled(Spell.QI_FLIGHT) && data.isQiFlightActive();
+        boolean qiFlightEnabled = data.isSpellEnabled(Spell.QI_FLIGHT);
         boolean ghostFlightEnabled = PassiveSpellHandler.isGhostFlightActive(data);
         boolean hasQi = data.getCurrentQi() > 0L;
         // DivineArsenal 式飞行：灵气飞行已显式激活且有灵气时每 tick 强制授权 mayfly，
@@ -192,7 +192,7 @@ public final class PassiveSpellHandler {
         if (data == null) {
             return false;
         }
-        return PassiveSpellHandler.isGhostFlightActive(data) || data.isQiFlightActive() && data.getCurrentQi() > 0L;
+        return PassiveSpellHandler.isGhostFlightActive(data) || data.isSpellEnabled(Spell.QI_FLIGHT) && data.getCurrentQi() > 0L;
     }
 
     /**

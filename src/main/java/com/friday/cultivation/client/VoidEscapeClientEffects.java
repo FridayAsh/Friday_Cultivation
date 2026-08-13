@@ -419,7 +419,7 @@ public final class VoidEscapeClientEffects {
         if (data == null) {
             return false;
         }
-        return data.isSoulState() && data.isSpellEnabled(Spell.GHOST_FLIGHT) || data.isQiFlightActive() && data.getCurrentQi() > 0L;
+        return data.isSoulState() && data.isSpellEnabled(Spell.GHOST_FLIGHT) || data.isSpellEnabled(Spell.QI_FLIGHT) && data.getCurrentQi() > 0L;
     }
 
     private static boolean isLocalPlayer(Player player) {

@@ -84,7 +84,6 @@ implements INBTSerializable<CompoundTag> {
     private int chargingEntityId = -1;
     private ItemStack swordFlightStack = ItemStack.EMPTY;
     private int swordFlightOriginalSlot = -1;
-    private boolean qiFlightActive = false;
     private boolean voidEscapeActive = false;
     private int voidEscapeStability = 0;
     private QiElement inverseFiveElementMark = QiElement.PURE;
@@ -1752,14 +1751,6 @@ implements INBTSerializable<CompoundTag> {
         return !this.swordFlightStack.isEmpty();
     }
 
-    /** 灵气飞行是否已显式激活（双击空格切换，类似创造模式） */
-    public boolean isQiFlightActive() {
-        return this.qiFlightActive;
-    }
-
-    public void setQiFlightActive(boolean active) {
-        this.qiFlightActive = active;
-    }
 
     public ItemStack getSwordFlightStack() {
         return this.swordFlightStack;
@@ -2137,7 +2128,6 @@ implements INBTSerializable<CompoundTag> {
         this.chargingEntityId = -1;
         this.swordFlightStack = other.swordFlightStack.copy();
         this.swordFlightOriginalSlot = other.swordFlightOriginalSlot;
-        this.qiFlightActive = other.qiFlightActive;
         this.voidEscapeActive = other.voidEscapeActive;
         this.voidEscapeStability = other.voidEscapeStability;
         this.inverseFiveElementMark = other.inverseFiveElementMark;
@@ -2422,7 +2412,6 @@ implements INBTSerializable<CompoundTag> {
         this.swordFlightStack = tag.contains("swordFlightStack", 10) ? ItemStack.of((CompoundTag)tag.getCompound("swordFlightStack")) : ItemStack.EMPTY;
         this.swordFlightOriginalSlot = tag.contains("swordFlightOriginalSlot", 3) ? tag.getInt("swordFlightOriginalSlot") : -1;
         // 灵气飞行状态随数据同步（syncToClient 传输），存档亦保留；登录时由 CapabilityEvents 重置
-        this.qiFlightActive = tag.contains("qiFlightActive", 99) && tag.getBoolean("qiFlightActive");
         this.voidEscapeActive = tag.getBoolean("voidEscapeActive");
         this.voidEscapeStability = tag.contains("voidEscapeStability", 3) ? tag.getInt("voidEscapeStability") : 0;
         this.inverseFiveElementMark = tag.contains("inverseFiveElementMark", 8) ? QiElement.byId(tag.getString("inverseFiveElementMark")) : QiElement.PURE;

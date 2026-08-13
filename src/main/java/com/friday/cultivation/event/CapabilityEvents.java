@@ -67,8 +67,6 @@ public final class CapabilityEvents {
                 data.clearCharging();
                 data.applyZhenyuanMajorAutoRebalanceMigration();
                 CapabilityEvents.applySpellTerrainRuleSnapshot(data, true);
-                // 登录时重置飞行状态（灵气飞行/御剑飞行为临时状态，不跨会话保留）
-                data.setQiFlightActive(false);
                 if (data.isSwordFlightActive()) {
                     data.clearSwordFlight();
                 }

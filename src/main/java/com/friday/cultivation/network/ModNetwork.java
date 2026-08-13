@@ -46,7 +46,6 @@ import com.friday.cultivation.network.OpenSectScreenPacket;
 import com.friday.cultivation.network.OriginRandomizedPacket;
 import com.friday.cultivation.network.PalmThunderVisualPacket;
 import com.friday.cultivation.network.QiAbsorbedPacket;
-import com.friday.cultivation.network.QiFlightTogglePacket;
 import com.friday.cultivation.network.QiShieldHitPacket;
 import com.friday.cultivation.network.RealmPressureVisualPacket;
 import com.friday.cultivation.network.ReincarnationChoicePacket;
@@ -196,7 +195,6 @@ public final class ModNetwork {
         CHANNEL.registerMessage(id++, TrackSectTaskIssuerPacket.class, TrackSectTaskIssuerPacket::encode, TrackSectTaskIssuerPacket::decode, TrackSectTaskIssuerPacket::handle);
         CHANNEL.registerMessage(id++, CreateImperialArtPacket.class, CreateImperialArtPacket::encode, CreateImperialArtPacket::decode, CreateImperialArtPacket::handle);
         CHANNEL.registerMessage(id++, FlightInputPacket.class, FlightInputPacket::encode, FlightInputPacket::decode, FlightInputPacket::handle);
-CHANNEL.registerMessage(id++, QiFlightTogglePacket.class, QiFlightTogglePacket::encode, QiFlightTogglePacket::decode, QiFlightTogglePacket::handle);
     }
 }
 

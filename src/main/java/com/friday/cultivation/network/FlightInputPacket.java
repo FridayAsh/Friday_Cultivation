@@ -2,6 +2,7 @@ package com.friday.cultivation.network;
 
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
+import com.friday.cultivation.cultivation.spell.Spell;
 import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -45,7 +46,7 @@ public class FlightInputPacket {
                 return;
             }
             CultivationCapability.get((Player)player).ifPresent(data -> {
-                if (!data.isQiFlightActive() || data.getCurrentQi() <= 0L) {
+                if (!data.isSpellEnabled(Spell.QI_FLIGHT) || data.getCurrentQi() <= 0L) {
                     return;
                 }
                 Vec3 motion = player.getDeltaMovement();
