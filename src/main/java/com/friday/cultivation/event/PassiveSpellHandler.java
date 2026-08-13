@@ -138,15 +138,11 @@ public final class PassiveSpellHandler {
             QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
             return;
         }
-        if (SwordFlightHandler.isActive(data)) {
-            QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
-            return;
-        }
         boolean qiFlightEnabled = data.isSpellEnabled(Spell.QI_FLIGHT);
         boolean ghostFlightEnabled = PassiveSpellHandler.isGhostFlightActive(data);
         boolean hasQi = data.getCurrentQi() > 0L;
-        // DivineArsenal 式飞行：灵气飞行已显式激活且有灵气时每 tick 强制授权 mayfly，
-        // 玩家按空格即自然起飞上升（MC 原生飞行行为）；取消/灵气耗尽时移除
+        // 灵气飞行独立判定：已学习且启用（isSpellEnabled）且有灵气时授权 mayfly。
+        // 御剑飞行另由 SwordFlightHandler 独立判定授权，两者互不拦截。
         boolean shouldFly = (qiFlightEnabled || ghostFlightEnabled) && hasQi;
         if (shouldFly) {
             if (!player.getAbilities().mayfly) {

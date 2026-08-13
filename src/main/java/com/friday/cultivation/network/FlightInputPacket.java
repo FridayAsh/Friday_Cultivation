@@ -46,7 +46,9 @@ public class FlightInputPacket {
                 return;
             }
             CultivationCapability.get((Player)player).ifPresent(data -> {
-                if (!data.isSpellEnabled(Spell.QI_FLIGHT) || data.getCurrentQi() <= 0L) {
+                boolean swordFlight = data.isSwordFlightActive();
+                boolean qiFlight = data.isSpellEnabled(Spell.QI_FLIGHT) && data.getCurrentQi() > 0L;
+                if (!swordFlight && !qiFlight) {
                     return;
                 }
                 Vec3 motion = player.getDeltaMovement();

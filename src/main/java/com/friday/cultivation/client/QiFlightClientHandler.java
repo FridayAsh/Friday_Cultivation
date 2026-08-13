@@ -58,7 +58,7 @@ public final class QiFlightClientHandler {
         }
     }
 
-    /** 灵气飞行可用（已启用且灵气>0）——替代 DivineArsenal 的套装穿戴检查 */
+    /** 修仙飞行可用（御剑激活 或 灵气飞行启用且灵气>0）——替代 DivineArsenal 的套装穿戴检查 */
     private static boolean canQiFlight(Player player) {
         if (player == null || player.isCreative() || player.isSpectator()) {
             return false;
@@ -67,6 +67,6 @@ public final class QiFlightClientHandler {
         if (data == null) {
             return false;
         }
-        return data.isSpellEnabled(Spell.QI_FLIGHT) && data.getCurrentQi() > 0L;
+        return data.isSwordFlightActive() || data.isSpellEnabled(Spell.QI_FLIGHT) && data.getCurrentQi() > 0L;
     }
 }

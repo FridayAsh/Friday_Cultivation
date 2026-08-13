@@ -83,16 +83,7 @@ public final class SwordFlightHandler {
             SwordFlightHandler.stop(player, data, false);
             return;
         }
-        // 已离地标记：一旦不在空中（onGround=false）则记入
-        if (!player.onGround()) {
-            SwordFlightHandler.AIRBORNE.add(player.getUUID());
-        }
-        // 落地检测：曾离地后回到地面且无上升动量 → 自动结束御剑飞行并归还剑
-        if (SwordFlightHandler.AIRBORNE.contains(player.getUUID()) && player.onGround() && player.getDeltaMovement().y <= 0.0) {
-            SwordFlightHandler.AIRBORNE.remove(player.getUUID());
-            SwordFlightHandler.stop(player, data, false);
-            return;
-        }
+        // 御剑飞行独立判定：激活（剑被取走）即授权 mayfly，MC 原生按空格飞行
         SwordFlightHandler.enableFlight(player);
         player.fallDistance = 0.0f;
         if (data.getCurrentQi() <= 0L) {
@@ -140,7 +131,9 @@ public final class SwordFlightHandler {
         data.clearSwordFlight();
         SwordFlightHandler.returnSword(player, sword, originalSlot);
         if (!(player.isCreative() || player.isSpectator() || !RealmPressureHandler.isSuppressed((LivingEntity)player) && (data.isSpellEnabled(Spell.QI_FLIGHT) || data.isVoidEscapeActive() || data.isSoulState()))) {
-            player.setNoGravity(false);
+            player.getAbilities().mayfly = false;
+            player.getAbilities().flying = false;
+            player.onUpdateAbilities();
         }
         player.fallDistance = 0.0f;
         player.containerMenu.broadcastChanges();
@@ -151,10 +144,11 @@ public final class SwordFlightHandler {
     }
 
     private static void enableFlight(ServerPlayer player) {
-        // 自写飞行：不依赖 mayfly/flying（绕过 Caelus 飞行管理），
-        // 用 setNoGravity 悬浮 + FlightInputPacket 控制运动
-        player.setNoGravity(true);
-        player.fallDistance = 0.0f;
+        player.getAbilities().flying = true;
+        player.getAbilities().mayfly = true;
+        if (Math.abs(player.getAbilities().getFlyingSpeed() - 0.05f) > 1.0E-4f) {
+            player.getAbilities().setFlyingSpeed(0.05f);
+        }
         player.onUpdateAbilities();
     }
 
