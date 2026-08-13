@@ -29,6 +29,8 @@ import net.minecraft.world.phys.Vec3;
 public final class SwordFlightHandler {
     private static final float FLYING_SPEED = 0.05f;
     private static final double TAKEOFF_UPWARD_SPEED = 0.42;
+    /** 记录玩家是否已真正离地（用于落地判定，避免起飞瞬间误停） */
+    private static final java.util.Set<java.util.UUID> AIRBORNE = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
 
     private SwordFlightHandler() {
     }
@@ -61,6 +63,9 @@ public final class SwordFlightHandler {
         data.startSwordFlight(ridingSword, slot);
         SwordFlightHandler.enableFlight(player);
         SwordFlightHandler.liftPlayerIntoFlight(player);
+        if (!player.onGround()) {
+            SwordFlightHandler.AIRBORNE.add(player.getUUID());
+        }
         player.containerMenu.broadcastChanges();
         CapabilityEvents.syncToClient(player);
         player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.sword_flight.started"), true);
@@ -75,6 +80,16 @@ public final class SwordFlightHandler {
             return;
         }
         if (RealmPressureHandler.isSuppressed((LivingEntity)player)) {
+            SwordFlightHandler.stop(player, data, false);
+            return;
+        }
+        // 已离地标记：一旦不在空中（onGround=false）则记入
+        if (!player.onGround()) {
+            SwordFlightHandler.AIRBORNE.add(player.getUUID());
+        }
+        // 落地检测：曾离地后回到地面且无上升动量 → 自动结束御剑飞行并归还剑
+        if (SwordFlightHandler.AIRBORNE.contains(player.getUUID()) && player.onGround() && player.getDeltaMovement().y <= 0.0) {
+            SwordFlightHandler.AIRBORNE.remove(player.getUUID());
             SwordFlightHandler.stop(player, data, false);
             return;
         }
@@ -119,6 +134,7 @@ public final class SwordFlightHandler {
         if (data == null || !data.isSwordFlightActive()) {
             return;
         }
+        SwordFlightHandler.AIRBORNE.remove(player.getUUID());
         ItemStack sword = data.getSwordFlightStack().copy();
         int originalSlot = data.getSwordFlightOriginalSlot();
         data.clearSwordFlight();

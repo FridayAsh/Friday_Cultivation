@@ -57,16 +57,14 @@ public final class QiFlightClientHandler {
         if (!QiFlightClientHandler.isFlightActive(player)) {
             return;
         }
-        // 每 2 tick 发送输入状态，降低网络开销
+        // 每 2 tick 无条件发送输入状态（含全部松开），保证服务端持续收到运动衰减/落地判定
         if (++QiFlightClientHandler.inputTickCounter % 2 != 0) {
             return;
         }
         boolean jump = mc.options.keyJump.isDown();
         boolean sprint = mc.options.keySprint.isDown();
         boolean sneak = mc.options.keyShift.isDown();
-        if (jump || sprint || sneak) {
-            ModNetwork.CHANNEL.sendToServer((Object)new FlightInputPacket(jump, sprint, sneak));
-        }
+        ModNetwork.CHANNEL.sendToServer((Object)new FlightInputPacket(jump, sprint, sneak));
     }
 
     /** 御剑飞行或灵气飞行激活（客户端数据判断） */

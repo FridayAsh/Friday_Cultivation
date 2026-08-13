@@ -149,6 +149,16 @@ public final class PassiveSpellHandler {
         // 灵气飞行启用且有灵气时悬浮（setNoGravity），客户端输入包控制运动
         boolean shouldHover = qiFlightEnabled || ghostFlightEnabled;
         if (shouldHover && hasQi) {
+            // 落地检测：已离地过（曾悬浮）且回到地面且无上升动量 → 停止悬浮恢复重力
+            boolean wasFlying = QI_FLIGHT_FLYING_TICKS.containsKey(player.getUUID());
+            if (wasFlying && player.onGround() && player.getDeltaMovement().y <= 0.0) {
+                QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
+                if (player.isNoGravity()) {
+                    player.setNoGravity(false);
+                    player.onUpdateAbilities();
+                }
+                return;
+            }
             if (!player.isNoGravity()) {
                 player.setNoGravity(true);
                 player.onUpdateAbilities();

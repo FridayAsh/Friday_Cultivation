@@ -50,25 +50,31 @@ public class FlightInputPacket {
                     return;
                 }
                 Vec3 motion = player.getDeltaMovement();
+                // 按住跳跃：上升（每次基于最新垂直速度，避免旧值叠加失真）
                 if (msg.jumpHeld) {
-                    player.setDeltaMovement(motion.add(0.0, 0.12, 0.0));
+                    motion = motion.add(0.0, 0.12, 0.0);
                 } else {
-                    // 松开跳跃：垂直速度缓慢归零，实现悬浮稳定
+                    // 松开跳跃：垂直速度缓慢归零，实现稳定悬浮
                     double vy = motion.y;
                     if (Math.abs(vy) > 0.001) {
-                        player.setDeltaMovement(motion.x, vy * 0.6, motion.z);
+                        motion = motion.add(0.0, -vy * 0.4, 0.0);
                     }
                 }
+                // 按住潜行：主动下降（每次基于最新垂直速度）
+                if (msg.sneakHeld) {
+                    motion = motion.add(0.0, -0.12, 0.0);
+                }
+                // 按住疾跑：沿视线方向加速（基于最新速度）
                 if (msg.sprintHeld) {
                     Vec3 look = player.getLookAngle();
-                    player.setDeltaMovement(motion.add(look.x * 0.8, look.y * 0.8, look.z * 0.8));
+                    motion = motion.add(look.x * 0.8, look.y * 0.8, look.z * 0.8);
                 }
-                if (msg.sneakHeld) {
-                    player.setDeltaMovement(motion.multiply(0.5, 0.3, 0.5));
-                }
+                // 下落速度钳制，防止突然坠地
                 if (motion.y < -0.5) {
-                    player.setDeltaMovement(motion.x, -0.5, motion.z);
+                    motion = new Vec3(motion.x, -0.5, motion.z);
                 }
+                player.setDeltaMovement(motion);
+                player.fallDistance = 0.0f;
                 player.hurtMarked = true;
             });
         });
