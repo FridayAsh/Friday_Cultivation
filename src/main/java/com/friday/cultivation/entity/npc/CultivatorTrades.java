@@ -242,6 +242,7 @@ public final class CultivatorTrades {
             case HIGH -> new ItemStack((ItemLike)ModItems.HIGH_SPIRIT_STONE.get(), 5);
             case SUPREME -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 4);
             case IMMORTAL -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 16);
+            case GREAT_EMPEROR -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 64);
         };
     }
 
@@ -397,6 +398,7 @@ public final class CultivatorTrades {
             case HIGH -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 1);
             case SUPREME -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 8);
             case IMMORTAL -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 32);
+            case GREAT_EMPEROR -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 128);
         };
     }
 
@@ -409,6 +411,7 @@ public final class CultivatorTrades {
             case HIGH -> new ItemStack(passive ? (ItemLike)ModItems.SUPREME_SPIRIT_STONE.get() : (ItemLike)ModItems.HIGH_SPIRIT_STONE.get(), passive ? 1 : 5);
             case SUPREME -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), passive ? 5 : 3);
             case IMMORTAL -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), passive ? 32 : 16);
+            case GREAT_EMPEROR -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), passive ? 128 : 64);
         };
     }
 }

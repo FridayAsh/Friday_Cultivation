@@ -1312,6 +1312,7 @@ public final class SectProtectionDomeHandler {
             case HIGH -> 0.3;
             case SUPREME -> 0.5;
             case IMMORTAL -> 1.0;
+            case GREAT_EMPEROR -> 1.0;
         };
         if (reflectPct > 0.0 && (reflectAmt = (float)((double)blockedDmg * reflectPct)) > 0.0f) {
             livingAtk.hurt(victim.damageSources().magic(), reflectAmt);

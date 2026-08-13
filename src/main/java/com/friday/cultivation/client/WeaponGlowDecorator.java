@@ -54,6 +54,15 @@ implements IItemDecorator {
         if (tier == ItemTier.IMMORTAL) {
             return 16726559;
         }
+        if (tier == ItemTier.GREAT_EMPEROR) {
+            // 帝兵背景光效：金红闪烁（金→橙→红循环）
+            long time = Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0L;
+            double t = (double)(time % 60L) / 60.0;
+            if (t < 0.5) {
+                return 16755200; // 金
+            }
+            return 16732160; // 红橙
+        }
         Integer rgbObj = TooltipUtils.tierFormatting(tier).getColor();
         return rgbObj == null ? 0xFFFFFF : rgbObj & 0xFFFFFF;
     }

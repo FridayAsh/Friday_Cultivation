@@ -22,9 +22,12 @@ import com.friday.cultivation.cultivation.ItemTier;
 import com.friday.cultivation.cultivation.QiElement;
 import com.friday.cultivation.event.SoulStateHandler;
 import com.friday.cultivation.item.weapon.TieredWeapon;
+import com.friday.cultivation.util.ShimmerColors;
 import com.friday.cultivation.util.TooltipUtils;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
@@ -62,6 +65,7 @@ implements TieredWeapon {
             case HIGH -> Rarity.RARE;
             case SUPREME -> Rarity.EPIC;
             case IMMORTAL -> Rarity.EPIC;
+            case GREAT_EMPEROR -> Rarity.EPIC;
         };
     }
 
@@ -102,11 +106,20 @@ implements TieredWeapon {
 
     @NotNull
     public Component getName(@NotNull ItemStack stack) {
+        if (this.tier == ItemTier.GREAT_EMPEROR) {
+            return ShimmerColors.buildShimmeringName(Component.translatable((String)this.getDescriptionId(stack)).getString(), ShimmerColors.DIVINE_FLAME);
+        }
         return TooltipUtils.tieredName((Component)Component.translatable((String)this.getDescriptionId(stack)), this.tier);
     }
 
     public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
-        tooltip.add((Component)TooltipUtils.tierElementLine(this.tier, this.element));
+        if (this.tier == ItemTier.GREAT_EMPEROR) {
+            // [帝兵] [元素]：帝兵品阶用金红流动，元素标签保留
+            MutableComponent tierBadge = Component.literal((String)"[").withStyle(ChatFormatting.DARK_GRAY).append(ShimmerColors.buildShimmeringName(Component.translatable((String)"item_tier.friday_cultivation.great_emperor_weapon").getString(), ShimmerColors.DIVINE_FLAME)).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.empty().append((Component)tierBadge).append((Component)Component.literal((String)" ")).append((Component)TooltipUtils.elementBadge(this.element)));
+        } else {
+            tooltip.add((Component)TooltipUtils.tierElementLine(this.tier, this.element));
+        }
         TooltipUtils.addBlank(tooltip);
         TooltipUtils.addSection(tooltip, "tooltip.friday_cultivation.section.stats");
         tooltip.add((Component)TooltipUtils.costLine((Component)Component.translatable((String)"tooltip.friday_cultivation.weapon.attack", (Object[])new Object[]{this.attackDamage})));

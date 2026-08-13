@@ -181,6 +181,10 @@ public enum Spell {
                     key = "true_immortal_self_destruct";
                     break;
                 }
+                case GREAT_EMPEROR: {
+                    key = "great_emperor_self_destruct";
+                    break;
+                }
                 case LOOSE_IMMORTAL: {
                     key = "loose_immortal_self_destruct";
                     break;

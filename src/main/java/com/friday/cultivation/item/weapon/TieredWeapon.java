@@ -21,6 +21,7 @@ public interface TieredWeapon {
             case HIGH -> 10;
             case SUPREME -> 15;
             case IMMORTAL -> 20;
+            case GREAT_EMPEROR -> 50;
         };
     }
 

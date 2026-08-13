@@ -202,21 +202,25 @@ public final class ModItems {
     public static final RegistryObject<Item> XUAN_IRON_SWORD_HIGH;
     public static final RegistryObject<Item> XUAN_IRON_SWORD_SUPREME;
     public static final RegistryObject<Item> XUAN_IRON_SWORD_IMMORTAL;
+    public static final RegistryObject<Item> XUAN_IRON_SWORD_GREAT_EMPEROR;
     public static final RegistryObject<Item> QING_MU_SWORD_LOW;
     public static final RegistryObject<Item> QING_MU_SWORD_MID;
     public static final RegistryObject<Item> QING_MU_SWORD_HIGH;
     public static final RegistryObject<Item> QING_MU_SWORD_SUPREME;
     public static final RegistryObject<Item> QING_MU_SWORD_IMMORTAL;
+    public static final RegistryObject<Item> QING_MU_SWORD_GREAT_EMPEROR;
     public static final RegistryObject<Item> CHI_YAN_SWORD_LOW;
     public static final RegistryObject<Item> CHI_YAN_SWORD_MID;
     public static final RegistryObject<Item> CHI_YAN_SWORD_HIGH;
     public static final RegistryObject<Item> CHI_YAN_SWORD_SUPREME;
     public static final RegistryObject<Item> CHI_YAN_SWORD_IMMORTAL;
+    public static final RegistryObject<Item> CHI_YAN_SWORD_GREAT_EMPEROR;
     public static final RegistryObject<Item> HAN_BING_SWORD_LOW;
     public static final RegistryObject<Item> HAN_BING_SWORD_MID;
     public static final RegistryObject<Item> HAN_BING_SWORD_HIGH;
     public static final RegistryObject<Item> HAN_BING_SWORD_SUPREME;
     public static final RegistryObject<Item> HAN_BING_SWORD_IMMORTAL;
+    public static final RegistryObject<Item> HAN_BING_SWORD_GREAT_EMPEROR;
     public static final Map<Realm, RegistryObject<Item>> REALM_TOKENS;
     public static final Map<Integer, RegistryObject<Item>> LOOSE_IMMORTAL_REALM_TOKENS;
     public static final Map<Realm, RegistryObject<Item>> CULTIVATOR_SPAWN_EGGS;
@@ -396,6 +400,13 @@ public final class ModItems {
                 nArray13[0] = 13227775;
                 nArray = nArray13;
                 nArray13[1] = 4926056;
+                break;
+            }
+            case GREAT_EMPEROR: {
+                int[] nArray14 = new int[2];
+                nArray14[0] = 16755200;
+                nArray = nArray14;
+                nArray14[1] = 32896;
             }
         }
         return nArray;
@@ -407,7 +418,7 @@ public final class ModItems {
             case MORTAL, BODY_TEMPERING, QI_REFINING -> Rarity.COMMON;
             case FOUNDATION_BUILDING, GOLDEN_CORE -> Rarity.UNCOMMON;
             case NASCENT_SOUL, SOUL_FORMATION -> Rarity.RARE;
-            case VOID_REFINING, BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL -> Rarity.EPIC;
+            case VOID_REFINING, BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> Rarity.EPIC;
         };
     }
 
@@ -471,6 +482,7 @@ public final class ModItems {
                 case HIGH -> Rarity.RARE;
                 case SUPREME -> Rarity.EPIC;
                 case IMMORTAL -> Rarity.EPIC;
+                case GREAT_EMPEROR -> Rarity.EPIC;
             };
             final Spell spellFinal = spell2;
             final Rarity rarityFinal = rarity;
@@ -489,6 +501,7 @@ public final class ModItems {
                 case HIGH -> Rarity.RARE;
                 case SUPREME -> Rarity.EPIC;
                 case IMMORTAL -> Rarity.EPIC;
+                case GREAT_EMPEROR -> Rarity.EPIC;
             };
             final Technique techFinal = tech;
             final Rarity rarityFinal = rarity;
@@ -585,21 +598,25 @@ public final class ModItems {
         XUAN_IRON_SWORD_HIGH = ITEMS.register("xuan_iron_sword_high", () -> new XuanIronSwordItem(ItemTier.HIGH, 15, 30));
         XUAN_IRON_SWORD_SUPREME = ITEMS.register("xuan_iron_sword_supreme", () -> new XuanIronSwordItem(ItemTier.SUPREME, 17, 40));
         XUAN_IRON_SWORD_IMMORTAL = ITEMS.register("xuan_iron_sword_immortal", () -> new XuanIronSwordItem(ItemTier.IMMORTAL, 20, 50));
+        XUAN_IRON_SWORD_GREAT_EMPEROR = ITEMS.register("xuan_iron_sword_great_emperor", () -> new XuanIronSwordItem(ItemTier.GREAT_EMPEROR, 30, 100));
         QING_MU_SWORD_LOW = ITEMS.register("qing_mu_sword_low", () -> new QingMuSwordItem(ItemTier.LOW, 10, 10));
         QING_MU_SWORD_MID = ITEMS.register("qing_mu_sword_mid", () -> new QingMuSwordItem(ItemTier.MID, 12, 20));
         QING_MU_SWORD_HIGH = ITEMS.register("qing_mu_sword_high", () -> new QingMuSwordItem(ItemTier.HIGH, 15, 30));
         QING_MU_SWORD_SUPREME = ITEMS.register("qing_mu_sword_supreme", () -> new QingMuSwordItem(ItemTier.SUPREME, 17, 40));
         QING_MU_SWORD_IMMORTAL = ITEMS.register("qing_mu_sword_immortal", () -> new QingMuSwordItem(ItemTier.IMMORTAL, 20, 50));
+        QING_MU_SWORD_GREAT_EMPEROR = ITEMS.register("qing_mu_sword_great_emperor", () -> new QingMuSwordItem(ItemTier.GREAT_EMPEROR, 30, 100));
         CHI_YAN_SWORD_LOW = ITEMS.register("chi_yan_sword_low", () -> new ChiYanSwordItem(ItemTier.LOW, 10, 10));
         CHI_YAN_SWORD_MID = ITEMS.register("chi_yan_sword_mid", () -> new ChiYanSwordItem(ItemTier.MID, 12, 20));
         CHI_YAN_SWORD_HIGH = ITEMS.register("chi_yan_sword_high", () -> new ChiYanSwordItem(ItemTier.HIGH, 15, 30));
         CHI_YAN_SWORD_SUPREME = ITEMS.register("chi_yan_sword_supreme", () -> new ChiYanSwordItem(ItemTier.SUPREME, 17, 40));
         CHI_YAN_SWORD_IMMORTAL = ITEMS.register("chi_yan_sword_immortal", () -> new ChiYanSwordItem(ItemTier.IMMORTAL, 20, 50));
+        CHI_YAN_SWORD_GREAT_EMPEROR = ITEMS.register("chi_yan_sword_great_emperor", () -> new ChiYanSwordItem(ItemTier.GREAT_EMPEROR, 30, 100));
         HAN_BING_SWORD_LOW = ITEMS.register("han_bing_sword_low", () -> new HanBingSwordItem(ItemTier.LOW, 10, 10));
         HAN_BING_SWORD_MID = ITEMS.register("han_bing_sword_mid", () -> new HanBingSwordItem(ItemTier.MID, 12, 20));
         HAN_BING_SWORD_HIGH = ITEMS.register("han_bing_sword_high", () -> new HanBingSwordItem(ItemTier.HIGH, 15, 30));
         HAN_BING_SWORD_SUPREME = ITEMS.register("han_bing_sword_supreme", () -> new HanBingSwordItem(ItemTier.SUPREME, 17, 40));
         HAN_BING_SWORD_IMMORTAL = ITEMS.register("han_bing_sword_immortal", () -> new HanBingSwordItem(ItemTier.IMMORTAL, 20, 50));
+        HAN_BING_SWORD_GREAT_EMPEROR = ITEMS.register("han_bing_sword_great_emperor", () -> new HanBingSwordItem(ItemTier.GREAT_EMPEROR, 30, 100));
         REALM_TOKENS = new EnumMap<Realm, RegistryObject<Item>>(Realm.class);
         for (Enum enum_ : Realm.values()) {
             id = "realm_token_" + ((Realm)enum_).id();

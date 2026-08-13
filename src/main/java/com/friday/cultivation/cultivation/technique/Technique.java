@@ -41,7 +41,8 @@ public enum Technique {
     FIVE_ELEMENT_CHAOS_ART("five_element_chaos_art", ItemTier.SUPREME, QiElement.PURE, Bonus.NONE),
     IMMORTAL_INCANTATION("immortal_incantation", ItemTier.IMMORTAL, QiElement.PURE, Bonus.builder().qiAbsorbMult(10.0).qiAbsorbRange(10).maxHp(10).qiCostHalve(true).damageHalve(true).build()),
     QINGDI_LONGEVITY("qingdi_longevity", ItemTier.IMMORTAL, QiElement.WOOD, Bonus.builder().elementSpellMult(QiElement.WOOD, 2.0).woodSpellCostHalve(true).build()),
-    GHOST_DAO_BASIC("ghost_dao_basic", ItemTier.SUPREME, QiElement.PURE, Bonus.NONE);
+    GHOST_DAO_BASIC("ghost_dao_basic", ItemTier.SUPREME, QiElement.PURE, Bonus.NONE),
+    IMPERIAL_ART("imperial_art", ItemTier.GREAT_EMPEROR, QiElement.PURE, Bonus.builder().attack(20).defense(20).critRate(30).maxHp(100).qiAbsorbMult(15.0).qiAbsorbRange(15).qiCostHalve(true).damageHalve(true).nightVision(true).waterBreathing(true).fireResistance(true).knockbackResist(true).build());
 
     private final String id;
     private final ItemTier tier;
@@ -102,6 +103,10 @@ public enum Technique {
     public ResourceLocation iconTexture() {
         if (this == IMMORTAL_INCANTATION) {
             return new ResourceLocation("friday_cultivation", "textures/gui/technique_immortal_body.png");
+        }
+        if (this == IMPERIAL_ART) {
+            // 帝法未自创时复用残篇图标
+            return new ResourceLocation("friday_cultivation", "textures/gui/technique_fragment.png");
         }
         return new ResourceLocation("friday_cultivation", "textures/gui/technique_" + this.id + ".png");
     }

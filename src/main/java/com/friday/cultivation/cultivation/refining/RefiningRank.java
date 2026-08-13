@@ -89,6 +89,7 @@ public enum RefiningRank {
             case HIGH -> 50;
             case SUPREME -> 150;
             case IMMORTAL -> 500;
+            case GREAT_EMPEROR -> 2000;
         };
     }
 

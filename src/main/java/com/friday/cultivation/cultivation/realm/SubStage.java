@@ -90,7 +90,7 @@ public final class SubStage {
         return EARLY;
     }
 
-    /** realm 感知 byId：支持数字层 id（"1".."10"）及命名 id（"turn_1"/"heaven_1"/"dao_*"） */
+    /** realm 感知 byId：支持数字层 id（"1".."10"）及命名 id（"turn_1"/"heaven_1"/"dao_*"/"emperor_*"） */
     public static SubStage byId(String id, Realm realm) {
         if ("early".equals(id)) return EARLY;
         if ("middle".equals(id)) return MIDDLE;
@@ -98,7 +98,7 @@ public final class SubStage {
         if ("peak".equals(id)) return PEAK;
         if (realm != null) {
             try {
-                if (id != null && (id.startsWith("turn_") || id.startsWith("heaven_"))) {
+                if (id != null && (id.startsWith("turn_") || id.startsWith("heaven_") || id.startsWith("emperor_"))) {
                     int lvl = Integer.parseInt(id.substring(id.indexOf('_') + 1));
                     SubStage s = realm.subStageAt(lvl);
                     if (s != null) return s;

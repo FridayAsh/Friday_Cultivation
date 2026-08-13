@@ -130,6 +130,7 @@ import com.friday.cultivation.entity.npc.ai.CultivatorSpellAttackGoal;
 import com.friday.cultivation.event.NpcPassiveSpellHandler;
 import com.friday.cultivation.event.RealmPressureHandler;
 import com.friday.cultivation.event.SoulHookHandler;
+import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.event.SoulStateHandler;
 import com.friday.cultivation.event.SpiritLockHandler;
 import com.friday.cultivation.event.TimeStasisHandler;
@@ -162,6 +163,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import net.minecraft.ChatFormatting;
+import com.friday.cultivation.worldgen.GreatEmperorTracker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
@@ -454,6 +456,28 @@ extends AbstractVillager {
         this.setTarget(attacker);
         if (this.canStartNpcSwordFlightForCombat() && this.shouldStartNpcSwordFlight(attacker)) {
             this.startNpcSwordFlight();
+        }
+    }
+
+    /**
+     * 大帝 NPC 死亡：释放全存档大帝名额；若为玩家亲手击杀则记录击杀者。
+     */
+    public void die(@NotNull DamageSource source) {
+        boolean wasGreatEmperor = this.getRealm() == Realm.GREAT_EMPEROR;
+        super.die(source);
+        if (!this.level().isClientSide && wasGreatEmperor && this.level() instanceof ServerLevel) {
+            ServerLevel serverLevel = (ServerLevel)this.level();
+            GreatEmperorTracker tracker = GreatEmperorTracker.get(serverLevel);
+            tracker.releaseEmperor();
+            Entity killer = source.getEntity();
+            if (killer instanceof ServerPlayer) {
+                ServerPlayer sp = (ServerPlayer)killer;
+                tracker.recordEmperorSlayer(killer.getUUID());
+                CultivationCapability.get((Player)sp).ifPresent(data -> {
+                    data.setKilledGreatEmperor(true);
+                    CapabilityEvents.syncToClient(sp);
+                });
+            }
         }
     }
 
@@ -1146,6 +1170,12 @@ extends AbstractVillager {
             this.setDifuReaper(true);
         }
         Realm realm = difu ? Realm.values()[Realm.QI_REFINING.ordinal() + this.random.nextInt(Math.max(1, Realm.TRIBULATION_TRANSCENDENCE.ordinal() - Realm.QI_REFINING.ordinal() + 1))] : (dataTag != null && dataTag.contains("forcedRealmId") ? ((forced = Realm.byId(id = dataTag.getString("forcedRealmId"))) != null ? forced : CultivatorRealmRoller.roll(this.random)) : CultivatorRealmRoller.roll(this.random));
+        if (realm == Realm.GREAT_EMPEROR) {
+            if (level.getLevel() instanceof ServerLevel && !GreatEmperorTracker.get((ServerLevel)level.getLevel()).claimEmperor()) {
+                // 全存档大帝已达上限（10），本次生成降级为散仙
+                realm = Realm.LOOSE_IMMORTAL;
+            }
+        }
         int looseImmortalTribulations = 0;
         if (realm == Realm.LOOSE_IMMORTAL) {
             looseImmortalTribulations = dataTag != null && dataTag.contains("forcedLooseImmortalTribulations", 3) ? dataTag.getInt("forcedLooseImmortalTribulations") : 1 + this.random.nextInt(9);
@@ -1318,7 +1348,7 @@ extends AbstractVillager {
             case SOUL_FORMATION -> 0.24f;
             case VOID_REFINING, BODY_INTEGRATION -> 0.27f;
             case MAHAYANA, TRIBULATION_TRANSCENDENCE -> 0.3f;
-            case TRUE_IMMORTAL, LOOSE_IMMORTAL -> 0.33f;
+            case TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> 0.33f;
             case MORTAL, BODY_TEMPERING, QI_REFINING -> 0.0f;
         };
     }
@@ -1336,7 +1366,7 @@ extends AbstractVillager {
             case SOUL_FORMATION -> 0.24f;
             case VOID_REFINING, BODY_INTEGRATION -> 0.27f;
             case MAHAYANA, TRIBULATION_TRANSCENDENCE -> 0.3f;
-            case TRUE_IMMORTAL, LOOSE_IMMORTAL -> 0.33f;
+            case TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> 0.33f;
             case MORTAL, BODY_TEMPERING, QI_REFINING -> 0.0f;
         };
     }
@@ -1542,7 +1572,8 @@ extends AbstractVillager {
                 break;
             }
             case TRUE_IMMORTAL: 
-            case LOOSE_IMMORTAL: {
+            case LOOSE_IMMORTAL:
+            case GREAT_EMPEROR: {
                 int[] nArray12 = new int[2];
                 nArray12[0] = 9;
                 nArray = nArray12;
@@ -1664,7 +1695,7 @@ extends AbstractVillager {
             case MORTAL, BODY_TEMPERING, QI_REFINING -> (Item)ModItems.LOW_SPIRIT_STONE.get();
             case FOUNDATION_BUILDING, GOLDEN_CORE -> (Item)ModItems.MID_SPIRIT_STONE.get();
             case NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, BODY_INTEGRATION -> (Item)ModItems.HIGH_SPIRIT_STONE.get();
-            case MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL -> (Item)ModItems.SUPREME_SPIRIT_STONE.get();
+            case MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> (Item)ModItems.SUPREME_SPIRIT_STONE.get();
         };
     }
 
@@ -1977,6 +2008,9 @@ extends AbstractVillager {
         if (realm == Realm.TRUE_IMMORTAL || realm == Realm.LOOSE_IMMORTAL) {
             this.addImmortalSpells(1 + this.random.nextInt(3));
         }
+        if (realm == Realm.GREAT_EMPEROR) {
+            this.addImmortalSpells(3 + this.random.nextInt(3));
+        }
         this.normalizeSpellIdsForRealm(realm);
     }
 
@@ -2145,7 +2179,8 @@ extends AbstractVillager {
             case MAHAYANA: 
             case TRIBULATION_TRANSCENDENCE: 
             case TRUE_IMMORTAL: 
-            case LOOSE_IMMORTAL: {
+            case LOOSE_IMMORTAL:
+            case GREAT_EMPEROR: {
                 int[] nArray4 = new int[2];
                 nArray4[0] = 3;
                 nArray = nArray4;
@@ -2170,6 +2205,7 @@ extends AbstractVillager {
             case MAHAYANA -> 20.0;
             case TRIBULATION_TRANSCENDENCE -> 25.0;
             case TRUE_IMMORTAL -> 30.0;
+            case GREAT_EMPEROR -> 35.0;
             case LOOSE_IMMORTAL -> 28.0;
         };
     }
@@ -3633,6 +3669,7 @@ extends AbstractVillager {
             case MAHAYANA -> ChatFormatting.RED;
             case TRIBULATION_TRANSCENDENCE -> ChatFormatting.DARK_BLUE;
             case TRUE_IMMORTAL -> ChatFormatting.GOLD;
+            case GREAT_EMPEROR -> ChatFormatting.DARK_RED;
             case LOOSE_IMMORTAL -> ChatFormatting.LIGHT_PURPLE;
         };
     }

@@ -80,6 +80,7 @@ import com.friday.cultivation.cultivation.technique.Technique;
 import com.friday.cultivation.cultivation.technique.TechniqueBonusHelper;
 import com.friday.cultivation.entity.SeatEntity;
 import com.friday.cultivation.event.SoulStateHandler;
+import com.friday.cultivation.network.CreateImperialArtPacket;
 import com.friday.cultivation.network.CycleGenderPacket;
 import com.friday.cultivation.network.EquipSpellPacket;
 import com.friday.cultivation.network.EquipTechniquePacket;
@@ -98,6 +99,7 @@ import com.friday.cultivation.registry.ModDimensions;
 import com.friday.cultivation.registry.ModItems;
 import com.friday.cultivation.util.CompactNumberFormat;
 import com.friday.cultivation.util.SpellScalingHelper;
+import com.friday.cultivation.util.ShimmerColors;
 import com.friday.cultivation.util.TooltipUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -215,8 +217,6 @@ extends Screen {
     private Button breakthroughBtn;
     private Button reincarnationBtn;
     private Button goDifuBtn;
-    private Button timeAccelerationStartBtn;
-    private Button timeAccelerationStopBtn;
     private BambooTabButton tabAttrBtn;
     private BambooTabButton tabTechBtn;
     private BambooTabButton tabSpellBtn;
@@ -229,6 +229,7 @@ extends Screen {
     private int hoveredBreakthroughOptionKind = 0;
     private int hoveredBreakthroughOptionOrdinal = -1;
     private int[] breakthroughHistoryButtonRect = null;
+    private int[] createImperialArtButtonRect = null;
     private int[] breakthroughHistoryPopupRect = null;
     private int[] breakthroughHistoryPopupCloseRect = null;
     private boolean breakthroughHistoryPopupOpen = false;
@@ -330,12 +331,6 @@ extends Screen {
         });
         this.goDifuBtn.visible = false;
         this.addRenderableWidget(this.goDifuBtn);
-        this.timeAccelerationStartBtn = new MiniCinnabarButton(leftHalfX + 58, topY + 62, 44, 10, (Component)Component.translatable((String)"screen.friday_cultivation.time_acceleration.button"), btn -> Minecraft.getInstance().setScreen((Screen)new TimeAccelerationChoiceScreen(this)));
-        this.timeAccelerationStartBtn.visible = false;
-        this.addRenderableWidget(this.timeAccelerationStartBtn);
-        this.timeAccelerationStopBtn = new MiniCinnabarButton(leftHalfX + 124, topY + 62, 30, 10, (Component)Component.translatable((String)"screen.friday_cultivation.time_acceleration.stop"), btn -> ModNetwork.CHANNEL.sendToServer((Object)new SetTimeAccelerationPacket(0)));
-        this.timeAccelerationStopBtn.visible = false;
-        this.addRenderableWidget(this.timeAccelerationStopBtn);
         int tabReserveRight = 16;
         int tabAreaW = 153 - tabReserveRight;
         int tabW = tabAreaW / 4 - 1;
@@ -474,10 +469,6 @@ extends Screen {
         this.updateToggleSpellBtn(data);
         this.updateSpellTerrainDestructionBtn(data);
         super.render(gfx, mouseX, mouseY, partial);
-        if (this.timeAccelerationStartBtn != null && this.timeAccelerationStartBtn.visible && this.timeAccelerationStartBtn.isMouseOver((double)mouseX, (double)mouseY)) {
-            MutableComponent tooltip = this.timeAccelerationStartBtn.active ? Component.translatable((String)"tooltip.friday_cultivation.time_acceleration.start") : Component.translatable((String)"tooltip.friday_cultivation.time_acceleration.requires_cushion");
-            gfx.renderTooltip(this.font, (Component)tooltip, mouseX, mouseY);
-        }
         if (this.spellTerrainDestructionBtn != null && this.spellTerrainDestructionBtn.visible && this.spellTerrainDestructionBtn.isMouseOver(mouseX, mouseY)) {
             lines2 = new ArrayList<Component>();
             lines2.add((Component)Component.translatable((String)"tooltip.friday_cultivation.spell_terrain.title").copy().withStyle(ChatFormatting.GOLD));
@@ -561,7 +552,11 @@ extends Screen {
         }
         if (this.currentTab == Tab.TECHNIQUES && this.hoveredTechniqueId != null && (ht = Technique.byId(this.hoveredTechniqueId)) != null) {
             ArrayList<Component> lines3 = new ArrayList<Component>();
-            lines3.add((Component)TooltipUtils.tieredName(ht.displayName(), ht.tier()));
+            if (ht == Technique.IMPERIAL_ART && data.hasCreatedImperialArt()) {
+                lines3.add((Component)ShimmerColors.buildShimmeringName(data.getImperialArtName(), ShimmerColors.DIVINE_FLAME));
+            } else {
+                lines3.add((Component)TooltipUtils.tieredName(ht.displayName(), ht.tier()));
+            }
             lines3.add((Component)TooltipUtils.tierElementLine(ht.tier(), ht.primaryElement()));
             lines3.add((Component)TooltipUtils.statsLine((Component)Component.translatable((String)"tooltip.friday_cultivation.technique.path", (Object[])new Object[]{Component.translatable((String)ht.daoPathTranslationKey())})));
             TooltipUtils.addBlank(lines3);
@@ -635,12 +630,6 @@ extends Screen {
         this.reincarnationBtn.active = canReincarnate;
         this.goDifuBtn.visible = canGoDifu;
         this.goDifuBtn.active = canGoDifu;
-        boolean canUseTimeAcceleration = data.canUseTimeAcceleration();
-        boolean timeAccelerationActive = data.isTimeAccelerationActive();
-        boolean sittingOnCushion = player.getVehicle() instanceof SeatEntity;
-        this.timeAccelerationStartBtn.visible = canUseTimeAcceleration && !timeAccelerationActive;
-        this.timeAccelerationStartBtn.active = this.timeAccelerationStartBtn.visible && sittingOnCushion;
-        this.timeAccelerationStopBtn.active = this.timeAccelerationStopBtn.visible = canUseTimeAcceleration && timeAccelerationActive;
         int breakthroughW = 112;
         this.breakthroughBtn.setX(splitX + 24);
         this.breakthroughBtn.setY(topY + 200 - 26);
@@ -1073,7 +1062,7 @@ extends Screen {
         Realm realm = data.getRealm();
         boolean soul = data.isSoulState();
         MutableComponent race = Component.translatable((String)(soul ? "race.friday_cultivation.ghost" : "race.friday_cultivation.human"));
-        String subKey = realm == Realm.MORTAL ? (soul ? "race_sub.friday_cultivation.ghost_mortal" : "race_sub.friday_cultivation.mortal") : (realm.ordinal() >= Realm.TRUE_IMMORTAL.ordinal() ? (soul ? "race_sub.friday_cultivation.ghost_immortal" : "race_sub.friday_cultivation.immortal") : (soul ? "race_sub.friday_cultivation.ghost_cultivator" : "race_sub.friday_cultivation.cultivator"));
+        String subKey = realm == Realm.MORTAL ? (soul ? "race_sub.friday_cultivation.ghost_mortal" : "race_sub.friday_cultivation.mortal") : (realm == Realm.GREAT_EMPEROR ? (soul ? "race_sub.friday_cultivation.ghost_great_emperor" : "race_sub.friday_cultivation.great_emperor") : (realm.ordinal() >= Realm.TRUE_IMMORTAL.ordinal() ? (soul ? "race_sub.friday_cultivation.ghost_immortal" : "race_sub.friday_cultivation.immortal") : (soul ? "race_sub.friday_cultivation.ghost_cultivator" : "race_sub.friday_cultivation.cultivator")));
         return Component.translatable((String)"screen.friday_cultivation.attr.id.race_value", (Object[])new Object[]{race, Component.translatable((String)subKey)});
     }
 
@@ -1177,6 +1166,27 @@ extends Screen {
             this.drawBreakthroughCentered(gfx, (Component)current, cx, y, width - 8, -12950192, false);
             y += 13;
             y = this.canChooseGoldenCoreRoute(data) ? this.renderGoldenCoreBreakthroughOptions(gfx, x, rightX, y, data, boneAge, hasBloodTalisman, mouseX, mouseY) : (y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_locked_stage"), cx, y, width - 8, -9807288) + 4);
+        } else if (realm == Realm.TRUE_IMMORTAL && sub.isPeakFor(Realm.TRUE_IMMORTAL)) {
+            boolean killedEmperor = data.hasKilledGreatEmperor();
+            boolean hasArt = data.hasCreatedImperialArt();
+            boolean artEquipped = Technique.IMPERIAL_ART.id().equals(data.getEquippedTechniqueId());
+            MutableComponent killLine = killedEmperor ? Component.translatable((String)"screen.friday_cultivation.breakthrough.great_emperor_requirement_met").withStyle(ChatFormatting.GREEN) : Component.translatable((String)"screen.friday_cultivation.breakthrough.great_emperor_requirement").withStyle(ChatFormatting.RED);
+            y += this.drawBreakthroughParagraphCentered(gfx, (Component)killLine, cx, y, width - 8, killedEmperor ? 5635925 : -9807288) + 4;
+            MutableComponent artLine;
+            if (hasArt && artEquipped) {
+                artLine = Component.translatable((String)"screen.friday_cultivation.breakthrough.imperial_art_met", (Object[])new Object[]{Component.literal(data.getImperialArtName())}).withStyle(ChatFormatting.GREEN);
+            } else if (hasArt) {
+                artLine = Component.translatable((String)"screen.friday_cultivation.breakthrough.imperial_art_not_equipped", (Object[])new Object[]{Component.literal(data.getImperialArtName())}).withStyle(ChatFormatting.RED);
+            } else {
+                artLine = Component.translatable((String)"screen.friday_cultivation.breakthrough.imperial_art_requirement").withStyle(ChatFormatting.RED);
+            }
+            y += this.drawBreakthroughParagraphCentered(gfx, (Component)artLine, cx, y, width - 8, (hasArt && artEquipped) ? 5635925 : -9807288) + 4;
+            if (killedEmperor && !hasArt) {
+                y = this.renderCreateImperialArtButton(gfx, x, rightX, y, mouseX, mouseY);
+            }
+            if (!killedEmperor || !hasArt || !artEquipped) {
+                y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_locked_stage"), cx, y, width - 8, -9807288) + 4;
+            }
         } else if (realm.ordinal() >= Realm.GOLDEN_CORE.ordinal()) {
             y = this.renderBreakthroughHistoryButton(gfx, x, rightX, y, data, mouseX, mouseY);
             y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_waiting"), cx, y, width - 8, -9807288) + 4;
@@ -1330,6 +1340,19 @@ extends Screen {
         gfx.fill(rowX + 1, y + 1, rowRight - 1, y + rowH - 1, hover ? -1517128 : -2571110);
         gfx.fill(rowX + 2, y + 2, rowRight - 2, y + 3, hover ? -10496 : -2504802);
         this.drawBreakthroughHistoryButtonText(gfx, this.breakthroughHistorySummary(data), (rowX + rowRight) / 2, y + 5, rowRight - rowX - 8, hover ? -4703686 : -12950192);
+        return y + rowH + 5;
+    }
+
+    private int renderCreateImperialArtButton(GuiGraphics gfx, int x, int rightX, int y, int mouseX, int mouseY) {
+        int rowX = x + 4;
+        int rowRight = rightX - 4;
+        int rowH = 18;
+        boolean hover = mouseX >= rowX && mouseX < rowRight && mouseY >= y && mouseY < y + rowH;
+        this.createImperialArtButtonRect = new int[]{rowX, y, rowRight, y + rowH};
+        gfx.fill(rowX, y, rowRight, y + rowH, -15067628);
+        gfx.fill(rowX + 1, y + 1, rowRight - 1, y + rowH - 1, hover ? -1517128 : -2571110);
+        gfx.fill(rowX + 2, y + 2, rowRight - 2, y + 3, hover ? -10496 : -2504802);
+        this.drawBreakthroughHistoryButtonText(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.create_imperial_art"), (rowX + rowRight) / 2, y + 5, rowRight - rowX - 8, hover ? -4703686 : -12950192);
         return y + rowH + 5;
     }
 
@@ -1752,6 +1775,9 @@ extends Screen {
         }
         if (data.getRealm() == Realm.FOUNDATION_BUILDING && data.getSubStage().isPeakFor(Realm.FOUNDATION_BUILDING)) {
             return data.isEligibleGoldenCoreDao(this.selectedGoldenCoreDao, LifespanHelper.displayBoneAge(data), this.hasBloodTransformationTalisman(player));
+        }
+        if (data.getRealm() == Realm.TRUE_IMMORTAL && data.getSubStage().isPeakFor(Realm.TRUE_IMMORTAL)) {
+            return data.canBreakthroughToGreatEmperor();
         }
         return true;
     }
@@ -2692,7 +2718,16 @@ extends Screen {
         gfx.blit(t.iconTexture(), iconX, iconY, 16, 16, 0.0f, 0.0f, 32, 32, 32, 32);
         RenderSystem.disableBlend();
         int textX = iconX + iconSize + 4;
-        this.drawSmall(gfx, t.displayName(), textX, y + 4, -4703686);
+        if (t == Technique.IMPERIAL_ART) {
+            CultivationData cap = Minecraft.getInstance().player == null ? null : (CultivationData)CultivationCapability.get((Player)Minecraft.getInstance().player).orElse(null);
+            if (cap != null && cap.hasCreatedImperialArt()) {
+                this.drawSmall(gfx, (Component)ShimmerColors.buildShimmeringName(cap.getImperialArtName(), ShimmerColors.DIVINE_FLAME), textX, y + 4, -4703686);
+            } else {
+                this.drawSmall(gfx, t.displayName(), textX, y + 4, -4703686);
+            }
+        } else {
+            this.drawSmall(gfx, t.displayName(), textX, y + 4, -4703686);
+        }
         this.drawSmall(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.tech.click_to_unequip"), textX, y + 14, -9807288);
         MutableComponent equippedLabel = Component.translatable((String)"screen.friday_cultivation.tech.equipped_label_short");
         int labelW = (int)((float)this.font.width((FormattedText)equippedLabel) * CultivationScreen.effectiveTextScale()) + 4;
@@ -2724,6 +2759,7 @@ extends Screen {
             case HIGH -> -12525344;
             case SUPREME -> -2064129;
             case IMMORTAL -> -2068440;
+            case GREAT_EMPEROR -> 16755200;
         };
     }
 
@@ -3122,6 +3158,12 @@ extends Screen {
             return true;
         }
         if (this.handleBreakthroughHistoryClick(mouseX, mouseY, button)) {
+            return true;
+        }
+        if (button == 0 && this.createImperialArtButtonRect != null && this.isInsideRect(this.createImperialArtButtonRect, mouseX, mouseY)) {
+            ModNetwork.CHANNEL.sendToServer((Object)new CreateImperialArtPacket());
+            this.createImperialArtButtonRect = null;
+            this.playUiClick();
             return true;
         }
         if (this.editingName) {
@@ -3777,7 +3819,8 @@ extends Screen {
         MID("item_tier.friday_cultivation.mid"),
         HIGH("item_tier.friday_cultivation.high"),
         SUPREME("item_tier.friday_cultivation.supreme"),
-        IMMORTAL("item_tier.friday_cultivation.immortal");
+        IMMORTAL("item_tier.friday_cultivation.immortal"),
+        GREAT_EMPEROR("item_tier.friday_cultivation.great_emperor");
 
         final String key;
 
@@ -3820,6 +3863,12 @@ extends Screen {
                 }
                 case IMMORTAL -> {
                     if (tier == ItemTier.IMMORTAL) {
+                        yield true;
+                    }
+                    yield false;
+                }
+                case GREAT_EMPEROR -> {
+                    if (tier == ItemTier.GREAT_EMPEROR) {
                         yield true;
                     }
                     yield false;
