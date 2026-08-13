@@ -142,23 +142,13 @@ public final class PassiveSpellHandler {
             QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
             return;
         }
-        boolean qiFlightEnabled = data.isSpellEnabled(Spell.QI_FLIGHT);
+        boolean qiFlightEnabled = data.isQiFlightActive();
         boolean ghostFlightEnabled = PassiveSpellHandler.isGhostFlightActive(data);
         boolean hasQi = data.getCurrentQi() > 0L;
         // 自写飞行：不依赖 mayfly/flying（绕过 Caelus 飞行管理），
-        // 灵气飞行启用且有灵气时悬浮（setNoGravity），客户端输入包控制运动
+        // 灵气飞行已显式激活（双击空格）且有灵气时悬浮（setNoGravity），客户端输入包控制运动
         boolean shouldHover = qiFlightEnabled || ghostFlightEnabled;
         if (shouldHover && hasQi) {
-            // 落地检测：已离地过（曾悬浮）且回到地面且无上升动量 → 停止悬浮恢复重力
-            boolean wasFlying = QI_FLIGHT_FLYING_TICKS.containsKey(player.getUUID());
-            if (wasFlying && player.onGround() && player.getDeltaMovement().y <= 0.0) {
-                QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
-                if (player.isNoGravity()) {
-                    player.setNoGravity(false);
-                    player.onUpdateAbilities();
-                }
-                return;
-            }
             if (!player.isNoGravity()) {
                 player.setNoGravity(true);
                 player.onUpdateAbilities();
@@ -196,7 +186,7 @@ public final class PassiveSpellHandler {
         if (data == null) {
             return false;
         }
-        return PassiveSpellHandler.isGhostFlightActive(data) || data.isSpellEnabled(Spell.QI_FLIGHT) && data.getCurrentQi() > 0L;
+        return PassiveSpellHandler.isGhostFlightActive(data) || data.isQiFlightActive() && data.getCurrentQi() > 0L;
     }
 
     /**
