@@ -2326,5 +2326,10 @@
   "item.friday_cultivation.chi_yan_sword_great_emperor": "赤焰帝兵",
   "item.friday_cultivation.han_bing_sword_great_emperor": "寒冰帝兵",
   "tooltip.friday_cultivation.technique_book.imperial_art_mystery": "一门尚未自创的帝法，字迹如天机般晦涩难辨……",
-  "item_tier.friday_cultivation.great_emperor_weapon": "帝兵"
+  "item_tier.friday_cultivation.great_emperor_weapon": "帝兵",
+  "message.friday_cultivation.qi_flight.not_learned": "你尚未掌握灵气飞行法术。",
+  "message.friday_cultivation.qi_flight.disabled": "灵气飞行法术已停用，请先在法术界面启用。",
+  "message.friday_cultivation.qi_flight.no_qi": "灵气不足，无法开始灵气飞行。",
+  "message.friday_cultivation.qi_flight.started": "御气腾空，灵气飞行开始。",
+  "message.friday_cultivation.qi_flight.stopped": "灵气飞行结束。"
 }

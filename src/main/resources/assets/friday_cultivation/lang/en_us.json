@@ -2326,5 +2326,10 @@
   "item.friday_cultivation.chi_yan_sword_great_emperor": "Crimson Flame Emperor Weapon",
   "item.friday_cultivation.han_bing_sword_great_emperor": "Frost Emperor Weapon",
   "tooltip.friday_cultivation.technique_book.imperial_art_mystery": "A not-yet-created Imperial Art; its script is as obscure as heavenly secrets...",
-  "item_tier.friday_cultivation.great_emperor_weapon": "Emperor Weapon"
+  "item_tier.friday_cultivation.great_emperor_weapon": "Emperor Weapon",
+  "message.friday_cultivation.qi_flight.not_learned": "You have not learned the Qi Flight spell.",
+  "message.friday_cultivation.qi_flight.disabled": "Qi Flight is disabled. Enable it in the spell screen first.",
+  "message.friday_cultivation.qi_flight.no_qi": "Not enough qi to start Qi Flight.",
+  "message.friday_cultivation.qi_flight.started": "Riding the qi, flight begins.",
+  "message.friday_cultivation.qi_flight.stopped": "Qi Flight ended."
 }

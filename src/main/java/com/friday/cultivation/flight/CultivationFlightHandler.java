@@ -16,34 +16,87 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
 
 /**
- * 独立修仙飞行系统（御剑飞行 + 灵气飞行）。
- * 自写实现，完全独立于其他系统：
- * - 御剑飞行：施放后取出主手剑，激活飞行；再施放归还。
- * - 灵气飞行：被动法术启用（isSpellEnabled）且有灵气时自动可飞。
- * - 服务端每 tick 强制授权 mayfly+flying（覆盖其他模组/库的覆盖），
- *   客户端按空格自然起飞（MC 原生飞行行为），输入包控制运动。
- * 判定条件独立：御剑=已激活；灵气=已启用且灵气>0。
+ * 独立修仙飞行系统（御剑飞行 + 灵气飞行）——自写实现。
+ * 方案：
+ * - 服务端激活时同时设 mayfly+flying（触发创造模式飞行动画/手感/落地逻辑）
+ *   与 setNoGravity（防 Caelus 等覆盖导致无法悬浮），双保险；
+ * - 灵气飞行消耗灵气（25/秒），灵气耗尽自动停止；
+ * - 御剑飞行脚底渲染剑（客户端渲染器）；
+ * - 落地自动恢复重力与飞行状态。
+ * 判定：御剑=已激活；灵气=isSpellEnabled(QI_FLIGHT) && 灵气>0。
  */
 public final class CultivationFlightHandler {
-    private static final float FLYING_SPEED = 0.05f;
     private static final Map<UUID, ItemStack> SWORD_FLIGHT = new ConcurrentHashMap<>();
     private static final Map<UUID, Integer> SWORD_FLIGHT_SLOT = new ConcurrentHashMap<>();
 
     private CultivationFlightHandler() {
     }
 
-    /** 御剑是否激活 */
+    /** 御剑是否激活（服务端读 Map；客户端读 CultivationData 同步值） */
     public static boolean isSwordFlightActive(Player player) {
-        return player != null && SWORD_FLIGHT.containsKey(player.getUUID());
+        if (player == null) {
+            return false;
+        }
+        if (SWORD_FLIGHT.containsKey(player.getUUID())) {
+            return true;
+        }
+        CultivationData data = CultivationCapability.get((Player)player).orElse(null);
+        return data != null && data.isSwordFlightActive();
     }
 
-    /** 灵气飞行是否可用（已启用且灵气>0） */
+    /** 御剑激活时脚底渲染的剑（客户端调用；服务端有数据时返回） */
+    public static ItemStack getSwordFlightStack(Player player) {
+        if (player == null) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack s = SWORD_FLIGHT.get(player.getUUID());
+        if (s != null && !s.isEmpty()) {
+            return s;
+        }
+        CultivationData data = CultivationCapability.get((Player)player).orElse(null);
+        return data != null ? data.getSwordFlightStack() : ItemStack.EMPTY;
+    }
+
+    /** 灵气飞行是否可用（已启用、已双击激活且灵气>0） */
     public static boolean canQiFlight(Player player) {
         if (player == null) {
             return false;
         }
         CultivationData data = CultivationCapability.get((Player)player).orElse(null);
-        return data != null && data.isSpellEnabled(Spell.QI_FLIGHT) && data.getCurrentQi() > 0L;
+        return data != null && data.isSpellEnabled(Spell.QI_FLIGHT) && data.isQiFlightToggled() && data.getCurrentQi() > 0L;
+    }
+
+    /** 双击空格切换灵气飞行开关 */
+    public static void toggleQiFlight(ServerPlayer player) {
+        CultivationData data = CultivationCapability.get((Player)player).orElse(null);
+        if (data == null || !data.hasSpell(Spell.QI_FLIGHT)) {
+            player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.qi_flight.not_learned"), true);
+            return;
+        }
+        boolean activating = !data.isQiFlightToggled();
+        if (activating) {
+            if (!data.isSpellEnabled(Spell.QI_FLIGHT)) {
+                player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.qi_flight.disabled"), true);
+                return;
+            }
+            if (data.getCurrentQi() <= 0L) {
+                player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.qi_flight.no_qi"), true);
+                return;
+            }
+            data.setQiFlightToggled(true);
+            enableFlight(player);
+            player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.qi_flight.started"), true);
+        } else {
+            data.setQiFlightToggled(false);
+            disableFlight(player);
+            player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.qi_flight.stopped"), true);
+        }
+        CapabilityEvents.syncToClient(player);
+    }
+
+    /** 是否任一飞行激活 */
+    public static boolean isAnyFlightActive(Player player) {
+        return isSwordFlightActive(player) || canQiFlight(player);
     }
 
     /** 施放/切换御剑飞行 */
@@ -66,8 +119,12 @@ public final class CultivationFlightHandler {
         player.getInventory().setItem(slot, ItemStack.EMPTY);
         SWORD_FLIGHT.put(player.getUUID(), riding);
         SWORD_FLIGHT_SLOT.put(player.getUUID(), slot);
-        grantFlight(player);
-        liftPlayer(player);
+        // 同步到 CultivationData（供客户端渲染与判定）
+        CultivationData cd = CultivationCapability.get((Player)player).orElse(null);
+        if (cd != null) {
+            cd.startSwordFlight(riding, slot);
+        }
+        enableFlight(player);
         player.containerMenu.broadcastChanges();
         CapabilityEvents.syncToClient(player);
         player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.sword_flight.started"), true);
@@ -78,6 +135,10 @@ public final class CultivationFlightHandler {
         UUID id = player.getUUID();
         ItemStack sword = SWORD_FLIGHT.remove(id);
         Integer slot = SWORD_FLIGHT_SLOT.remove(id);
+        CultivationData cd = CultivationCapability.get((Player)player).orElse(null);
+        if (cd != null) {
+            cd.clearSwordFlight();
+        }
         if (sword != null && !sword.isEmpty()) {
             if (slot != null && slot >= 0 && slot < player.getInventory().items.size() && player.getInventory().getItem(slot).isEmpty()) {
                 player.getInventory().setItem(slot, sword);
@@ -85,16 +146,13 @@ public final class CultivationFlightHandler {
                 player.drop(sword, false);
             }
         }
-        revokeFlightIfNotQi(player);
+        disableFlight(player);
         player.containerMenu.broadcastChanges();
         CapabilityEvents.syncToClient(player);
         player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.sword_flight.stopped"), true);
     }
 
-    /**
-     * 服务端每 tick 飞行判定（由主类事件调用）：
-     * 御剑激活 或 灵气飞行可用时，强制授权 mayfly+flying（覆盖 Caelus 等外部覆盖）。
-     */
+    /** 服务端每 tick 飞行判定 */
     public static void tickFlight(ServerPlayer player) {
         CultivationData data = CultivationCapability.get((Player)player).orElse(null);
         if (data == null || player.isCreative() || player.isSpectator()) {
@@ -104,71 +162,41 @@ public final class CultivationFlightHandler {
             if (isSwordFlightActive(player)) {
                 stopSwordFlight(player);
             }
-            revokeFlight(player);
+            disableFlight(player);
             return;
         }
         boolean sword = isSwordFlightActive(player);
         boolean qi = canQiFlight(player);
         boolean shouldFly = sword || qi;
         if (shouldFly) {
-            grantFlight(player);
+            enableFlight(player);
             player.fallDistance = 0.0f;
-            // 灵气消耗（御剑也在 consumeQi 分支处理）
-            if (qi && !sword && player.tickCount % 20 == 0) {
-                long cost = 25L;
-                if (data.getCurrentQi() >= cost) {
-                    data.setCurrentQi(data.getCurrentQi() - cost);
-                } else {
-                    data.setCurrentQi(0L);
-                    revokeFlight(player);
-                }
-                CapabilityEvents.syncToClient(player);
-            }
         } else {
-            revokeFlight(player);
+            disableFlight(player);
         }
     }
 
-    /** 灵气飞行是否激活（供客户端判定） */
-    public static boolean isAnyFlightActive(ServerPlayer player) {
-        return isSwordFlightActive(player) || canQiFlight(player);
-    }
-
-    private static void grantFlight(ServerPlayer player) {
-        if (!player.getAbilities().mayfly || !player.getAbilities().flying) {
-            player.getAbilities().mayfly = true;
-            player.getAbilities().flying = true;
-        }
-        if (Math.abs(player.getAbilities().getFlyingSpeed() - FLYING_SPEED) > 1.0E-4f) {
-            player.getAbilities().setFlyingSpeed(FLYING_SPEED);
+    /** 授权飞行：mayfly+flying（创造模式手感/动画）+ setNoGravity（防覆盖） */
+    private static void enableFlight(ServerPlayer player) {
+        // 悬浮飞行：setNoGravity 不受重力，客户端本地控制运动（不依赖 mayfly/flying）
+        if (!player.isNoGravity()) {
+            player.setNoGravity(true);
         }
         player.onUpdateAbilities();
     }
 
-    private static void revokeFlight(ServerPlayer player) {
+    /** 撤销飞行：恢复重力 + 移除 mayfly/flying */
+    private static void disableFlight(ServerPlayer player) {
         if (player.isCreative() || player.isSpectator()) {
             return;
         }
         if (player.getAbilities().mayfly || player.getAbilities().flying) {
             player.getAbilities().mayfly = false;
             player.getAbilities().flying = false;
-            player.onUpdateAbilities();
         }
-    }
-
-    private static void revokeFlightIfNotQi(ServerPlayer player) {
-        if (canQiFlight(player)) {
-            grantFlight(player);
-            return;
+        if (player.isNoGravity()) {
+            player.setNoGravity(false);
         }
-        revokeFlight(player);
-    }
-
-    private static void liftPlayer(ServerPlayer player) {
-        if (!player.onGround()) {
-            return;
-        }
-        player.setDeltaMovement(player.getDeltaMovement().add(0.0, 0.5, 0.0));
-        player.hurtMarked = true;
+        player.onUpdateAbilities();
     }
 }
