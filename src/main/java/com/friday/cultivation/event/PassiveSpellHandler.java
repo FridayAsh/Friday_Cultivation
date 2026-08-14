@@ -31,7 +31,6 @@ import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.event.RealmPressureHandler;
 import com.friday.cultivation.event.SoulHookHandler;
 import com.friday.cultivation.event.SpiritLockHandler;
-import com.friday.cultivation.event.SwordFlightHandler;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -71,8 +70,6 @@ public final class PassiveSpellHandler {
     private static final long QI_FLIGHT_DRAIN_PER_SECOND = 25L;
     private static final float QI_FLIGHT_BASE_FLYING_SPEED = 0.05f;
     private static final int QI_FLIGHT_GROUND_RELEASE_TICKS = 4;
-    private static final Map<UUID, Integer> GROUNDED_FLIGHT_TICKS = new ConcurrentHashMap<UUID, Integer>();
-    private static final Map<UUID, Integer> QI_FLIGHT_FLYING_TICKS = new ConcurrentHashMap<UUID, Integer>();
     private static final Map<UUID, Integer> BIGU_PAID_UNTIL_TICK = new ConcurrentHashMap<UUID, Integer>();
 
     private PassiveSpellHandler() {
@@ -88,26 +85,22 @@ public final class PassiveSpellHandler {
             return;
         }
         ServerPlayer player2 = (ServerPlayer)player;
+        if (player2.tickCount % 100 == 0) {
+        }
         CultivationData data = CultivationCapability.get((Player)player2).orElse(null);
         if (data == null) {
             return;
         }
         if (SpiritLockHandler.isEntityLocked((Entity)player2)) {
-            PassiveSpellHandler.revokeQiFlight(player2);
-            SwordFlightHandler.stopIfActive(player2, data);
             return;
         }
         if (SoulHookHandler.isActionLocked((Entity)player2)) {
-            QI_FLIGHT_FLYING_TICKS.remove(player2.getUUID());
             return;
         }
         if (RealmPressureHandler.isSuppressed((LivingEntity)player2)) {
             RealmPressureHandler.forceGrounded((LivingEntity)player2);
-            PassiveSpellHandler.revokeQiFlight(player2);
-            SwordFlightHandler.stopIfActive(player2, data, false);
         }
         PassiveSpellHandler.handleBigu(player2, data);
-        SwordFlightHandler.tick(player2, data);
         PassiveSpellHandler.handleQiMending(player2, data);
         if (data.isSpellEnabled(Spell.SLOW_REGEN) && player2.tickCount % 100 == 0 && player2.getHealth() < player2.getMaxHealth()) {
             long cost = TechniqueBonusHelper.applySpellQiCostMultiplier((Player)player2, Spell.SLOW_REGEN, 5L);
@@ -121,87 +114,8 @@ public final class PassiveSpellHandler {
             BlockPos pos = player2.blockPosition();
             FrostWalkerEnchantment.onEntityMoved((LivingEntity)player2, (Level)player2.level(), (BlockPos)pos, (int)2);
         }
-        PassiveSpellHandler.handleQiFlight(player2, data);
     }
 
-    private static void handleQiFlight(ServerPlayer player, CultivationData data) {
-        if (player.isCreative() || player.isSpectator()) {
-            QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
-            return;
-        }
-        if (RealmPressureHandler.isSuppressed((LivingEntity)player)) {
-            PassiveSpellHandler.revokeQiFlight(player);
-            return;
-        }
-        if (data.isVoidEscapeActive()) {
-            QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
-            return;
-        }
-        if (SwordFlightHandler.isActive(data)) {
-            QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
-            return;
-        }
-        boolean qiFlightEnabled = data.isSpellEnabled(Spell.QI_FLIGHT);
-        boolean ghostFlightEnabled = PassiveSpellHandler.isGhostFlightActive(data);
-        boolean hasQi = data.getCurrentQi() > 0L;
-        boolean shouldAllowFly = PassiveSpellHandler.hasEnabledPassiveFlight(data);
-        boolean currentlyAllowed = player.getAbilities().mayfly;
-        boolean currentlyFlying = player.getAbilities().flying;
-        boolean abilitiesDirty = false;
-        if (shouldAllowFly != currentlyAllowed) {
-            player.getAbilities().mayfly = shouldAllowFly;
-            if (!shouldAllowFly && currentlyFlying) {
-                player.getAbilities().flying = false;
-            }
-            abilitiesDirty = true;
-        }
-        if (shouldAllowFly && Math.abs(player.getAbilities().getFlyingSpeed() - 0.05f) > 1.0E-4f) {
-            player.getAbilities().setFlyingSpeed(0.05f);
-            abilitiesDirty = true;
-        }
-        if (abilitiesDirty) {
-            player.onUpdateAbilities();
-        }
-        if (!shouldAllowFly && player.getAbilities().flying) {
-            player.getAbilities().flying = false;
-            player.onUpdateAbilities();
-        }
-        if (shouldAllowFly && player.getAbilities().flying) {
-            if (player.onGround()) {
-                int groundedTicks = GROUNDED_FLIGHT_TICKS.merge(player.getUUID(), 1, Integer::sum);
-                if (groundedTicks >= 4) {
-                    player.getAbilities().flying = false;
-                    player.fallDistance = 0.0f;
-                    player.onUpdateAbilities();
-                    GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
-                }
-            } else {
-                GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
-            }
-        } else {
-            GROUNDED_FLIGHT_TICKS.remove(player.getUUID());
-        }
-        currentlyFlying = player.getAbilities().flying;
-        if (qiFlightEnabled && !ghostFlightEnabled && currentlyFlying && hasQi) {
-            int flyingTicks = QI_FLIGHT_FLYING_TICKS.merge(player.getUUID(), 1, Integer::sum);
-            if (flyingTicks < 20) {
-                return;
-            }
-            QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
-            long base = TechniqueBonusHelper.applySpellQiCostMultiplier((Player)player, Spell.QI_FLIGHT, 25L);
-            long drain = Math.min(base, data.getCurrentQi());
-            data.setCurrentQi(data.getCurrentQi() - drain);
-            CapabilityEvents.syncToClient(player);
-            if (data.getCurrentQi() <= 0L) {
-                player.getAbilities().mayfly = false;
-                player.getAbilities().flying = false;
-                player.onUpdateAbilities();
-                CapabilityEvents.syncToClient(player);
-            }
-        } else {
-            QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
-        }
-    }
 
     private static boolean isGhostFlightActive(CultivationData data) {
         return data.isSoulState() && data.isSpellEnabled(Spell.GHOST_FLIGHT);
@@ -214,17 +128,6 @@ public final class PassiveSpellHandler {
         return PassiveSpellHandler.isGhostFlightActive(data) || data.isSpellEnabled(Spell.QI_FLIGHT) && data.getCurrentQi() > 0L;
     }
 
-    private static void revokeQiFlight(ServerPlayer player) {
-        if (player.isCreative() || player.isSpectator()) {
-            return;
-        }
-        if (player.getAbilities().mayfly || player.getAbilities().flying) {
-            player.getAbilities().mayfly = false;
-            player.getAbilities().flying = false;
-            player.onUpdateAbilities();
-        }
-        QI_FLIGHT_FLYING_TICKS.remove(player.getUUID());
-    }
 
     private static void handleBigu(ServerPlayer player, CultivationData data) {
         UUID id = player.getUUID();

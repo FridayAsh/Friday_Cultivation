@@ -1155,7 +1155,7 @@
   "spell.friday_cultivation.poison_immunity": "Poison Immunity",
   "spell.friday_cultivation.poison_immunity.desc": "Inner Qi neutralizes all poisons.",
   "spell.friday_cultivation.qi_flight": "Qi Flight",
-  "spell.friday_cultivation.qi_flight.desc": "Soar on Qi. While enabled, fly exactly like creative mode (double-tap jump to take off, space to ascend, sneak to descend, sprint to accelerate). Drains 25 Qi/sec while actively flying; no cost when grounded. Auto-disables when Qi runs out.",
+  "spell.friday_cultivation.qi_flight.desc": "Ride the qi and soar. While enabled, fly freely like in Creative: hold jump to ascend, sprint to accelerate, shift to descend, release to hover; drains 25 qi per second while airborne, free when grounded. Stops automatically when qi runs out.",
   "spell.friday_cultivation.frost_walker": "Frost Walker",
   "spell.friday_cultivation.frost_walker.desc": "Walking on water freezes it under your feet.",
   "spell.friday_cultivation.meta": "%s · %s · %s",
@@ -2326,5 +2326,10 @@
   "item.friday_cultivation.chi_yan_sword_great_emperor": "Crimson Flame Emperor Weapon",
   "item.friday_cultivation.han_bing_sword_great_emperor": "Frost Emperor Weapon",
   "tooltip.friday_cultivation.technique_book.imperial_art_mystery": "A not-yet-created Imperial Art; its script is as obscure as heavenly secrets...",
-  "item_tier.friday_cultivation.great_emperor_weapon": "Emperor Weapon"
+  "item_tier.friday_cultivation.great_emperor_weapon": "Emperor Weapon",
+  "message.friday_cultivation.qi_flight.not_learned": "You have not learned the Qi Flight spell.",
+  "message.friday_cultivation.qi_flight.disabled": "Qi Flight is disabled. Enable it in the spell screen first.",
+  "message.friday_cultivation.qi_flight.no_qi": "Not enough qi to start Qi Flight.",
+  "message.friday_cultivation.qi_flight.started": "Riding the qi, flight begins.",
+  "message.friday_cultivation.qi_flight.stopped": "Qi Flight ended."
 }

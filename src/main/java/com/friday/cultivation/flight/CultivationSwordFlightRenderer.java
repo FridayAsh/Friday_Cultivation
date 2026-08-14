@@ -1,35 +1,8 @@
 /*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.mojang.blaze3d.systems.RenderSystem
- *  com.mojang.blaze3d.vertex.PoseStack
- *  com.mojang.blaze3d.vertex.VertexConsumer
- *  com.mojang.math.Axis
- *  net.minecraft.client.Minecraft
- *  net.minecraft.client.player.AbstractClientPlayer
- *  net.minecraft.client.renderer.MultiBufferSource
- *  net.minecraft.client.renderer.MultiBufferSource$BufferSource
- *  net.minecraft.client.renderer.RenderType
- *  net.minecraft.client.renderer.texture.OverlayTexture
- *  net.minecraft.resources.ResourceLocation
- *  net.minecraft.util.Mth
- *  net.minecraft.world.entity.player.Player
- *  net.minecraft.world.item.ItemDisplayContext
- *  net.minecraft.world.item.ItemStack
- *  net.minecraft.world.level.Level
- *  net.minecraft.world.phys.Vec3
- *  net.minecraftforge.api.distmarker.Dist
- *  net.minecraftforge.client.event.RenderLevelStageEvent
- *  net.minecraftforge.client.event.RenderLevelStageEvent$Stage
- *  net.minecraftforge.client.event.RenderPlayerEvent$Pre
- *  net.minecraftforge.event.TickEvent$ClientTickEvent
- *  net.minecraftforge.event.TickEvent$Phase
- *  net.minecraftforge.eventbus.api.SubscribeEvent
- *  net.minecraftforge.fml.common.Mod$EventBusSubscriber
- *  org.joml.Matrix4f
+ * 御剑飞行客户端渲染（完整还原）：脚底渲染飞剑模型 + 光效拖尾 + 行走动画冻结。
+ * 判定改用 CultivationFlightHandler（兼容 Map 存储与服务端同步）。
  */
-package com.friday.cultivation.client;
+package com.friday.cultivation.flight;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -61,7 +34,7 @@ import net.minecraftforge.fml.common.Mod;
 import org.joml.Matrix4f;
 
 @Mod.EventBusSubscriber(modid="friday_cultivation", value={Dist.CLIENT})
-public final class SwordFlightClientRenderer {
+public final class CultivationSwordFlightRenderer {
     private static final float SWORD_FORWARD_YAW_OFFSET = 90.0f;
     private static final double SWORD_VERTICAL_OFFSET = -0.1;
     private static final ResourceLocation WHITE = new ResourceLocation("textures/misc/white.png");
@@ -73,7 +46,7 @@ public final class SwordFlightClientRenderer {
     private static final int TRAIL_SUBDIVISIONS = 4;
     private static final double TRAIL_TELEPORT_THRESHOLD = 8.0;
 
-    private SwordFlightClientRenderer() {
+    private CultivationSwordFlightRenderer() {
     }
 
     @SubscribeEvent
@@ -91,20 +64,23 @@ public final class SwordFlightClientRenderer {
         }
         ItemStack sword = data.getSwordFlightStack();
         if (sword.isEmpty()) {
+            sword = CultivationFlightHandler.getSwordFlightStack(mc.player);
+        }
+        if (sword.isEmpty()) {
             return;
         }
         PoseStack pose = event.getPoseStack();
         Vec3 camera = event.getCamera().getPosition();
         float partial = event.getPartialTick();
         Optional<NascentSoulBodyVisualHandler.BodyAnchor> bodyAnchor = NascentSoulBodyVisualHandler.bodyAnchorFor(mc.player.getId());
-        Vec3 anchorPos = bodyAnchor.map(NascentSoulBodyVisualHandler.BodyAnchor::pos).orElseGet(() -> SwordFlightClientRenderer.interpolatedPlayerPosition(mc, partial));
+        Vec3 anchorPos = bodyAnchor.map(NascentSoulBodyVisualHandler.BodyAnchor::pos).orElseGet(() -> CultivationSwordFlightRenderer.interpolatedPlayerPosition(mc, partial));
         double x = anchorPos.x - camera.x;
         double y = anchorPos.y - camera.y + -0.1;
         double z = anchorPos.z - camera.z;
         float yaw = bodyAnchor.map(NascentSoulBodyVisualHandler.BodyAnchor::yRot).orElseGet(() -> Float.valueOf(Mth.rotLerp((float)partial, (float)mc.player.yRotO, (float)mc.player.getYRot()))).floatValue();
         MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
         TrailSample headNow = new TrailSample(anchorPos.x, anchorPos.y, anchorPos.z, yaw);
-        SwordFlightClientRenderer.renderSwordTrail(pose, buffer, camera, headNow);
+        CultivationSwordFlightRenderer.renderSwordTrail(pose, buffer, camera, headNow);
         pose.pushPose();
         pose.translate(x, y, z);
         pose.mulPose(Axis.YP.rotationDegrees(-yaw + 90.0f));
@@ -131,10 +107,10 @@ public final class SwordFlightClientRenderer {
             return;
         }
         for (AbstractClientPlayer player : mc.level.players()) {
-            if (!SwordFlightClientRenderer.isSwordFlightActive((Player)player)) continue;
-            SwordFlightClientRenderer.freezeWalkAnimation((Player)player);
+            if (!CultivationSwordFlightRenderer.isSwordFlightActive((Player)player)) continue;
+            CultivationSwordFlightRenderer.freezeWalkAnimation((Player)player);
         }
-        if (mc.player == null || !SwordFlightClientRenderer.isSwordFlightActive((Player)mc.player)) {
+        if (mc.player == null || !CultivationSwordFlightRenderer.isSwordFlightActive((Player)mc.player)) {
             TRAIL_HISTORY.clear();
             return;
         }
@@ -151,14 +127,13 @@ public final class SwordFlightClientRenderer {
 
     @SubscribeEvent
     public static void onRenderPlayerPre(RenderPlayerEvent.Pre event) {
-        if (SwordFlightClientRenderer.isSwordFlightActive(event.getEntity())) {
-            SwordFlightClientRenderer.freezeWalkAnimation(event.getEntity());
+        if (CultivationSwordFlightRenderer.isSwordFlightActive(event.getEntity())) {
+            CultivationSwordFlightRenderer.freezeWalkAnimation(event.getEntity());
         }
     }
 
     private static boolean isSwordFlightActive(Player player) {
-        CultivationData data = CultivationCapability.get(player).orElse(null);
-        return data != null && data.isSwordFlightActive();
+        return CultivationFlightHandler.isSwordFlightActive(player);
     }
 
     private static void freezeWalkAnimation(Player player) {
@@ -182,7 +157,7 @@ public final class SwordFlightClientRenderer {
         }
         Vec3[] pommelPoints = new Vec3[count];
         for (int i = 0; i < count; ++i) {
-            pommelPoints[i] = SwordFlightClientRenderer.pommelWorldFor(samples[i]);
+            pommelPoints[i] = CultivationSwordFlightRenderer.pommelWorldFor(samples[i]);
         }
         int interpCount = (count - 1) * 4 + 1;
         Vec3[] interp = new Vec3[interpCount];
@@ -195,7 +170,7 @@ public final class SwordFlightClientRenderer {
             int subCount = i == count - 2 ? 5 : 4;
             for (int sub = 0; sub < subCount; ++sub) {
                 float t = (float)sub / 4.0f;
-                interp[interpIdx++] = SwordFlightClientRenderer.catmullRom(p0, p1, p2, p3, t);
+                interp[interpIdx++] = CultivationSwordFlightRenderer.catmullRom(p0, p1, p2, p3, t);
             }
         }
         Vec3[] segDirs = new Vec3[interpCount - 1];
@@ -246,10 +221,10 @@ public final class SwordFlightClientRenderer {
             float w1 = w[i + 1];
             int a0 = a[i];
             int a1 = a[i + 1];
-            SwordFlightClientRenderer.addTrailVert(vc, m, (float)(lp0.x + perp0.x * (double)w0), (float)(lp0.y + perp0.y * (double)w0), (float)(lp0.z + perp0.z * (double)w0), 1.0f, 0.0f, a0);
-            SwordFlightClientRenderer.addTrailVert(vc, m, (float)(lp1.x + perp1.x * (double)w1), (float)(lp1.y + perp1.y * (double)w1), (float)(lp1.z + perp1.z * (double)w1), 1.0f, 1.0f, a1);
-            SwordFlightClientRenderer.addTrailVert(vc, m, (float)(lp1.x - perp1.x * (double)w1), (float)(lp1.y - perp1.y * (double)w1), (float)(lp1.z - perp1.z * (double)w1), 0.0f, 1.0f, a1);
-            SwordFlightClientRenderer.addTrailVert(vc, m, (float)(lp0.x - perp0.x * (double)w0), (float)(lp0.y - perp0.y * (double)w0), (float)(lp0.z - perp0.z * (double)w0), 0.0f, 0.0f, a0);
+            CultivationSwordFlightRenderer.addTrailVert(vc, m, (float)(lp0.x + perp0.x * (double)w0), (float)(lp0.y + perp0.y * (double)w0), (float)(lp0.z + perp0.z * (double)w0), 1.0f, 0.0f, a0);
+            CultivationSwordFlightRenderer.addTrailVert(vc, m, (float)(lp1.x + perp1.x * (double)w1), (float)(lp1.y + perp1.y * (double)w1), (float)(lp1.z + perp1.z * (double)w1), 1.0f, 1.0f, a1);
+            CultivationSwordFlightRenderer.addTrailVert(vc, m, (float)(lp1.x - perp1.x * (double)w1), (float)(lp1.y - perp1.y * (double)w1), (float)(lp1.z - perp1.z * (double)w1), 0.0f, 1.0f, a1);
+            CultivationSwordFlightRenderer.addTrailVert(vc, m, (float)(lp0.x - perp0.x * (double)w0), (float)(lp0.y - perp0.y * (double)w0), (float)(lp0.z - perp0.z * (double)w0), 0.0f, 0.0f, a0);
         }
         RenderSystem.disableBlend();
     }
@@ -277,4 +252,3 @@ public final class SwordFlightClientRenderer {
     private record TrailSample(double x, double y, double z, float yaw) {
     }
 }
-

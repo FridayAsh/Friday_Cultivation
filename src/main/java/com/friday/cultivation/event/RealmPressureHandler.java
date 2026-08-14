@@ -41,7 +41,6 @@ import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.event.NascentSoulOutOfBodyHandler;
 import com.friday.cultivation.event.SectCombatHandler;
 import com.friday.cultivation.event.SoulStateHandler;
-import com.friday.cultivation.event.SwordFlightHandler;
 import com.friday.cultivation.event.VoidEscapeHandler;
 import com.friday.cultivation.network.ModNetwork;
 import com.friday.cultivation.network.RealmPressureVisualPacket;
@@ -453,7 +452,6 @@ public final class RealmPressureHandler {
             ServerPlayer player = (ServerPlayer)entity;
             CultivationData data = CultivationCapability.get((Player)player).orElse(null);
             if (data != null) {
-                SwordFlightHandler.stopIfActive(player, data, false);
                 if (data.isVoidEscapeActive()) {
                     VoidEscapeHandler.tryManualExitIfActive(player);
                 }

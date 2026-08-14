@@ -55,7 +55,6 @@ import com.friday.cultivation.event.SectCombatHandler;
 import com.friday.cultivation.event.SoulHookHandler;
 import com.friday.cultivation.event.SoulStateHandler;
 import com.friday.cultivation.event.SpiritLockHandler;
-import com.friday.cultivation.event.SwordFlightHandler;
 import com.friday.cultivation.event.TimeStasisHandler;
 import com.friday.cultivation.event.VoidEscapeHandler;
 import com.friday.cultivation.item.weapon.SoulHookItem;
@@ -153,10 +152,6 @@ public class CastSpellPacket {
                     player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.spirit_lock.caster_locked"), true);
                     return;
                 }
-                if (sp == Spell.SWORD_FLIGHT && SwordFlightHandler.isActive(data)) {
-                    SwordFlightHandler.stop(player, data);
-                    return;
-                }
                 if (sp == Spell.NASCENT_SOUL_OUT_OF_BODY && NascentSoulOutOfBodyHandler.isActive(player)) {
                     NascentSoulOutOfBodyHandler.toggle(player);
                     return;
@@ -176,7 +171,7 @@ public class CastSpellPacket {
                     player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.flying_sword.no_sword"), true);
                     return;
                 }
-                if (sp == Spell.SWORD_FLIGHT && !(player.getMainHandItem().getItem() instanceof SwordItem)) {
+                if (sp == Spell.SWORD_FLIGHT && !(player.getMainHandItem().getItem() instanceof SwordItem) && !com.friday.cultivation.flight.CultivationFlightHandler.isSwordFlightActive(player)) {
                     player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.sword_flight.no_sword"), true);
                     return;
                 }
@@ -194,7 +189,7 @@ public class CastSpellPacket {
                 }
                 if (sp == Spell.SWORD_FLIGHT) {
                     DharmaBodyManifestationHandler.trigger(player);
-                    SwordFlightHandler.start(player);
+                    com.friday.cultivation.flight.CultivationFlightHandler.toggleSwordFlight(player);
                     return;
                 }
                 if (sp == Spell.SPIRIT_LOCK && !SpiritLockHandler.hasLockTarget(player)) {
@@ -298,7 +293,7 @@ public class CastSpellPacket {
                 break;
             }
             case SWORD_FLIGHT: {
-                SwordFlightHandler.start(player);
+                com.friday.cultivation.flight.CultivationFlightHandler.toggleSwordFlight(player);
                 break;
             }
             case CORE_SELF_DESTRUCT: {

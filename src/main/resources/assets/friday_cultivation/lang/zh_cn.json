@@ -1157,7 +1157,7 @@
   "spell.friday_cultivation.frost_walker": "寒冰筑路",
   "spell.friday_cultivation.frost_walker.desc": "行走水上时化水为冰，可踏水而行",
   "spell.friday_cultivation.qi_flight": "灵气飞行",
-  "spell.friday_cultivation.qi_flight.desc": "御气翱翔之术。启用后可如创造模式般自由飞行 (双击跳跃键起飞、空白上升、Shift 下降、疾跑键加速)，飞行期间每秒消耗 25 灵气；落地不消耗。灵气耗尽会自动停止飞行。",
+  "spell.friday_cultivation.qi_flight.desc": "御气翱翔之术。启用后可如创造模式般自由飞行：按住空格上升、疾跑键加速、Shift 下降、松开悬停；飞行期间每秒消耗 25 灵气，落地不消耗。灵气耗尽会自动停止飞行。",
   "spell.friday_cultivation.meta": "%s · %s · %s",
   "spell.friday_cultivation.cost": "伤害 %s ／ 灵气 %s",
   "spell.friday_cultivation.cost.charge_100": "伤害 %s 起跳 ／ 100%% 约需 %s 灵气",
@@ -2326,5 +2326,10 @@
   "item.friday_cultivation.chi_yan_sword_great_emperor": "赤焰帝兵",
   "item.friday_cultivation.han_bing_sword_great_emperor": "寒冰帝兵",
   "tooltip.friday_cultivation.technique_book.imperial_art_mystery": "一门尚未自创的帝法，字迹如天机般晦涩难辨……",
-  "item_tier.friday_cultivation.great_emperor_weapon": "帝兵"
+  "item_tier.friday_cultivation.great_emperor_weapon": "帝兵",
+  "message.friday_cultivation.qi_flight.not_learned": "你尚未掌握灵气飞行法术。",
+  "message.friday_cultivation.qi_flight.disabled": "灵气飞行法术已停用，请先在法术界面启用。",
+  "message.friday_cultivation.qi_flight.no_qi": "灵气不足，无法开始灵气飞行。",
+  "message.friday_cultivation.qi_flight.started": "御气腾空，灵气飞行开始。",
+  "message.friday_cultivation.qi_flight.stopped": "灵气飞行结束。"
 }

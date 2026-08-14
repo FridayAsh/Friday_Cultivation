@@ -83,6 +83,8 @@ implements INBTSerializable<CompoundTag> {
     private int chargingTicks = 0;
     private int chargingEntityId = -1;
     private ItemStack swordFlightStack = ItemStack.EMPTY;
+    /** 灵气飞行显式开关（双击空格激活/取消） */
+    private boolean qiFlightToggled = false;
     private int swordFlightOriginalSlot = -1;
     private boolean voidEscapeActive = false;
     private int voidEscapeStability = 0;
@@ -1751,6 +1753,15 @@ implements INBTSerializable<CompoundTag> {
         return !this.swordFlightStack.isEmpty();
     }
 
+    public boolean isQiFlightToggled() {
+        return this.qiFlightToggled;
+    }
+
+    public void setQiFlightToggled(boolean v) {
+        this.qiFlightToggled = v;
+    }
+
+
     public ItemStack getSwordFlightStack() {
         return this.swordFlightStack;
     }
@@ -2127,6 +2138,7 @@ implements INBTSerializable<CompoundTag> {
         this.chargingEntityId = -1;
         this.swordFlightStack = other.swordFlightStack.copy();
         this.swordFlightOriginalSlot = other.swordFlightOriginalSlot;
+        this.qiFlightToggled = other.qiFlightToggled;
         this.voidEscapeActive = other.voidEscapeActive;
         this.voidEscapeStability = other.voidEscapeStability;
         this.inverseFiveElementMark = other.inverseFiveElementMark;
@@ -2252,6 +2264,7 @@ implements INBTSerializable<CompoundTag> {
             tag.put("swordFlightStack", (Tag)this.swordFlightStack.save(new CompoundTag()));
         }
         tag.putInt("swordFlightOriginalSlot", this.swordFlightOriginalSlot);
+        tag.putBoolean("qiFlightToggled", this.qiFlightToggled);
         tag.putBoolean("voidEscapeActive", this.voidEscapeActive);
         tag.putInt("voidEscapeStability", this.voidEscapeStability);
         tag.putString("inverseFiveElementMark", this.getInverseFiveElementMark().id());
@@ -2410,6 +2423,8 @@ implements INBTSerializable<CompoundTag> {
         this.chargingEntityId = tag.contains("chargingEntityId", 3) ? tag.getInt("chargingEntityId") : -1;
         this.swordFlightStack = tag.contains("swordFlightStack", 10) ? ItemStack.of((CompoundTag)tag.getCompound("swordFlightStack")) : ItemStack.EMPTY;
         this.swordFlightOriginalSlot = tag.contains("swordFlightOriginalSlot", 3) ? tag.getInt("swordFlightOriginalSlot") : -1;
+        this.qiFlightToggled = tag.getBoolean("qiFlightToggled");
+        // 灵气飞行状态随数据同步（syncToClient 传输），存档亦保留；登录时由 CapabilityEvents 重置
         this.voidEscapeActive = tag.getBoolean("voidEscapeActive");
         this.voidEscapeStability = tag.contains("voidEscapeStability", 3) ? tag.getInt("voidEscapeStability") : 0;
         this.inverseFiveElementMark = tag.contains("inverseFiveElementMark", 8) ? QiElement.byId(tag.getString("inverseFiveElementMark")) : QiElement.PURE;

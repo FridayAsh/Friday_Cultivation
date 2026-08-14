@@ -67,6 +67,9 @@ public final class CapabilityEvents {
                 data.clearCharging();
                 data.applyZhenyuanMajorAutoRebalanceMigration();
                 CapabilityEvents.applySpellTerrainRuleSnapshot(data, true);
+                if (data.isSwordFlightActive()) {
+                    data.clearSwordFlight();
+                }
             });
             CapabilityEvents.syncToClient(player2);
         }

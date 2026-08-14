@@ -11,6 +11,7 @@ package com.friday.cultivation.network;
 
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.spell.Spell;
+import com.friday.cultivation.cultivation.spell.SpellType;
 import com.friday.cultivation.event.CapabilityEvents;
 import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
@@ -50,6 +51,13 @@ public class EquipSpellPacket {
                 Spell sp;
                 if (!(msg.spellId.isEmpty() || (sp = Spell.byId(msg.spellId)) != null && data.hasSpell(sp))) {
                     return;
+                }
+                if (!msg.spellId.isEmpty()) {
+                    Spell sel = Spell.byId(msg.spellId);
+                    if (sel != null && sel.type() == SpellType.PASSIVE) {
+                        // 被动法术不可装备到快捷施法栏
+                        return;
+                    }
                 }
                 data.setEquippedSpellAt(msg.slot, msg.spellId);
                 CapabilityEvents.syncToClient(player);

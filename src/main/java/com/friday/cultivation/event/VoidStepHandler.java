@@ -28,7 +28,6 @@ import com.friday.cultivation.event.NascentSoulOutOfBodyHandler;
 import com.friday.cultivation.event.RealmPressureHandler;
 import com.friday.cultivation.event.SoulHookHandler;
 import com.friday.cultivation.event.SpiritLockHandler;
-import com.friday.cultivation.event.SwordFlightHandler;
 import com.friday.cultivation.network.VoidStepPacket;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -292,9 +291,6 @@ public final class VoidStepHandler {
         if (data == null || !VoidStepHandler.canUseVoidStep(data)) {
             return;
         }
-        if (SwordFlightHandler.isActive(data)) {
-            return;
-        }
         if (!VoidStepHandler.isFarEnoughAboveGround(player)) {
             return;
         }
@@ -323,9 +319,6 @@ public final class VoidStepHandler {
             return false;
         }
         if (NascentSoulOutOfBodyHandler.isActive(player)) {
-            return false;
-        }
-        if (SwordFlightHandler.isActive(data)) {
             return false;
         }
         return VoidStepHandler.isFarEnoughAboveGround(player);
