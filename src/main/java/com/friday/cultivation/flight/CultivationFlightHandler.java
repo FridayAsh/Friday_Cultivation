@@ -15,6 +15,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * 独立修仙飞行系统（御剑飞行 + 灵气飞行）——自写实现。
@@ -126,6 +127,10 @@ public final class CultivationFlightHandler {
             cd.startSwordFlight(riding, slot);
         }
         enableFlight(player);
+        // 启用瞬间给予初始上升速度，让玩家原地起跳离地（否则站地无法触发飞行）
+        Vec3 motion = player.getDeltaMovement();
+        player.setDeltaMovement(motion.x, 0.42, motion.z);
+        player.hurtMarked = true;
         player.containerMenu.broadcastChanges();
         CapabilityEvents.syncToClient(player);
         player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.sword_flight.started"), true);
