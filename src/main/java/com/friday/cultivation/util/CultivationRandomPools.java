@@ -162,7 +162,25 @@ public final class CultivationRandomPools {
                 pillTierArray6[2] = PillTier.SUPREME;
                 break;
             }
-            case TRUE_IMMORTAL: 
+            case TRUE_IMMORTAL: {
+                PillTier[] pillTierTrueImmortal = new PillTier[3];
+                pillTierTrueImmortal[0] = PillTier.SUPREME;
+                pillTierTrueImmortal[1] = PillTier.SUPREME;
+                pillTierArray = pillTierTrueImmortal;
+                pillTierTrueImmortal[2] = PillTier.IMMORTAL;
+                break;
+            }
+            case HALF_SAGE: 
+            case SAGE:
+            case HALF_EMPEROR: {
+                // 半圣/圣人/半帝：圣级品阶（SAGE，介于仙 IMMORTAL 与帝 GREAT_EMPEROR 之间）
+                PillTier[] pillTierSage = new PillTier[3];
+                pillTierSage[0] = PillTier.SUPREME;
+                pillTierSage[1] = PillTier.SUPREME;
+                pillTierArray = pillTierSage;
+                pillTierSage[2] = PillTier.SUPREME;
+                break;
+            }
             case LOOSE_IMMORTAL:
             case GREAT_EMPEROR: {
                 PillTier[] pillTierArray7 = new PillTier[3];
@@ -182,7 +200,9 @@ public final class CultivationRandomPools {
             case GOLDEN_CORE, NASCENT_SOUL -> ItemTier.MID;
             case SOUL_FORMATION, VOID_REFINING -> ItemTier.HIGH;
             case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE -> ItemTier.SUPREME;
-            case TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> ItemTier.IMMORTAL;
+            case TRUE_IMMORTAL -> ItemTier.IMMORTAL;
+            case HALF_SAGE, SAGE, HALF_EMPEROR -> ItemTier.SAGE;
+            case LOOSE_IMMORTAL, GREAT_EMPEROR -> ItemTier.IMMORTAL;
         };
     }
 
@@ -192,7 +212,9 @@ public final class CultivationRandomPools {
             case MORTAL, BODY_TEMPERING, QI_REFINING, FOUNDATION_BUILDING -> ItemTier.LOW;
             case GOLDEN_CORE, NASCENT_SOUL -> ItemTier.MID;
             case SOUL_FORMATION, VOID_REFINING -> ItemTier.HIGH;
-            case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> ItemTier.SUPREME;
+            case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL -> ItemTier.SUPREME;
+            case HALF_SAGE, SAGE, HALF_EMPEROR -> ItemTier.SAGE;
+            case LOOSE_IMMORTAL, GREAT_EMPEROR -> ItemTier.SUPREME;
         };
     }
 
@@ -203,7 +225,9 @@ public final class CultivationRandomPools {
             case GOLDEN_CORE, NASCENT_SOUL -> ItemTier.MID;
             case SOUL_FORMATION, VOID_REFINING -> ItemTier.HIGH;
             case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE -> ItemTier.SUPREME;
-            case TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> ItemTier.IMMORTAL;
+            case TRUE_IMMORTAL -> ItemTier.IMMORTAL;
+            case HALF_SAGE, SAGE, HALF_EMPEROR -> ItemTier.SAGE;
+            case LOOSE_IMMORTAL, GREAT_EMPEROR -> ItemTier.IMMORTAL;
         };
     }
 
@@ -234,6 +258,7 @@ public final class CultivationRandomPools {
                 }
                 yield 2;
             }
+            case SAGE -> ruined ? 1 : 1;
             case IMMORTAL -> ruined ? 1 : 1;
             case GREAT_EMPEROR -> ruined ? 1 : 1;
         };

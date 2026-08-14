@@ -85,6 +85,8 @@ implements INBTSerializable<CompoundTag> {
     private ItemStack swordFlightStack = ItemStack.EMPTY;
     /** 灵气飞行显式开关（双击空格激活/取消） */
     private boolean qiFlightToggled = false;
+    /** 悟道进度（半圣/半帝境界专用：悟道条，满后突破下一境界） */
+    private long wuDaoProgress = 0L;
     private int swordFlightOriginalSlot = -1;
     private boolean voidEscapeActive = false;
     private int voidEscapeStability = 0;
@@ -269,6 +271,10 @@ implements INBTSerializable<CompoundTag> {
         this.totalQiAbsorbed += (long)amount;
         if (!this.isLooseImmortal()) {
             this.setCultivationProgress(this.cultivationProgress + (long)amount);
+        }
+        // 半圣/半帝：吸收灵气同时累积悟道（悟道条）
+        if (this.getWuDaoMax() > 0L) {
+            this.addWuDao((long)amount);
         }
         long before = this.currentQi;
         this.setCurrentQi(this.currentQi + (long)amount);
@@ -1761,6 +1767,39 @@ implements INBTSerializable<CompoundTag> {
         this.qiFlightToggled = v;
     }
 
+    /** 悟道进度（半圣/半帝专用） */
+    public long getWuDaoProgress() {
+        return this.wuDaoProgress;
+    }
+
+    public void setWuDaoProgress(long v) {
+        this.wuDaoProgress = Math.max(0L, Math.min(v, this.getWuDaoMax()));
+    }
+
+    /** 悟道上限（半圣/半帝）：悟道满后可突破下一境界 */
+    public long getWuDaoMax() {
+        if (this.realm == Realm.HALF_SAGE) {
+            return 20000L;
+        }
+        if (this.realm == Realm.HALF_EMPEROR) {
+            return 30000L;
+        }
+        return 0L;
+    }
+
+    /** 悟道是否圆满（半圣/半帝悟道满） */
+    public boolean isWuDaoComplete() {
+        long max = this.getWuDaoMax();
+        return max > 0L && this.wuDaoProgress >= max;
+    }
+
+    /** 增加悟道进度（修炼时累积） */
+    public void addWuDao(long amount) {
+        if (amount > 0L && this.getWuDaoMax() > 0L) {
+            this.setWuDaoProgress(this.wuDaoProgress + amount);
+        }
+    }
+
 
     public ItemStack getSwordFlightStack() {
         return this.swordFlightStack;
@@ -1896,6 +1935,10 @@ implements INBTSerializable<CompoundTag> {
         if (this.isInTribulation()) {
             return false;
         }
+        // 半圣/半帝：悟道条满后方可突破（修为进度不用于这些境界）
+        if (this.realm == Realm.HALF_SAGE || this.realm == Realm.HALF_EMPEROR) {
+            return this.isWuDaoComplete();
+        }
         return this.cultivationProgress >= this.getMaxCultivation();
     }
 
@@ -1918,7 +1961,8 @@ implements INBTSerializable<CompoundTag> {
                 this.currentQi = this.getMaxQi();
                 return;
             }
-            Realm n = this.realm == Realm.TRUE_IMMORTAL ? Realm.GREAT_EMPEROR : this.realm.next();
+            // 主链路进阶：真仙→半圣→圣人→半帝→大帝（next() 跳过散仙旁支）
+            Realm n = this.realm.next();
             if (n != this.realm) {
                 this.realm = n;
                 if (n == Realm.FOUNDATION_BUILDING && this.pendingFoundationDao != FoundationDao.NONE) {
@@ -2139,6 +2183,7 @@ implements INBTSerializable<CompoundTag> {
         this.swordFlightStack = other.swordFlightStack.copy();
         this.swordFlightOriginalSlot = other.swordFlightOriginalSlot;
         this.qiFlightToggled = other.qiFlightToggled;
+        this.wuDaoProgress = other.wuDaoProgress;
         this.voidEscapeActive = other.voidEscapeActive;
         this.voidEscapeStability = other.voidEscapeStability;
         this.inverseFiveElementMark = other.inverseFiveElementMark;
@@ -2265,6 +2310,7 @@ implements INBTSerializable<CompoundTag> {
         }
         tag.putInt("swordFlightOriginalSlot", this.swordFlightOriginalSlot);
         tag.putBoolean("qiFlightToggled", this.qiFlightToggled);
+        tag.putLong("wuDaoProgress", this.wuDaoProgress);
         tag.putBoolean("voidEscapeActive", this.voidEscapeActive);
         tag.putInt("voidEscapeStability", this.voidEscapeStability);
         tag.putString("inverseFiveElementMark", this.getInverseFiveElementMark().id());
@@ -2424,6 +2470,7 @@ implements INBTSerializable<CompoundTag> {
         this.swordFlightStack = tag.contains("swordFlightStack", 10) ? ItemStack.of((CompoundTag)tag.getCompound("swordFlightStack")) : ItemStack.EMPTY;
         this.swordFlightOriginalSlot = tag.contains("swordFlightOriginalSlot", 3) ? tag.getInt("swordFlightOriginalSlot") : -1;
         this.qiFlightToggled = tag.getBoolean("qiFlightToggled");
+        this.wuDaoProgress = tag.contains("wuDaoProgress", 4) ? Math.max(0L, tag.getLong("wuDaoProgress")) : 0L;
         // 灵气飞行状态随数据同步（syncToClient 传输），存档亦保留；登录时由 CapabilityEvents 重置
         this.voidEscapeActive = tag.getBoolean("voidEscapeActive");
         this.voidEscapeStability = tag.contains("voidEscapeStability", 3) ? tag.getInt("voidEscapeStability") : 0;

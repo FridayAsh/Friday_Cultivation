@@ -705,6 +705,12 @@ extends Screen {
         long curQi = data.getCurrentQi();
         long maxQi = data.getMaxQi();
         this.drawLeftStatusBar(gfx, ICON_QI, contentX, infoY += 11, statusBarW, maxQi == 0L ? 0.0f : (float)curQi / (float)maxQi, (Component)Component.translatable((String)"screen.friday_cultivation.qi_short"), curQi + " / " + maxQi, -9583434, -13729678);
+        // 悟道条（半圣/半帝专用）：位于灵气条下方，复用图标贴图、使用专属颜色（紫色渐变）
+        if (data.getWuDaoMax() > 0L) {
+            long curWudao = data.getWuDaoProgress();
+            long maxWudao = data.getWuDaoMax();
+            this.drawLeftStatusBar(gfx, ICON_QI, contentX, infoY += 11, statusBarW, maxWudao == 0L ? 0.0f : (float)curWudao / (float)maxWudao, (Component)Component.translatable((String)"screen.friday_cultivation.wudao_short"), curWudao + " / " + maxWudao, -6750208, -13684944);
+        }
         infoY += 14;
         if (data.isInTribulation()) {
             int noteX = contentX;
@@ -2758,6 +2764,7 @@ extends Screen {
             case MID -> -8128;
             case HIGH -> -12525344;
             case SUPREME -> -2064129;
+            case SAGE -> 10197724;
             case IMMORTAL -> -2068440;
             case GREAT_EMPEROR -> 16755200;
         };
@@ -3820,6 +3827,7 @@ extends Screen {
         MID("item_tier.friday_cultivation.mid"),
         HIGH("item_tier.friday_cultivation.high"),
         SUPREME("item_tier.friday_cultivation.supreme"),
+        SAGE("item_tier.friday_cultivation.sage"),
         IMMORTAL("item_tier.friday_cultivation.immortal"),
         GREAT_EMPEROR("item_tier.friday_cultivation.great_emperor");
 
@@ -3858,6 +3866,12 @@ extends Screen {
                 }
                 case SUPREME -> {
                     if (tier == ItemTier.SUPREME) {
+                        yield true;
+                    }
+                    yield false;
+                }
+                case SAGE -> {
+                    if (tier == ItemTier.SAGE) {
                         yield true;
                     }
                     yield false;

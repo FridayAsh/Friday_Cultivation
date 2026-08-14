@@ -1,18 +1,28 @@
 {
-  "type": "friday_cultivation:refining",
-  "translation_key": "recipe.friday_cultivation.rejuvenation_flag",
-  "sort_order": 80,
-  "ingredients": [
-    { "item": "friday_cultivation:low_spirit_stone", "count": 1 },
-    { "item": "minecraft:apple", "count": 4 },
-    { "item": "minecraft:stick", "count": 3 }
-  ],
-  "qi_cost_per_item": 400,
-  "outputs": {
-    "low": "friday_cultivation:low_rejuvenation_flag",
-    "mid": "friday_cultivation:mid_rejuvenation_flag",
-    "high": "friday_cultivation:high_rejuvenation_flag",
-    "supreme": "friday_cultivation:supreme_rejuvenation_flag",
-    "immortal": "friday_cultivation:immortal_rejuvenation_flag"
-  }
+    "type":  "friday_cultivation:refining",
+    "translation_key":  "recipe.friday_cultivation.rejuvenation_flag",
+    "sort_order":  80,
+    "ingredients":  [
+                        {
+                            "item":  "friday_cultivation:low_spirit_stone",
+                            "count":  1
+                        },
+                        {
+                            "item":  "minecraft:apple",
+                            "count":  4
+                        },
+                        {
+                            "item":  "minecraft:stick",
+                            "count":  3
+                        }
+                    ],
+    "qi_cost_per_item":  400,
+    "outputs":  {
+                    "low":  "friday_cultivation:low_rejuvenation_flag",
+                    "mid":  "friday_cultivation:mid_rejuvenation_flag",
+                    "high":  "friday_cultivation:high_rejuvenation_flag",
+                    "supreme":  "friday_cultivation:supreme_rejuvenation_flag",
+                    "immortal":  "friday_cultivation:immortal_rejuvenation_flag",
+                    "sage":  "friday_cultivation:immortal_rejuvenation_flag"
+                }
 }

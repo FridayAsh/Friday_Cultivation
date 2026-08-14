@@ -1,18 +1,28 @@
 {
-  "type": "friday_cultivation:refining",
-  "translation_key": "recipe.friday_cultivation.qi_gathering_flag",
-  "sort_order": 50,
-  "ingredients": [
-    { "item": "friday_cultivation:low_spirit_stone", "count": 1 },
-    { "item": "minecraft:paper", "count": 4 },
-    { "item": "minecraft:stick", "count": 3 }
-  ],
-  "qi_cost_per_item": 100,
-  "outputs": {
-    "low": "friday_cultivation:low_qi_gathering_flag",
-    "mid": "friday_cultivation:mid_qi_gathering_flag",
-    "high": "friday_cultivation:high_qi_gathering_flag",
-    "supreme": "friday_cultivation:supreme_qi_gathering_flag",
-    "immortal": "friday_cultivation:immortal_qi_gathering_flag"
-  }
+    "type":  "friday_cultivation:refining",
+    "translation_key":  "recipe.friday_cultivation.qi_gathering_flag",
+    "sort_order":  50,
+    "ingredients":  [
+                        {
+                            "item":  "friday_cultivation:low_spirit_stone",
+                            "count":  1
+                        },
+                        {
+                            "item":  "minecraft:paper",
+                            "count":  4
+                        },
+                        {
+                            "item":  "minecraft:stick",
+                            "count":  3
+                        }
+                    ],
+    "qi_cost_per_item":  100,
+    "outputs":  {
+                    "low":  "friday_cultivation:low_qi_gathering_flag",
+                    "mid":  "friday_cultivation:mid_qi_gathering_flag",
+                    "high":  "friday_cultivation:high_qi_gathering_flag",
+                    "supreme":  "friday_cultivation:supreme_qi_gathering_flag",
+                    "immortal":  "friday_cultivation:immortal_qi_gathering_flag",
+                    "sage":  "friday_cultivation:immortal_qi_gathering_flag"
+                }
 }

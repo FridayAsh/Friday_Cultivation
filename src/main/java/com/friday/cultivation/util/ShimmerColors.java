@@ -10,6 +10,8 @@ import net.minecraft.network.chat.MutableComponent;
 public final class ShimmerColors {
     /** 帝炎金红：金→橙→红→橙 循环 */
     public static final int[] DIVINE_FLAME = {0xFFD700, 0xFFA500, 0xFF6600, 0xFF3300, 0xFF6600, 0xFFA500};
+    /** 圣辉紫：紫→亮紫→蓝紫 循环（圣人级物品） */
+    public static final int[] SAGE_AURA = {0x9B59FF, 0xC56FFF, 0x7A3BFF, 0xA15CFF, 0xC56FFF};
     /** 帝法乱码流动色（偏暗金红） */
     public static final int[] DIVINE_MYSTERY = {0xCC6600, 0xFF8800, 0xFF4400, 0xAA2200, 0xFF4400, 0xFF8800};
 

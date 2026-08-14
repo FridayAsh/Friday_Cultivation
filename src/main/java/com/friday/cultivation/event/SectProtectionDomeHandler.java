@@ -1311,6 +1311,7 @@ public final class SectProtectionDomeHandler {
             case MID -> 0.1;
             case HIGH -> 0.3;
             case SUPREME -> 0.5;
+            case SAGE -> 0.8;
             case IMMORTAL -> 1.0;
             case GREAT_EMPEROR -> 1.0;
         };

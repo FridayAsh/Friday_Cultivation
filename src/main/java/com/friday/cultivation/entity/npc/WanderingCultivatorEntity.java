@@ -1348,7 +1348,7 @@ extends AbstractVillager {
             case SOUL_FORMATION -> 0.24f;
             case VOID_REFINING, BODY_INTEGRATION -> 0.27f;
             case MAHAYANA, TRIBULATION_TRANSCENDENCE -> 0.3f;
-            case TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> 0.33f;
+            case TRUE_IMMORTAL, HALF_SAGE, SAGE, HALF_EMPEROR, LOOSE_IMMORTAL, GREAT_EMPEROR -> 0.33f;
             case MORTAL, BODY_TEMPERING, QI_REFINING -> 0.0f;
         };
     }
@@ -1366,7 +1366,7 @@ extends AbstractVillager {
             case SOUL_FORMATION -> 0.24f;
             case VOID_REFINING, BODY_INTEGRATION -> 0.27f;
             case MAHAYANA, TRIBULATION_TRANSCENDENCE -> 0.3f;
-            case TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> 0.33f;
+            case TRUE_IMMORTAL, HALF_SAGE, SAGE, HALF_EMPEROR, LOOSE_IMMORTAL, GREAT_EMPEROR -> 0.33f;
             case MORTAL, BODY_TEMPERING, QI_REFINING -> 0.0f;
         };
     }
@@ -1572,6 +1572,9 @@ extends AbstractVillager {
                 break;
             }
             case TRUE_IMMORTAL: 
+            case HALF_SAGE:
+            case SAGE:
+            case HALF_EMPEROR:
             case LOOSE_IMMORTAL:
             case GREAT_EMPEROR: {
                 int[] nArray12 = new int[2];
@@ -1695,7 +1698,7 @@ extends AbstractVillager {
             case MORTAL, BODY_TEMPERING, QI_REFINING -> (Item)ModItems.LOW_SPIRIT_STONE.get();
             case FOUNDATION_BUILDING, GOLDEN_CORE -> (Item)ModItems.MID_SPIRIT_STONE.get();
             case NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, BODY_INTEGRATION -> (Item)ModItems.HIGH_SPIRIT_STONE.get();
-            case MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, LOOSE_IMMORTAL, GREAT_EMPEROR -> (Item)ModItems.SUPREME_SPIRIT_STONE.get();
+            case MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, HALF_SAGE, SAGE, HALF_EMPEROR, LOOSE_IMMORTAL, GREAT_EMPEROR -> (Item)ModItems.SUPREME_SPIRIT_STONE.get();
         };
     }
 
@@ -2179,6 +2182,9 @@ extends AbstractVillager {
             case MAHAYANA: 
             case TRIBULATION_TRANSCENDENCE: 
             case TRUE_IMMORTAL: 
+            case HALF_SAGE:
+            case SAGE:
+            case HALF_EMPEROR:
             case LOOSE_IMMORTAL:
             case GREAT_EMPEROR: {
                 int[] nArray4 = new int[2];
@@ -2205,6 +2211,9 @@ extends AbstractVillager {
             case MAHAYANA -> 20.0;
             case TRIBULATION_TRANSCENDENCE -> 25.0;
             case TRUE_IMMORTAL -> 30.0;
+            case HALF_SAGE -> 31.0;
+            case SAGE -> 32.0;
+            case HALF_EMPEROR -> 34.0;
             case GREAT_EMPEROR -> 35.0;
             case LOOSE_IMMORTAL -> 28.0;
         };
@@ -3669,6 +3678,8 @@ extends AbstractVillager {
             case MAHAYANA -> ChatFormatting.RED;
             case TRIBULATION_TRANSCENDENCE -> ChatFormatting.DARK_BLUE;
             case TRUE_IMMORTAL -> ChatFormatting.GOLD;
+            case HALF_SAGE, SAGE -> ChatFormatting.DARK_AQUA;
+            case HALF_EMPEROR -> ChatFormatting.DARK_RED;
             case GREAT_EMPEROR -> ChatFormatting.DARK_RED;
             case LOOSE_IMMORTAL -> ChatFormatting.LIGHT_PURPLE;
         };

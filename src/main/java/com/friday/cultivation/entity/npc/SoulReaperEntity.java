@@ -94,9 +94,9 @@ extends PathfinderMob {
         return r.baseHealthForNpc();
     }
 
-    /** 勾魂使者境界随击杀数提升；最高只到散仙（不生成大帝级勾魂使者） */
+    /** 勾魂使者境界随击杀数提升；上限为主链路的半帝（不生成大帝级勾魂使者） */
     public static Realm realmForKills(int kills) {
-        int idx = Math.min(Realm.LOOSE_IMMORTAL.ordinal(), Realm.QI_REFINING.ordinal() + Math.max(0, kills));
+        int idx = Math.min(Realm.HALF_EMPEROR.ordinal(), Realm.QI_REFINING.ordinal() + Math.max(0, kills));
         Realm r = Realm.values()[idx];
         return r == Realm.BODY_TEMPERING ? Realm.QI_REFINING : r;
     }

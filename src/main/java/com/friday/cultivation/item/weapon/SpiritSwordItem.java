@@ -64,6 +64,7 @@ implements TieredWeapon {
             case MID -> Rarity.UNCOMMON;
             case HIGH -> Rarity.RARE;
             case SUPREME -> Rarity.EPIC;
+            case SAGE -> Rarity.EPIC;
             case IMMORTAL -> Rarity.EPIC;
             case GREAT_EMPEROR -> Rarity.EPIC;
         };
@@ -109,6 +110,9 @@ implements TieredWeapon {
         if (this.tier == ItemTier.GREAT_EMPEROR) {
             return ShimmerColors.buildShimmeringName(Component.translatable((String)this.getDescriptionId(stack)).getString(), ShimmerColors.DIVINE_FLAME);
         }
+        if (this.tier == ItemTier.SAGE) {
+            return ShimmerColors.buildShimmeringName(Component.translatable((String)this.getDescriptionId(stack)).getString(), ShimmerColors.SAGE_AURA);
+        }
         return TooltipUtils.tieredName((Component)Component.translatable((String)this.getDescriptionId(stack)), this.tier);
     }
 
@@ -117,6 +121,10 @@ implements TieredWeapon {
             // [帝兵] [元素]：帝兵品阶用金红流动，元素标签保留
             MutableComponent tierBadge = Component.literal((String)"[").withStyle(ChatFormatting.DARK_GRAY).append(ShimmerColors.buildShimmeringName(Component.translatable((String)"item_tier.friday_cultivation.great_emperor_weapon").getString(), ShimmerColors.DIVINE_FLAME)).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
             tooltip.add(Component.empty().append((Component)tierBadge).append((Component)Component.literal((String)" ")).append((Component)TooltipUtils.elementBadge(this.element)));
+        } else if (this.tier == ItemTier.SAGE) {
+            // [圣兵] [元素]：圣兵品阶用圣辉紫流动，元素标签保留
+            MutableComponent sageBadge = Component.literal((String)"[").withStyle(ChatFormatting.DARK_GRAY).append(ShimmerColors.buildShimmeringName(Component.translatable((String)"item_tier.friday_cultivation.sage_weapon").getString(), ShimmerColors.SAGE_AURA)).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.empty().append((Component)sageBadge).append((Component)Component.literal((String)" ")).append((Component)TooltipUtils.elementBadge(this.element)));
         } else {
             tooltip.add((Component)TooltipUtils.tierElementLine(this.tier, this.element));
         }

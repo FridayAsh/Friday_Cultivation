@@ -1,19 +1,32 @@
 {
-  "type": "friday_cultivation:refining",
-  "translation_key": "recipe.friday_cultivation.han_bing_sword",
-  "sort_order": 40,
-  "ingredients": [
-    { "item": "friday_cultivation:low_spirit_stone", "count": 1 },
-    { "item": "minecraft:blue_ice", "count": 2 },
-    { "item": "minecraft:bone", "count": 1 },
-    { "item": "minecraft:lapis_lazuli", "count": 1 }
-  ],
-  "qi_cost_per_item": 50,
-  "outputs": {
-    "low": "friday_cultivation:han_bing_sword_low",
-    "mid": "friday_cultivation:han_bing_sword_mid",
-    "high": "friday_cultivation:han_bing_sword_high",
-    "supreme": "friday_cultivation:han_bing_sword_supreme",
-    "immortal": "friday_cultivation:han_bing_sword_immortal"
-  }
+    "type":  "friday_cultivation:refining",
+    "translation_key":  "recipe.friday_cultivation.han_bing_sword",
+    "sort_order":  40,
+    "ingredients":  [
+                        {
+                            "item":  "friday_cultivation:low_spirit_stone",
+                            "count":  1
+                        },
+                        {
+                            "item":  "minecraft:blue_ice",
+                            "count":  2
+                        },
+                        {
+                            "item":  "minecraft:bone",
+                            "count":  1
+                        },
+                        {
+                            "item":  "minecraft:lapis_lazuli",
+                            "count":  1
+                        }
+                    ],
+    "qi_cost_per_item":  50,
+    "outputs":  {
+                    "low":  "friday_cultivation:han_bing_sword_low",
+                    "mid":  "friday_cultivation:han_bing_sword_mid",
+                    "high":  "friday_cultivation:han_bing_sword_high",
+                    "supreme":  "friday_cultivation:han_bing_sword_supreme",
+                    "immortal":  "friday_cultivation:han_bing_sword_immortal",
+                    "sage":  "friday_cultivation:han_bing_sword_sage"
+                }
 }

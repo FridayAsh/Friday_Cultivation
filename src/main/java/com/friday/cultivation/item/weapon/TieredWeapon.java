@@ -20,6 +20,7 @@ public interface TieredWeapon {
             case MID -> 7;
             case HIGH -> 10;
             case SUPREME -> 15;
+            case SAGE -> 30;
             case IMMORTAL -> 20;
             case GREAT_EMPEROR -> 50;
         };

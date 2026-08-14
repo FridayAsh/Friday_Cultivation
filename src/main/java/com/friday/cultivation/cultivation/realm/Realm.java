@@ -24,8 +24,11 @@ public enum Realm {
     MAHAYANA("mahayana"),
     TRIBULATION_TRANSCENDENCE("tribulation_transcendence"),
     TRUE_IMMORTAL("true_immortal"),
-    LOOSE_IMMORTAL("loose_immortal"),
-    GREAT_EMPEROR("great_emperor");
+    HALF_SAGE("half_sage"),
+    SAGE("sage"),
+    HALF_EMPEROR("half_emperor"),
+    GREAT_EMPEROR("great_emperor"),
+    LOOSE_IMMORTAL("loose_immortal");
 
     private final String id;
 
@@ -44,12 +47,13 @@ public enum Realm {
     /** 该境界的子阶段档数 */
     public int subStageCount() {
         return switch (this) {
-            case MORTAL, LOOSE_IMMORTAL -> 1;
+            case MORTAL, HALF_SAGE, HALF_EMPEROR, LOOSE_IMMORTAL -> 1;
             case BODY_TEMPERING -> 10;
             case QI_REFINING -> 9;
             case GOLDEN_CORE -> 9;
             case BODY_INTEGRATION -> 5;
             case TRUE_IMMORTAL -> 9;
+            case SAGE -> 3;
             case GREAT_EMPEROR -> 9;
             case FOUNDATION_BUILDING, NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, MAHAYANA, TRIBULATION_TRANSCENDENCE -> 4;
         };
@@ -57,7 +61,7 @@ public enum Realm {
 
     /** 是否使用数字层（1-based） */
     public boolean usesNumericLevels() {
-        return this == BODY_TEMPERING || this == QI_REFINING || this == GOLDEN_CORE || this == BODY_INTEGRATION || this == TRUE_IMMORTAL || this == GREAT_EMPEROR;
+        return this == BODY_TEMPERING || this == QI_REFINING || this == GOLDEN_CORE || this == BODY_INTEGRATION || this == TRUE_IMMORTAL || this == SAGE || this == GREAT_EMPEROR;
     }
 
     /** 获取该境界第 level 层的 SubStage（数字层 1-based；4 档 0-3；越界返回 null） */
@@ -84,10 +88,19 @@ public enum Realm {
         if (this == TRUE_IMMORTAL) {
             return level >= 1 && level <= 9 ? new SubStage("heaven_" + level, level) : null;
         }
+        if (this == SAGE) {
+            // 圣人三子阶段：入微 / 道韵 / 悟虚
+            return switch (level) {
+                case 1 -> new SubStage("sage_ruwei", 1);
+                case 2 -> new SubStage("sage_daoyun", 2);
+                case 3 -> new SubStage("sage_wuxu", 3);
+                default -> null;
+            };
+        }
         if (this == GREAT_EMPEROR) {
             return level >= 1 && level <= 9 ? new SubStage("emperor_" + level, level) : null;
         }
-        if (this == MORTAL || this == LOOSE_IMMORTAL) {
+        if (this == MORTAL || this == HALF_SAGE || this == HALF_EMPEROR || this == LOOSE_IMMORTAL) {
             return SubStage.EARLY;
         }
         return switch (level) {
@@ -161,9 +174,19 @@ public enum Realm {
             int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
             return 19000 + lvl * 200;
         }
+        if (this == HALF_SAGE) {
+            return 22000;
+        }
+        if (this == SAGE) {
+            int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
+            return 22500 + lvl * 300;
+        }
+        if (this == HALF_EMPEROR) {
+            return 25000;
+        }
         if (this == GREAT_EMPEROR) {
             int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
-            return 25000 + lvl * 300;
+            return 26000 + lvl * 300;
         }
         if (this == LOOSE_IMMORTAL) {
             return 18000;
@@ -199,6 +222,9 @@ public enum Realm {
             case TRIBULATION_TRANSCENDENCE -> 600000;
             case LOOSE_IMMORTAL -> 1000000;
             case TRUE_IMMORTAL -> 1000000;
+            case HALF_SAGE -> 2000000;
+            case SAGE -> 3000000;
+            case HALF_EMPEROR -> 5000000;
             case GREAT_EMPEROR -> 10000000;
         };
     }
@@ -212,7 +238,7 @@ public enum Realm {
     }
 
     public String npcCategoryTranslationKey() {
-        String category = this == MORTAL ? "mortal" : (this == GREAT_EMPEROR ? "great_emperor" : (this.ordinal() >= TRUE_IMMORTAL.ordinal() ? "immortal" : "cultivator"));
+        String category = this == MORTAL ? "mortal" : (this == GREAT_EMPEROR ? "great_emperor" : ((this == HALF_SAGE || this == SAGE || this == HALF_EMPEROR) ? "sage" : (this.ordinal() >= TRUE_IMMORTAL.ordinal() ? "immortal" : "cultivator")));
         return "npc_category.friday_cultivation." + category;
     }
 
@@ -239,8 +265,11 @@ public enum Realm {
             case MAHAYANA -> 9;
             case TRIBULATION_TRANSCENDENCE -> 10;
             case TRUE_IMMORTAL -> 11;
+            case HALF_SAGE -> 12;
+            case SAGE -> 13;
+            case HALF_EMPEROR -> 14;
             case LOOSE_IMMORTAL -> 12;
-            case GREAT_EMPEROR -> 13;
+            case GREAT_EMPEROR -> 15;
         };
     }
 
@@ -269,6 +298,9 @@ public enum Realm {
             case MAHAYANA -> 218.0;
             case TRIBULATION_TRANSCENDENCE -> 240.0;
             case TRUE_IMMORTAL -> 262.0;
+            case HALF_SAGE -> 320.0;
+            case SAGE -> 340.0;
+            case HALF_EMPEROR -> 370.0;
             case LOOSE_IMMORTAL -> 284.0;
             case GREAT_EMPEROR -> 400.0;
         };
@@ -288,25 +320,44 @@ public enum Realm {
             case MAHAYANA -> 90;
             case TRIBULATION_TRANSCENDENCE -> 95;
             case TRUE_IMMORTAL -> 100;
+            case HALF_SAGE -> 100;
+            case SAGE -> 100;
+            case HALF_EMPEROR -> 100;
             case LOOSE_IMMORTAL -> 95;
             case GREAT_EMPEROR -> 100;
         };
     }
 
     public Realm next() {
-        int idx = this.ordinal();
-        if (idx >= Realm.values().length - 1) {
+        // 主链路：凡人→…→真仙→半圣→圣人→半帝→大帝（大帝为终点）
+        // 散仙（LOOSE_IMMORTAL）是渡劫失败独立旁支，不参与主链路进阶
+        if (this == GREAT_EMPEROR || this == LOOSE_IMMORTAL) {
             return this;
         }
-        return Realm.values()[idx + 1];
+        int idx = this.ordinal() + 1;
+        while (idx < Realm.values().length) {
+            Realm r = Realm.values()[idx];
+            if (r != LOOSE_IMMORTAL) {
+                return r;
+            }
+            ++idx;
+        }
+        return this;
     }
 
     public Realm prev() {
-        int idx = this.ordinal();
-        if (idx <= 0) {
+        if (this == MORTAL) {
             return this;
         }
-        return Realm.values()[idx - 1];
+        int idx = this.ordinal() - 1;
+        while (idx >= 0) {
+            Realm r = Realm.values()[idx];
+            if (r != LOOSE_IMMORTAL) {
+                return r;
+            }
+            --idx;
+        }
+        return this;
     }
 
     public int tribulationCount(SubStage stage) {
@@ -332,8 +383,7 @@ public enum Realm {
             case LOOSE_IMMORTAL -> -1;
             case TRUE_IMMORTAL -> {
                 // 真仙每 3 重天渡劫一次：三重天→四重天 3波×9道，六重天→七重天 6波×9道
-                // 九重天圆满 9波×9道：当前九重天封顶无法突破，暂不生效；
-                // 预留接口——后续接入新境界（放开 canBreakthrough/advanceOnSuccess 封顶）后自动生效
+                // 九重天圆满 9波×9道 → 突破半圣
                 if (stage != null && stage.level() == 3) {
                     yield 3;
                 }
@@ -345,6 +395,17 @@ public enum Realm {
                 }
                 yield 0;
             }
+            // 半圣→圣人：9波×9道
+            case HALF_SAGE -> 9;
+            // 圣人三子阶段：入微→道韵→悟虚 无渡劫；悟虚圆满→半帝 9波×9道
+            case SAGE -> {
+                if (stage != null && stage.isPeakFor(this)) {
+                    yield 9;
+                }
+                yield 0;
+            }
+            // 半帝→大帝：9波×9道
+            case HALF_EMPEROR -> 9;
             // 大帝九帝界：每个帝界突破均渡劫，第一帝界 9 波起每界 +1（9~17 波）
             case GREAT_EMPEROR -> {
                 if (stage != null && stage.level() >= 1 && stage.level() <= 9) {
@@ -381,6 +442,8 @@ public enum Realm {
             case TRIBULATION_TRANSCENDENCE -> 9;
             // 真仙渡劫每波 9 道（配合 tribulationCount：3重天 3波、6重天 6波、9重天 9波 → 27/54/81 道）
             case TRUE_IMMORTAL -> 9;
+            // 半圣/圣人/半帝渡劫每波 9 道
+            case HALF_SAGE, SAGE, HALF_EMPEROR -> 9;
             // 大帝渡劫每波 9 道（配合 tribulationCount：5~13 波 → 45~117 道）
             case GREAT_EMPEROR -> 9;
             default -> 1;
@@ -401,6 +464,7 @@ public enum Realm {
             case MAHAYANA -> 0;
             case TRIBULATION_TRANSCENDENCE -> 150;
             case TRUE_IMMORTAL -> 180;
+            case HALF_SAGE, SAGE, HALF_EMPEROR -> 190;
             case GREAT_EMPEROR -> 200;
             case LOOSE_IMMORTAL -> 0;
         };

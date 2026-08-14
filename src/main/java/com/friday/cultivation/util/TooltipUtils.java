@@ -38,6 +38,7 @@ public final class TooltipUtils {
             case MID -> ChatFormatting.GREEN;
             case HIGH -> ChatFormatting.AQUA;
             case SUPREME -> ChatFormatting.GOLD;
+            case SAGE -> ChatFormatting.LIGHT_PURPLE;
             case IMMORTAL -> ChatFormatting.RED;
             case GREAT_EMPEROR -> ChatFormatting.YELLOW;
         };
@@ -46,6 +47,9 @@ public final class TooltipUtils {
     public static MutableComponent tieredName(Component baseName, ItemTier tier) {
         if (tier == ItemTier.GREAT_EMPEROR) {
             return ShimmerColors.buildShimmeringName(baseName.getString(), ShimmerColors.DIVINE_FLAME);
+        }
+        if (tier == ItemTier.SAGE) {
+            return ShimmerColors.buildShimmeringName(baseName.getString(), ShimmerColors.SAGE_AURA);
         }
         if (tier == ItemTier.IMMORTAL) {
             return Component.empty().append((Component)baseName.copy().withStyle(IMMORTAL_RED_GOLD));
@@ -87,6 +91,9 @@ public final class TooltipUtils {
         if (tier == ItemTier.GREAT_EMPEROR) {
             // 帝法品阶：金红流动（最高阶，高于仙阶的静态红）
             badge = Component.literal((String)"[").withStyle(ChatFormatting.DARK_GRAY).append(ShimmerColors.buildShimmeringName(tier.displayName().getString(), ShimmerColors.DIVINE_FLAME)).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
+        } else if (tier == ItemTier.SAGE) {
+            // 圣兵品阶：圣辉紫流动（介于仙阶静态红与帝阶金红之间）
+            badge = Component.literal((String)"[").withStyle(ChatFormatting.DARK_GRAY).append(ShimmerColors.buildShimmeringName(tier.displayName().getString(), ShimmerColors.SAGE_AURA)).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
         } else if (tier == ItemTier.IMMORTAL) {
             badge = Component.literal((String)"[").append((Component)tier.displayName().copy().withStyle(IMMORTAL_RED_GOLD)).append((Component)Component.literal((String)"]").withStyle(ChatFormatting.DARK_GRAY));
         }

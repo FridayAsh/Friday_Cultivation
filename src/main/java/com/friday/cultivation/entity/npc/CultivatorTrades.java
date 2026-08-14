@@ -241,6 +241,7 @@ public final class CultivatorTrades {
             case MID -> new ItemStack((ItemLike)ModItems.HIGH_SPIRIT_STONE.get(), 1);
             case HIGH -> new ItemStack((ItemLike)ModItems.HIGH_SPIRIT_STONE.get(), 5);
             case SUPREME -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 4);
+            case SAGE -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 32);
             case IMMORTAL -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 16);
             case GREAT_EMPEROR -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 64);
         };
@@ -397,6 +398,7 @@ public final class CultivatorTrades {
             case MID -> new ItemStack((ItemLike)ModItems.HIGH_SPIRIT_STONE.get(), 1);
             case HIGH -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 1);
             case SUPREME -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 8);
+            case SAGE -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 64);
             case IMMORTAL -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 32);
             case GREAT_EMPEROR -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), 128);
         };
@@ -410,6 +412,7 @@ public final class CultivatorTrades {
             case MID -> new ItemStack(passive ? (ItemLike)ModItems.HIGH_SPIRIT_STONE.get() : (ItemLike)ModItems.MID_SPIRIT_STONE.get(), passive ? 1 : 5);
             case HIGH -> new ItemStack(passive ? (ItemLike)ModItems.SUPREME_SPIRIT_STONE.get() : (ItemLike)ModItems.HIGH_SPIRIT_STONE.get(), passive ? 1 : 5);
             case SUPREME -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), passive ? 5 : 3);
+            case SAGE -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), passive ? 64 : 32);
             case IMMORTAL -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), passive ? 32 : 16);
             case GREAT_EMPEROR -> new ItemStack((ItemLike)ModItems.SUPREME_SPIRIT_STONE.get(), passive ? 128 : 64);
         };
