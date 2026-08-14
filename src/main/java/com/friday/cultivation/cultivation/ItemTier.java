@@ -13,8 +13,8 @@ public enum ItemTier {
     MID("mid", -10770200),
     HIGH("high", -4161296),
     SUPREME("supreme", -6528),
-    SAGE("sage", 10197724),
     IMMORTAL("immortal", -2068440),
+    SAGE("sage", 10197724),
     GREAT_EMPEROR("great_emperor", 16755200);
 
     private final String id;

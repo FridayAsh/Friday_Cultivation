@@ -23,7 +23,7 @@ public enum RefiningRank {
     RANK_6("rank_6", ChatFormatting.GREEN, 8000, new int[]{8, 15, 35, 30, 10, 2, 0}),
     RANK_7("rank_7", ChatFormatting.LIGHT_PURPLE, 16000, new int[]{5, 8, 25, 40, 18, 4, 0}),
     RANK_8("rank_8", ChatFormatting.LIGHT_PURPLE, 32000, new int[]{3, 5, 15, 40, 25, 5, 7}),
-    RANK_9("rank_9", ChatFormatting.GOLD, 64000, new int[]{2, 3, 8, 25, 40, 5, 17}),
+    RANK_9("rank_9", ChatFormatting.GOLD, 64000, new int[]{2, 3, 8, 25, 40, 10, 12}),
     IMMORTAL("immortal", ChatFormatting.RED, Integer.MAX_VALUE, new int[]{1, 2, 3, 4, 10, 80, 0});
 
     private final String id;
