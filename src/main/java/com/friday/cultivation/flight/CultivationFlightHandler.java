@@ -30,6 +30,8 @@ import net.minecraft.world.phys.Vec3;
 public final class CultivationFlightHandler {
     private static final Map<UUID, ItemStack> SWORD_FLIGHT = new ConcurrentHashMap<>();
     private static final Map<UUID, Integer> SWORD_FLIGHT_SLOT = new ConcurrentHashMap<>();
+    /** 飞行灵气消耗累计 tick（进入飞行后每 tick +1，满 20 扣一次） */
+    private static final Map<UUID, Integer> FLIGHT_TICKS = new ConcurrentHashMap<>();
 
     private CultivationFlightHandler() {
     }
@@ -178,7 +180,10 @@ public final class CultivationFlightHandler {
             enableFlight(player);
             player.fallDistance = 0.0f;
             // 灵气消耗：灵气飞行 25/秒（每 20 tick），御剑飞行 20/20 tick
-            if (player.tickCount % 20 == 0) {
+            // 用独立飞行 tick 计数（不依赖全局 tickCount 取模，保证每次进入飞行都正常累计）
+            int ticks = FLIGHT_TICKS.merge(player.getUUID(), 1, Integer::sum);
+            if (ticks >= 20) {
+                FLIGHT_TICKS.remove(player.getUUID());
                 long cost = qi ? TechniqueBonusHelper.applySpellQiCostMultiplier(player, Spell.QI_FLIGHT, 25L) : TechniqueBonusHelper.applySpellQiCostMultiplier(player, Spell.SWORD_FLIGHT, 20L);
                 if (cost > 0L) {
                     long actual = Math.min(cost, data.getCurrentQi());
@@ -198,6 +203,7 @@ public final class CultivationFlightHandler {
                 }
             }
         } else {
+            FLIGHT_TICKS.remove(player.getUUID());
             disableFlight(player);
         }
     }

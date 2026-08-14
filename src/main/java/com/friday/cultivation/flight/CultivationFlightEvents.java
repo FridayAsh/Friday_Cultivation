@@ -1,5 +1,7 @@
 package com.friday.cultivation.flight;
 
+import com.friday.cultivation.cultivation.CultivationCapability;
+import com.friday.cultivation.cultivation.CultivationData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.TickEvent;
@@ -28,8 +30,9 @@ public final class CultivationFlightEvents {
         if (!(player instanceof ServerPlayer)) {
             return;
         }
-        if (++CultivationFlightEvents.tickCounter % 100 == 0) {
-            CultivationFlightEvents.LOGGER.info("[FlightTick] called sword={} qi={}", CultivationFlightHandler.isSwordFlightActive(player), CultivationFlightHandler.canQiFlight(player));
+        if (++CultivationFlightEvents.tickCounter % 20 == 0) {
+            CultivationData data = CultivationCapability.get((Player)player).orElse(null);
+            CultivationFlightEvents.LOGGER.info("[FlightTick] sword={} qi={} qiToggled={} currentQi={}", CultivationFlightHandler.isSwordFlightActive(player), CultivationFlightHandler.canQiFlight(player), data != null ? data.isQiFlightToggled() : "no-data", data != null ? data.getCurrentQi() : -1L);
         }
         CultivationFlightHandler.tickFlight((ServerPlayer)player);
     }
