@@ -171,7 +171,7 @@ public class CastSpellPacket {
                     player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.flying_sword.no_sword"), true);
                     return;
                 }
-                if (sp == Spell.SWORD_FLIGHT && !(player.getMainHandItem().getItem() instanceof SwordItem)) {
+                if (sp == Spell.SWORD_FLIGHT && !(player.getMainHandItem().getItem() instanceof SwordItem) && !com.friday.cultivation.flight.CultivationFlightHandler.isSwordFlightActive(player)) {
                     player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.sword_flight.no_sword"), true);
                     return;
                 }

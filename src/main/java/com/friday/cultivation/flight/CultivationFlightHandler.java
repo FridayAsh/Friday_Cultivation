@@ -3,6 +3,7 @@ package com.friday.cultivation.flight;
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.spell.Spell;
+import com.friday.cultivation.cultivation.technique.TechniqueBonusHelper;
 import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.event.RealmPressureHandler;
 import java.util.UUID;
@@ -171,6 +172,26 @@ public final class CultivationFlightHandler {
         if (shouldFly) {
             enableFlight(player);
             player.fallDistance = 0.0f;
+            // 灵气消耗：灵气飞行 25/秒（每 20 tick），御剑飞行 20/20 tick
+            if (player.tickCount % 20 == 0) {
+                long cost = qi ? TechniqueBonusHelper.applySpellQiCostMultiplier(player, Spell.QI_FLIGHT, 25L) : TechniqueBonusHelper.applySpellQiCostMultiplier(player, Spell.SWORD_FLIGHT, 20L);
+                if (cost > 0L) {
+                    long actual = Math.min(cost, data.getCurrentQi());
+                    data.setCurrentQi(data.getCurrentQi() - actual);
+                    CapabilityEvents.syncToClient(player);
+                    if (data.getCurrentQi() <= 0L) {
+                        // 灵气耗尽：灵气飞行停止；御剑飞行若灵气耗尽也停止并归还剑
+                        data.setQiFlightToggled(false);
+                        player.displayClientMessage(Component.translatable("message.friday_cultivation.qi_flight.no_qi"), true);
+                        if (sword) {
+                            stopSwordFlight(player);
+                        } else {
+                            disableFlight(player);
+                        }
+                        CapabilityEvents.syncToClient(player);
+                    }
+                }
+            }
         } else {
             disableFlight(player);
         }
