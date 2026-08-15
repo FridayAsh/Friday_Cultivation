@@ -58,12 +58,12 @@ public class CultivationHud {
     private static final int WUDAO_TOP = -8355712;
     private static final int WUDAO_BOTTOM = -10592674;
 
-    // 原版属性行
-    private static final int ATTR_ICON_SIZE = 8;
-    private static final float ATTR_TEXT_SCALE = 0.6f;
-    private static final int ATTR_GROUP_WIDTH = 18;
-    private static final int ATTR_GROUP_GAP = 8;
-    private static final int FOOD_ICON_U = 16, FOOD_ICON_V = 27;
+    // 原版属性行（总宽 ≤ 45px，约为生命条 100px 的 45%）
+    private static final int ATTR_ICON_SIZE = 5;
+    private static final float ATTR_TEXT_SCALE = 0.35f;
+    private static final int ATTR_GROUP_WIDTH = 10;
+    private static final int ATTR_GROUP_GAP = 1;
+    private static final int FOOD_ICON_U = 52, FOOD_ICON_V = 27;
     private static final int ARMOR_ICON_U = 34, ARMOR_ICON_V = 9;
     private static final int TOUGH_ICON_U = 18, TOUGH_ICON_V = 0;
     private static final int AIR_ICON_U = 16, AIR_ICON_V = 18;
