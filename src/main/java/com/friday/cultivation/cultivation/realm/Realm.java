@@ -47,7 +47,9 @@ public enum Realm {
     /** 该境界的子阶段档数 */
     public int subStageCount() {
         return switch (this) {
-            case MORTAL, HALF_SAGE, HALF_EMPEROR, LOOSE_IMMORTAL -> 1;
+            case MORTAL, LOOSE_IMMORTAL -> 1;
+            case HALF_SAGE -> 3;
+            case HALF_EMPEROR -> 6;
             case BODY_TEMPERING -> 10;
             case QI_REFINING -> 9;
             case GOLDEN_CORE -> 9;
@@ -61,7 +63,7 @@ public enum Realm {
 
     /** 是否使用数字层（1-based） */
     public boolean usesNumericLevels() {
-        return this == BODY_TEMPERING || this == QI_REFINING || this == GOLDEN_CORE || this == BODY_INTEGRATION || this == TRUE_IMMORTAL || this == SAGE || this == GREAT_EMPEROR;
+        return this == BODY_TEMPERING || this == QI_REFINING || this == GOLDEN_CORE || this == BODY_INTEGRATION || this == TRUE_IMMORTAL || this == HALF_SAGE || this == SAGE || this == HALF_EMPEROR || this == GREAT_EMPEROR;
     }
 
     /** 获取该境界第 level 层的 SubStage（数字层 1-based；4 档 0-3；越界返回 null） */
@@ -97,10 +99,31 @@ public enum Realm {
                 default -> null;
             };
         }
+        if (this == HALF_SAGE) {
+            // 半圣三子阶段：斩情 / 斩念 / 斩我
+            return switch (level) {
+                case 1 -> new SubStage("half_sage_qing", 1);
+                case 2 -> new SubStage("half_sage_nian", 2);
+                case 3 -> new SubStage("half_sage_wo", 3);
+                default -> null;
+            };
+        }
+        if (this == HALF_EMPEROR) {
+            // 半帝六子阶段：叩关 / 铸心 / 法体 / 灵劫 / 凝印 / 聚威
+            return switch (level) {
+                case 1 -> new SubStage("half_emperor_guan", 1);
+                case 2 -> new SubStage("half_emperor_xin", 2);
+                case 3 -> new SubStage("half_emperor_ti", 3);
+                case 4 -> new SubStage("half_emperor_jie", 4);
+                case 5 -> new SubStage("half_emperor_yin", 5);
+                case 6 -> new SubStage("half_emperor_wei", 6);
+                default -> null;
+            };
+        }
         if (this == GREAT_EMPEROR) {
             return level >= 1 && level <= 9 ? new SubStage("emperor_" + level, level) : null;
         }
-        if (this == MORTAL || this == HALF_SAGE || this == HALF_EMPEROR || this == LOOSE_IMMORTAL) {
+        if (this == MORTAL || this == LOOSE_IMMORTAL) {
             return SubStage.EARLY;
         }
         return switch (level) {

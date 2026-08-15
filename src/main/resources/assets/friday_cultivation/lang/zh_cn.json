@@ -2362,5 +2362,15 @@
   "message.friday_cultivation.qi_flight.no_qi": "灵气不足，无法开始灵气飞行。",
   "message.friday_cultivation.qi_flight.started": "御气腾空，灵气飞行开始。",
   "message.friday_cultivation.qi_flight.stopped": "灵气飞行结束。",
-  "message.friday_cultivation.wudao_bonus": "%s天资聪慧，悟道进展%s幅增加（%s）"
+  "message.friday_cultivation.wudao_bonus": "%s天资聪慧，悟道进展%s幅增加（%s）",
+  "sub_stage.friday_cultivation.half_sage_qing": "斩情",
+  "sub_stage.friday_cultivation.half_sage_nian": "斩念",
+  "sub_stage.friday_cultivation.half_sage_wo": "斩我",
+  "sub_stage.friday_cultivation.half_emperor_guan": "叩关",
+  "sub_stage.friday_cultivation.half_emperor_xin": "铸心",
+  "sub_stage.friday_cultivation.half_emperor_ti": "法体",
+  "sub_stage.friday_cultivation.half_emperor_jie": "灵劫",
+  "sub_stage.friday_cultivation.half_emperor_yin": "凝印",
+  "sub_stage.friday_cultivation.half_emperor_wei": "聚威",
+  "item.friday_cultivation.realm_selector_token": "境界选择令牌"
 }

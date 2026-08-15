@@ -226,12 +226,9 @@ extends Screen {
         gfx.drawCenteredString(this.font, this.title, cx, this.panelTop + 12, -15067628);
         gfx.drawCenteredString(this.font, (Component)Component.translatable((String)"screen.friday_cultivation.realm_selector.hint"), cx, this.panelTop + 30, -11979486);
         this.drawDropdownChip(gfx, this.realmChipX, this.realmChipY, this.realmChipW, this.realmChipH, (Component)Component.translatable((String)"screen.friday_cultivation.realm_selector.realm", (Object[])new Object[]{this.selectedRealm.displayName()}), this.realmDropdownOpen, mouseX, mouseY);
+        // 有子阶段才绘制小境界选择器；单档境界（凡人等）不绘制任何内容
         if (this.currentRealmHasSubStages()) {
             this.drawDropdownChip(gfx, this.subChipX, this.subChipY, this.subChipW, this.subChipH, (Component)Component.translatable((String)"screen.friday_cultivation.realm_selector.substage", (Object[])new Object[]{this.subStageDisplayName(this.selectedRealm, this.selectedSubStageLevel)}), this.subStageDropdownOpen, mouseX, mouseY);
-        } else {
-            gfx.fill(this.subChipX, this.subChipY, this.subChipX + this.subChipW, this.subChipY + this.subChipH, -15067628);
-            gfx.fill(this.subChipX + 1, this.subChipY + 1, this.subChipX + this.subChipW - 1, this.subChipY + this.subChipH - 1, -12635095);
-            this.drawScaled(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.realm_selector.no_substage"), this.subChipX + (this.subChipW - this.chipTextWidth((Component)Component.translatable((String)"screen.friday_cultivation.realm_selector.no_substage"))) / 2, this.subChipY + (this.subChipH - 7) / 2, -3888992, 0.72f);
         }
         this.renderOpenDropdown(gfx, mouseX, mouseY);
         super.render(gfx, mouseX, mouseY, partial);
