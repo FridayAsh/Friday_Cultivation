@@ -45,11 +45,11 @@ public class RealmSelectionScreen extends Screen {
     private static final int HIGHLIGHT = 0x33FFFFFF;
     private static final int TITLE_HIGHLIGHT = 0xFFD65A5A;
 
-    // 问题2b：下拉器金色边框
+    // 问题2b：下拉器金色边框（已按用户反馈减细 60%，2px 金边 + 1px 内衬）
     private static final int CHIP_BORDER_GOLD = 0xFFD4AF37;
     private static final int CHIP_BORDER_INNER = 0xFF4A3A2A;
-    private static final int CHIP_BORDER = 4;
-    private static final int CHIP_INSET = CHIP_BORDER + 1; // 5
+    private static final int CHIP_BORDER = 2;
+    private static final int CHIP_INSET = CHIP_BORDER + 1; // 3
 
     private final List<Realm> realms;
     private Realm selectedRealm;
