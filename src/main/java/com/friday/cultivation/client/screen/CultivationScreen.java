@@ -143,6 +143,7 @@ extends Screen {
     private static final ResourceLocation ICON_HP = CultivationScreen.guiTexture("textures/gui/icon_hp.png");
     private static final ResourceLocation ICON_CULTIVATION = CultivationScreen.guiTexture("textures/gui/icon_cultivation.png");
     private static final ResourceLocation ICON_QI = CultivationScreen.guiTexture("textures/gui/icon_qi.png");
+    private static final ResourceLocation ICON_WUDAO = CultivationScreen.guiTexture("textures/gui/icon_wudao.png");
     public static final ResourceLocation TAIJI_TEXTURE = CultivationScreen.guiTexture("textures/gui/taiji.png");
     private static final int PANEL_WIDTH = 320;
     private static final int PANEL_HEIGHT = 200;
@@ -705,11 +706,11 @@ extends Screen {
         long curQi = data.getCurrentQi();
         long maxQi = data.getMaxQi();
         this.drawLeftStatusBar(gfx, ICON_QI, contentX, infoY += 11, statusBarW, maxQi == 0L ? 0.0f : (float)curQi / (float)maxQi, (Component)Component.translatable((String)"screen.friday_cultivation.qi_short"), curQi + " / " + maxQi, -9583434, -13729678);
-        // 悟道条（半圣/半帝专用）：位于灵气条下方，复用图标贴图、使用专属颜色（紫色渐变）
+        // 悟道条（半圣/半帝专用）：位于灵气条下方，灰色图标与灰色渐变
         if (data.getWuDaoMax() > 0L) {
             long curWudao = data.getWuDaoProgress();
             long maxWudao = data.getWuDaoMax();
-            this.drawLeftStatusBar(gfx, ICON_QI, contentX, infoY += 11, statusBarW, maxWudao == 0L ? 0.0f : (float)curWudao / (float)maxWudao, (Component)Component.translatable((String)"screen.friday_cultivation.wudao_short"), curWudao + " / " + maxWudao, -6750208, -13684944);
+            this.drawLeftStatusBar(gfx, ICON_WUDAO, contentX, infoY += 11, statusBarW, maxWudao == 0L ? 0.0f : (float)curWudao / (float)maxWudao, (Component)Component.translatable((String)"screen.friday_cultivation.wudao_short"), curWudao + " / " + maxWudao, -8355712, -10592674);
         }
         infoY += 14;
         if (data.isInTribulation()) {
