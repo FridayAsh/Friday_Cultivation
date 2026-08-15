@@ -34,6 +34,7 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.INBTSerializable;
+import org.jetbrains.annotations.Nullable;
 
 public class CultivationData
 implements INBTSerializable<CompoundTag> {
@@ -87,6 +88,11 @@ implements INBTSerializable<CompoundTag> {
     private boolean qiFlightToggled = false;
     /** 悟道进度（半圣/半帝境界专用：悟道条，满后突破下一境界） */
     private long wuDaoProgress = 0L;
+    /** 悟道随机源（服务端浮动/额外获得） */
+    private final java.util.Random wuDaoRandom = new java.util.Random();
+    /** 待播报的悟道额外事件（档位名/数值，由调用方读取后清除） */
+    private String pendingWuDaoBonusName = null;
+    private long pendingWuDaoBonusValue = 0L;
     private int swordFlightOriginalSlot = -1;
     private boolean voidEscapeActive = false;
     private int voidEscapeStability = 0;
@@ -272,9 +278,9 @@ implements INBTSerializable<CompoundTag> {
         if (!this.isLooseImmortal()) {
             this.setCultivationProgress(this.cultivationProgress + (long)amount);
         }
-        // 半圣/半帝：吸收灵气同时累积悟道（悟道条）
+        // 半圣/圣人/半帝/大帝：吸收灵气同时累积悟道（浮动获得：±30% 随机 + 5% 顿悟档位）
         if (this.getWuDaoMax() > 0L) {
-            this.addWuDao((long)amount);
+            this.gainWuDao((long)amount);
         }
         long before = this.currentQi;
         this.setCurrentQi(this.currentQi + (long)amount);
@@ -1776,28 +1782,110 @@ implements INBTSerializable<CompoundTag> {
         this.wuDaoProgress = Math.max(0L, Math.min(v, this.getWuDaoMax()));
     }
 
-    /** 悟道上限（半圣/半帝）：悟道满后可突破下一境界 */
+    /** 悟道上限（半圣/圣人/半帝/大帝）：确定性伪随机，同境界/子阶段恒定，带随机感、随子阶段递增 */
     public long getWuDaoMax() {
-        if (this.realm == Realm.HALF_SAGE) {
-            return 20000L;
+        if (this.realm != Realm.HALF_SAGE && this.realm != Realm.SAGE && this.realm != Realm.HALF_EMPEROR && this.realm != Realm.GREAT_EMPEROR) {
+            return 0L;
         }
-        if (this.realm == Realm.HALF_EMPEROR) {
-            return 30000L;
-        }
-        return 0L;
+        return CultivationData.deterministicWuDaoRequirement(this.realm, this.subStage);
     }
 
-    /** 悟道是否圆满（半圣/半帝悟道满） */
+    /**
+     * 确定性伪随机悟道上限：半圣/圣人/半帝/大帝专用，
+     * 同一境界/子阶段永远生成同一数值（读档、跨端一致），
+     * 数值带随机感（非整齐整数），随子阶段递增、高境界达数十万量级。
+     */
+    private static long deterministicWuDaoRequirement(Realm realm, SubStage sub) {
+        long[] bases = new long[]{40000L, 100000L, 300000L, 900000L};
+        int idx = realm == null ? -1 : realm.ordinal() - Realm.HALF_SAGE.ordinal();
+        if (realm == null || idx < 0 || idx >= bases.length) {
+            return 0L;
+        }
+        long base = bases[idx];
+        int count = Math.max(1, realm.subStageCount());
+        int level = sub == null ? 0 : Math.max(0, sub.level());
+        double frac = 0.0;
+        if (realm.usesNumericLevels()) {
+            if (count > 1) {
+                frac = (double)(level - 1) / (double)(count - 1);
+            }
+        } else if (count > 1) {
+            frac = (double)level / (double)(count - 1);
+        }
+        long span = Math.max(1L, base / 4L);
+        long val = Math.max(2L, base + Math.round(frac * (double)span));
+        java.util.Random rnd = new java.util.Random(130000L + (long)idx * 1000003L + (long)level * 7919L + 104729L);
+        long jitter = 5L + (long)rnd.nextInt((int)Math.max(1L, val / 20L));
+        return Math.max(2L, val - jitter);
+    }
+
+    /**
+     * 悟道浮动获得（半圣/圣人/半帝/大帝）：
+     * 1) 基础值 = 修为获取量 × [0.7, 1.3] 连续浮动（60% 概率落在少得区间 [0.7,1.0)，40% 概率落在多得区间 [1.0,1.3]）
+     * 2) 额外 5% 概率触发顿悟档位（权重抽取）：
+     *    初悟+1000 / 小悟+5000 / 明悟+10000 / 彻悟+50000 / 顿悟=补满
+     * 3) 触发额外档位时记录待播报事件（档位名/数值），由调用方读取后清除
+     */
+    public long gainWuDao(long baseAmount) {
+        if (baseAmount <= 0L || this.getWuDaoMax() <= 0L) {
+            return 0L;
+        }
+        this.pendingWuDaoBonusName = null;
+        this.pendingWuDaoBonusValue = 0L;
+        // 基础浮动：60% 落在 [0.7,1.0)，40% 落在 [1.0,1.3]
+        double mult = this.wuDaoRandom.nextDouble() < 0.6 ? 0.7 + this.wuDaoRandom.nextDouble() * 0.3 : 1.0 + this.wuDaoRandom.nextDouble() * 0.3;
+        long gained = Math.max(1L, Math.round((double)baseAmount * mult));
+        // 额外 5%：权重 40/30/20/9/1
+        if (this.wuDaoRandom.nextDouble() < 0.05) {
+            int roll = this.wuDaoRandom.nextInt(100);
+            if (roll < 40) {
+                gained += 1000L;
+                this.pendingWuDaoBonusName = "wudao_bonus.friday_cultivation.initial";
+                this.pendingWuDaoBonusValue = 1000L;
+            } else if (roll < 70) {
+                gained += 5000L;
+                this.pendingWuDaoBonusName = "wudao_bonus.friday_cultivation.small";
+                this.pendingWuDaoBonusValue = 5000L;
+            } else if (roll < 90) {
+                gained += 10000L;
+                this.pendingWuDaoBonusName = "wudao_bonus.friday_cultivation.medium";
+                this.pendingWuDaoBonusValue = 10000L;
+            } else if (roll < 99) {
+                gained += 50000L;
+                this.pendingWuDaoBonusName = "wudao_bonus.friday_cultivation.great";
+                this.pendingWuDaoBonusValue = 50000L;
+            } else {
+                // 顿悟：悟道值直接补满
+                long remain = this.getWuDaoMax() - this.wuDaoProgress;
+                this.pendingWuDaoBonusName = "wudao_bonus.friday_cultivation.enlightenment";
+                this.pendingWuDaoBonusValue = Math.max(1L, remain);
+                this.wuDaoProgress = this.getWuDaoMax();
+                return this.pendingWuDaoBonusValue;
+            }
+        }
+        this.setWuDaoProgress(this.wuDaoProgress + gained);
+        return gained;
+    }
+
+    /** 读取并清除待播报的悟道额外事件（无则返回 null） */
+    @Nullable
+    public String pollWuDaoBonusName() {
+        String name = this.pendingWuDaoBonusName;
+        this.pendingWuDaoBonusName = null;
+        return name;
+    }
+
+    /** 读取并清除待播报的悟道额外事件数值 */
+    public long pollWuDaoBonusValue() {
+        long value = this.pendingWuDaoBonusValue;
+        this.pendingWuDaoBonusValue = 0L;
+        return value;
+    }
+
+    /** 悟道是否圆满（半圣/圣人/半帝/大帝悟道满） */
     public boolean isWuDaoComplete() {
         long max = this.getWuDaoMax();
         return max > 0L && this.wuDaoProgress >= max;
-    }
-
-    /** 增加悟道进度（修炼时累积） */
-    public void addWuDao(long amount) {
-        if (amount > 0L && this.getWuDaoMax() > 0L) {
-            this.setWuDaoProgress(this.wuDaoProgress + amount);
-        }
     }
 
 
@@ -1935,9 +2023,9 @@ implements INBTSerializable<CompoundTag> {
         if (this.isInTribulation()) {
             return false;
         }
-        // 半圣/半帝：悟道条满后方可突破（修为进度不用于这些境界）
-        if (this.realm == Realm.HALF_SAGE || this.realm == Realm.HALF_EMPEROR) {
-            return this.isWuDaoComplete();
+        // 半圣/圣人/半帝/大帝：需同时满足修为值满 + 悟道值满方可突破
+        if (this.realm == Realm.HALF_SAGE || this.realm == Realm.SAGE || this.realm == Realm.HALF_EMPEROR || this.realm == Realm.GREAT_EMPEROR) {
+            return this.cultivationProgress >= this.getMaxCultivation() && this.isWuDaoComplete();
         }
         return this.cultivationProgress >= this.getMaxCultivation();
     }

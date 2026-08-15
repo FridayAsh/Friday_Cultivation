@@ -706,7 +706,7 @@ extends Screen {
         long curQi = data.getCurrentQi();
         long maxQi = data.getMaxQi();
         this.drawLeftStatusBar(gfx, ICON_QI, contentX, infoY += 11, statusBarW, maxQi == 0L ? 0.0f : (float)curQi / (float)maxQi, (Component)Component.translatable((String)"screen.friday_cultivation.qi_short"), curQi + " / " + maxQi, -9583434, -13729678);
-        // 悟道条（半圣/半帝专用）：位于灵气条下方，灰色图标与灰色渐变
+        // 悟道条（半圣/圣人/半帝/大帝专用）：位于灵气条下方，灰色图标与灰色渐变
         if (data.getWuDaoMax() > 0L) {
             long curWudao = data.getWuDaoProgress();
             long maxWudao = data.getWuDaoMax();

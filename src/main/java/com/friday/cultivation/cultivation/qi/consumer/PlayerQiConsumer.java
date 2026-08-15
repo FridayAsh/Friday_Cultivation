@@ -31,6 +31,7 @@ import com.friday.cultivation.network.ModNetwork;
 import com.friday.cultivation.network.QiAbsorbedPacket;
 import com.friday.cultivation.network.SyncCultivationDataPacket;
 import com.friday.cultivation.registry.ModEffects;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.LivingEntity;
@@ -106,6 +107,13 @@ implements IQiConsumer {
             Vec3 visualPos = this.position();
             ModNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> this.player), (Object)new QiAbsorbedPacket(visualPos.x, visualPos.y, visualPos.z, element.ordinal()));
             ModNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> this.player), (Object)new SyncCultivationDataPacket(this.data));
+        }
+        // 悟道额外档位播报：（玩家名）天资聪慧，悟道进展x幅增加（数值）
+        String wuDaoBonus = this.data.pollWuDaoBonusName();
+        if (wuDaoBonus != null) {
+            long bonusValue = this.data.pollWuDaoBonusValue();
+            Component msg = Component.translatable((String)"message.friday_cultivation.wudao_bonus", (Object[])new Object[]{this.player.getDisplayName(), Component.translatable((String)wuDaoBonus), bonusValue});
+            this.player.displayClientMessage((Component)msg, true);
         }
         return cultivationGained > 0L ? amount : qiGained;
     }

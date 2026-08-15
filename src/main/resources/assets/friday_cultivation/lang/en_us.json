@@ -2348,5 +2348,11 @@
   "message.friday_cultivation.qi_flight.disabled": "Qi Flight is disabled. Enable it in the spell screen first.",
   "message.friday_cultivation.qi_flight.no_qi": "Not enough qi to start Qi Flight.",
   "message.friday_cultivation.qi_flight.started": "Riding the qi, flight begins.",
-  "message.friday_cultivation.qi_flight.stopped": "Qi Flight ended."
+  "message.friday_cultivation.qi_flight.stopped": "Qi Flight ended.",
+  "message.friday_cultivation.wudao_bonus": "%s is gifted with wisdom, %s enlightenment increases by %s",
+  "wudao_bonus.friday_cultivation.initial": "Initial Enlightenment",
+  "wudao_bonus.friday_cultivation.small": "Minor Enlightenment",
+  "wudao_bonus.friday_cultivation.medium": "Insightful Enlightenment",
+  "wudao_bonus.friday_cultivation.great": "Profound Enlightenment",
+  "wudao_bonus.friday_cultivation.enlightenment": "Sudden Enlightenment"
 }

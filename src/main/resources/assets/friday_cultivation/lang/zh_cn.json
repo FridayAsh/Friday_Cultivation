@@ -558,6 +558,11 @@
   "item.friday_cultivation.chi_yan_sword_sage": "赤焰圣剑",
   "item.friday_cultivation.han_bing_sword_sage": "寒冰圣剑",
   "screen.friday_cultivation.wudao_short": "悟道",
+  "wudao_bonus.friday_cultivation.initial": "初悟",
+  "wudao_bonus.friday_cultivation.small": "小悟",
+  "wudao_bonus.friday_cultivation.medium": "明悟",
+  "wudao_bonus.friday_cultivation.great": "彻悟",
+  "wudao_bonus.friday_cultivation.enlightenment": "顿悟",
   "item.friday_cultivation.realm_token_half_sage": "境界令牌：半圣",
   "item.friday_cultivation.realm_token_sage": "境界令牌：圣人",
   "item.friday_cultivation.realm_token_half_emperor": "境界令牌：半帝",
@@ -2348,5 +2353,6 @@
   "message.friday_cultivation.qi_flight.disabled": "灵气飞行法术已停用，请先在法术界面启用。",
   "message.friday_cultivation.qi_flight.no_qi": "灵气不足，无法开始灵气飞行。",
   "message.friday_cultivation.qi_flight.started": "御气腾空，灵气飞行开始。",
-  "message.friday_cultivation.qi_flight.stopped": "灵气飞行结束。"
+  "message.friday_cultivation.qi_flight.stopped": "灵气飞行结束。",
+  "message.friday_cultivation.wudao_bonus": "%s天资聪慧，悟道进展%s幅增加（%s）"
 }

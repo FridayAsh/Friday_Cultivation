@@ -47,6 +47,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -169,6 +170,13 @@ public final class QiTransferTickHandler {
             if (p instanceof ServerPlayer) {
                 ServerPlayer sp2 = (ServerPlayer)p;
                 CapabilityEvents.syncToClient(sp2);
+                // 悟道额外档位播报
+                String wuDaoBonus = CultivationCapability.get(p).map(d -> d.pollWuDaoBonusName()).orElse(null);
+                if (wuDaoBonus != null) {
+                    long bonusValue = CultivationCapability.get(p).map(d -> d.pollWuDaoBonusValue()).orElse(0L);
+                    Component msg = Component.translatable((String)"message.friday_cultivation.wudao_bonus", (Object[])new Object[]{p.getDisplayName(), Component.translatable((String)wuDaoBonus), bonusValue});
+                    sp2.displayClientMessage((Component)msg, true);
+                }
             }
             return gained;
         }
