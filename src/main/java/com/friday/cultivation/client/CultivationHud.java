@@ -161,25 +161,19 @@ public class CultivationHud {
             renderValueBar(graphics, mc, textBaseX, barY, CULT_WIDTH, BAR_HEIGHT, curCult, maxCult, CULT_TOP, CULT_BOTTOM, CULT_TOP, cultText);
             barY += 8;
 
-            // 灵气条（有悟道时与悟道条并排，各占修为条一半宽度）
+            // 灵气条
+            long curQi = data.getCurrentQi();
+            long maxQi = data.getMaxQi();
+            Component qiText = Component.translatable("hud.friday_cultivation.qi", curQi, maxQi);
+            renderValueBar(graphics, mc, textBaseX, barY, QI_WIDTH, BAR_HEIGHT, curQi, maxQi, QI_TOP, QI_BOTTOM, QI_TOP, qiText);
+            barY += 8;
+
+            // 悟道条（仅 getWuDaoMax() > 0）
             long maxWudao = data.getWuDaoMax();
             if (maxWudao > 0L) {
-                int halfW = CULT_WIDTH / 2;
-                int qiWudaoGap = 2;
-                long curQi = data.getCurrentQi();
-                long maxQi = data.getMaxQi();
-                Component qiText = Component.translatable("hud.friday_cultivation.qi", curQi, maxQi);
-                renderValueBar(graphics, mc, textBaseX, barY, halfW, BAR_HEIGHT, curQi, maxQi, QI_TOP, QI_BOTTOM, QI_TOP, qiText);
-
                 long curWudao = data.getWuDaoProgress();
                 Component wudaoText = Component.translatable("hud.friday_cultivation.wudao", curWudao, maxWudao);
-                renderValueBar(graphics, mc, textBaseX + halfW + qiWudaoGap, barY, halfW, BAR_HEIGHT, curWudao, maxWudao, WUDAO_TOP, WUDAO_BOTTOM, WUDAO_TOP, wudaoText);
-                barY += 8;
-            } else {
-                long curQi = data.getCurrentQi();
-                long maxQi = data.getMaxQi();
-                Component qiText = Component.translatable("hud.friday_cultivation.qi", curQi, maxQi);
-                renderValueBar(graphics, mc, textBaseX, barY, QI_WIDTH, BAR_HEIGHT, curQi, maxQi, QI_TOP, QI_BOTTOM, QI_TOP, qiText);
+                renderValueBar(graphics, mc, textBaseX, barY, WUDAO_WIDTH, BAR_HEIGHT, curWudao, maxWudao, WUDAO_TOP, WUDAO_BOTTOM, WUDAO_TOP, wudaoText);
                 barY += 8;
             }
         }
