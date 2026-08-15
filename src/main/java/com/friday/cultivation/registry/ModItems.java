@@ -38,6 +38,7 @@ import com.friday.cultivation.item.LifeCreationPillItem;
 import com.friday.cultivation.item.OriginReconfigurationTokenItem;
 import com.friday.cultivation.item.PillItem;
 import com.friday.cultivation.item.RealmTokenItem;
+import com.friday.cultivation.item.RealmSelectorTokenItem;
 import com.friday.cultivation.item.RecallPillItem;
 import com.friday.cultivation.item.ReincarnationFatePlateItem;
 import com.friday.cultivation.item.RejuvenationPillItem;
@@ -227,6 +228,7 @@ public final class ModItems {
     public static final RegistryObject<Item> HAN_BING_SWORD_GREAT_EMPEROR;
     public static final Map<Realm, RegistryObject<Item>> REALM_TOKENS;
     public static final Map<Integer, RegistryObject<Item>> LOOSE_IMMORTAL_REALM_TOKENS;
+    public static final RegistryObject<Item> REALM_SELECTOR_TOKEN;
     public static final Map<Realm, RegistryObject<Item>> CULTIVATOR_SPAWN_EGGS;
     public static final RegistryObject<Item> SOUL_REAPER_SPAWN_EGG;
 
@@ -646,6 +648,7 @@ public final class ModItems {
         HAN_BING_SWORD_IMMORTAL = ITEMS.register("han_bing_sword_immortal", () -> new HanBingSwordItem(ItemTier.IMMORTAL, 20, 50));
         HAN_BING_SWORD_SAGE = ITEMS.register("han_bing_sword_sage", () -> new HanBingSwordItem(ItemTier.SAGE, 22, 60));
         HAN_BING_SWORD_GREAT_EMPEROR = ITEMS.register("han_bing_sword_great_emperor", () -> new HanBingSwordItem(ItemTier.GREAT_EMPEROR, 30, 100));
+        REALM_SELECTOR_TOKEN = ITEMS.register("realm_selector_token", () -> new RealmSelectorTokenItem(new Item.Properties()));
         REALM_TOKENS = new EnumMap<Realm, RegistryObject<Item>>(Realm.class);
         for (Enum enum_ : Realm.values()) {
             id = "realm_token_" + ((Realm)enum_).id();

@@ -48,6 +48,7 @@ import com.friday.cultivation.network.PalmThunderVisualPacket;
 import com.friday.cultivation.network.QiAbsorbedPacket;
 import com.friday.cultivation.network.QiShieldHitPacket;
 import com.friday.cultivation.network.RealmPressureVisualPacket;
+import com.friday.cultivation.network.RealmSelectionPacket;
 import com.friday.cultivation.network.ReincarnationChoicePacket;
 import com.friday.cultivation.network.RequestBreakthroughPacket;
 import com.friday.cultivation.network.RequestGoDifuPacket;
@@ -171,6 +172,7 @@ public final class ModNetwork {
         CHANNEL.registerMessage(id++, OpenReincarnationPacket.class, OpenReincarnationPacket::encode, OpenReincarnationPacket::decode, OpenReincarnationPacket::handle);
         CHANNEL.registerMessage(id++, ReincarnationChoicePacket.class, ReincarnationChoicePacket::encode, ReincarnationChoicePacket::decode, ReincarnationChoicePacket::handle);
         CHANNEL.registerMessage(id++, RequestReincarnationScreenPacket.class, RequestReincarnationScreenPacket::encode, RequestReincarnationScreenPacket::decode, RequestReincarnationScreenPacket::handle);
+        CHANNEL.registerMessage(id++, RealmSelectionPacket.class, RealmSelectionPacket::encode, RealmSelectionPacket::decode, RealmSelectionPacket::handle);
         CHANNEL.registerMessage(id++, RequestGoDifuPacket.class, RequestGoDifuPacket::encode, RequestGoDifuPacket::decode, RequestGoDifuPacket::handle);
         CHANNEL.registerMessage(id++, SetCultivationNamePacket.class, SetCultivationNamePacket::encode, SetCultivationNamePacket::decode, SetCultivationNamePacket::handle);
         CHANNEL.registerMessage(id++, CycleGenderPacket.class, CycleGenderPacket::encode, CycleGenderPacket::decode, CycleGenderPacket::handle);

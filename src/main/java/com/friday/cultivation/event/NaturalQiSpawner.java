@@ -17,6 +17,7 @@
  */
 package com.friday.cultivation.event;
 
+import com.friday.cultivation.cultivation.QiElement;
 import com.friday.cultivation.cultivation.qi.BlockQiSpec;
 import com.friday.cultivation.cultivation.qi.BlockQiSpecs;
 import com.friday.cultivation.cultivation.qi.QiEcosystem;
@@ -79,6 +80,17 @@ public final class NaturalQiSpawner {
         int nearbyOrbs = NaturalQiSpawner.countNearbyOrbs(level, player);
         if (nearbyOrbs >= 48) {
             return;
+        }
+        // 环境灵气：不依赖任何方块，任何位置（空中/水中/洞穴）都持续生成，保证随时随地可修炼
+        if (level.random.nextDouble() < 0.08) {
+            double ax = (double)player.getX() + (level.random.nextDouble() - 0.5) * 8.0;
+            double ay = (double)player.getY() + (level.random.nextDouble() - 0.5) * 4.0;
+            double az = (double)player.getZ() + (level.random.nextDouble() - 0.5) * 8.0;
+            QiOrbEntity ambientOrb = new QiOrbEntity((Level)level, ax, ay, az, QiElement.PURE);
+            level.addFreshEntity((Entity)ambientOrb);
+            if (++nearbyOrbs >= 48) {
+                return;
+            }
         }
         BlockPos.MutableBlockPos cur = new BlockPos.MutableBlockPos();
         for (int i = 0; i < Math.max(0, samples); ++i) {

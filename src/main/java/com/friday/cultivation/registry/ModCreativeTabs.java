@@ -184,13 +184,7 @@ public final class ModCreativeTabs {
         for (Item item : ModItems.orderedSpellBookItems()) {
             output.accept((ItemLike)item);
         }
-        for (Object realm : Realm.values()) {
-            if (realm == Realm.LOOSE_IMMORTAL) continue;
-            output.accept((ItemLike)ModItems.REALM_TOKENS.get(realm).get());
-        }
-        for (Map.Entry entry : ModItems.LOOSE_IMMORTAL_REALM_TOKENS.entrySet()) {
-            output.accept((ItemLike)((RegistryObject)entry.getValue()).get());
-        }
+        output.accept((ItemLike)ModItems.REALM_SELECTOR_TOKEN.get());
         for (Object realm : Realm.values()) {
             output.accept((ItemLike)ModItems.CULTIVATOR_SPAWN_EGGS.get(realm).get());
         }
