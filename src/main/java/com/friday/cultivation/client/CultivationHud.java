@@ -16,6 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
@@ -30,6 +31,8 @@ public class CultivationHud {
 
     private static final ResourceLocation BLOOD_EMPTY = new ResourceLocation("friday_cultivation", "textures/gui/blood_empty.png");
     private static final ResourceLocation BLOOD_FILL = new ResourceLocation("friday_cultivation", "textures/gui/blood_fill.png");
+    private static final ResourceLocation VANILLA_ICONS = new ResourceLocation("textures/gui/icons.png");
+    private static final ResourceLocation OVERFLOWING_ICONS = new ResourceLocation("friday_cultivation", "textures/gui/overflowing_icons.png");
     private static final String SPIRIT_ROOT_ICON_PREFIX = "textures/gui/spirit_root/";
 
     private static final int HUD_X = 6;
@@ -154,8 +157,10 @@ public class CultivationHud {
             barY += 8;
         }
 
-        // 4. 状态行
-        int statusY = barY + 2;
+        // 4. 头像下方原版属性（盔甲/韧性/氧气），不越过 x+32
+        int statusY = renderVanillaAttributes(graphics, player, x, y, barY + 2);
+
+        // 5. 状态行
         int statusW = HUD_WIDTH - 16;
         if (data.canBreakthrough()) {
             MutableComponent bt = Component.translatable("hud.friday_cultivation.breakthrough_ready").withStyle(ChatFormatting.GOLD);
@@ -317,6 +322,46 @@ public class CultivationHud {
         graphics.pose().scale(scale, scale, 1.0f);
         graphics.drawString(mc.font, text, Math.round((float)x / scale), Math.round((float)y / scale), color, shadow);
         graphics.pose().popPose();
+    }
+
+    private static int renderVanillaAttributes(GuiGraphics graphics, LocalPlayer player, int x, int y, int statusY) {
+        int attrX = x + 2;
+        int iconSize = 8;
+        int rowY1 = y + 30;
+        int rowY2 = y + 42;
+        int colGap = 15;
+
+        int armor = player.getArmorValue();
+        double toughness = player.getAttribute(Attributes.ARMOR_TOUGHNESS).getValue();
+        boolean showArmor = armor > 0;
+        boolean showToughness = toughness > 0.0;
+        boolean showAir = player.getAirSupply() < player.getMaxAirSupply();
+
+        int col1X = attrX;
+        int col2X = attrX + colGap;
+
+        if (showArmor) {
+            Component armorText = Component.literal(String.valueOf(armor));
+            drawAttributeIcon(graphics, VANILLA_ICONS, col1X, rowY1, 34, 9, iconSize, 0xAAAAAA, armorText, 0.42f);
+        }
+        if (showToughness) {
+            Component toughText = Component.literal(String.format("%.0f", toughness));
+            int tx = showArmor ? col2X : col1X;
+            drawAttributeIcon(graphics, OVERFLOWING_ICONS, tx, rowY1, 18, 0, iconSize, 0x40E0D0, toughText, 0.42f);
+        }
+        if (showAir) {
+            Component airText = Component.literal(String.valueOf(player.getAirSupply()));
+            drawAttributeIcon(graphics, VANILLA_ICONS, col1X, rowY2, 16, 18, iconSize, 0x3FA6FF, airText, 0.42f);
+        }
+
+        int bottom = (showAir ? rowY2 : rowY1) + iconSize;
+        return Math.max(statusY, bottom + 2);
+    }
+
+    private static void drawAttributeIcon(GuiGraphics graphics, ResourceLocation texture, int x, int y, int u, int v, int iconSize, int color, Component text, float textScale) {
+        graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+        graphics.blit(texture, x, y, iconSize, iconSize, (float)u, (float)v, 9, 9, 256, 256);
+        drawScaled(graphics, Minecraft.getInstance(), text, x + iconSize + 1, y + 1, textScale, color, true);
     }
 
     public static ResourceLocation overlayId() {
