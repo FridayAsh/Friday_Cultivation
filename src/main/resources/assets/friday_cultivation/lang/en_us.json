@@ -568,6 +568,7 @@
   "hud.friday_cultivation.realm_full": "Realm: %s %s",
   "hud.friday_cultivation.cultivation": "Cult %s/%s",
   "hud.friday_cultivation.qi": "Qi %s/%s",
+  "hud.friday_cultivation.wudao": "Comprehension %s/%s",
   "screen.friday_cultivation.cult_short": "Cult",
   "screen.friday_cultivation.qi_short": "Qi",
   "screen.friday_cultivation.hp_short": "HP",
