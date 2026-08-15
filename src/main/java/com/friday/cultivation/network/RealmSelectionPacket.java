@@ -69,6 +69,8 @@ public class RealmSelectionPacket {
             CultivationData.ZhenyuanBaselineResult zhenyuan = data.syncZhenyuanToRealmBaseline(realm, data.getSubStage());
             data.setCurrentQi(data.getMaxQi() / 2L);
             data.setCultivationProgress(0L);
+            // 切换境界后重置悟道进度（新境界/子阶段应有全新悟道上限与进度，避免沿用旧值）
+            data.setWuDaoProgress(0L);
             CapabilityEvents.syncToClient(player);
             player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.realm_token.set_synced_zhenyuan", (Object[])new Object[]{realm.displayName(), zhenyuan.automaticPerAttribute(), zhenyuan.unallocatedZhenyuan()}), false);
         });

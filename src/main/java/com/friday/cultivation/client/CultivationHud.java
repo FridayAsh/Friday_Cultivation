@@ -147,7 +147,7 @@ public class CultivationHud {
             barY += 8;
         }
 
-        // 头像下方竖排：饱食度 + 氧气（秒），创造模式隐藏
+        // 头像下方横排：饱食度 + 氧气（秒），创造模式隐藏
         if (!player.isCreative()) {
             renderAvatarAttributes(graphics, player, x, y);
         }
@@ -182,7 +182,7 @@ public class CultivationHud {
         int statusW = HUD_WIDTH - 16;
 
         // 避免状态行与头像下方饱食/氧气重叠
-        int avatarAttrBottom = y + 40 + ATTR_ICON_SIZE;
+        int avatarAttrBottom = y + 32 + ATTR_ICON_SIZE;
         if (!player.isCreative() && statusY < avatarAttrBottom + 2) {
             statusY = avatarAttrBottom + 2;
         }
@@ -372,17 +372,31 @@ public class CultivationHud {
     }
 
     private static void renderAvatarAttributes(GuiGraphics graphics, LocalPlayer player, int x, int y) {
-        int iconX = x + 4;
+        Minecraft mc = Minecraft.getInstance();
+        int iconSize = ATTR_ICON_SIZE;
+        float textScale = ATTR_TEXT_SCALE;
         int rowY = y + 32;
 
         // 饱食度
         int food = player.getFoodData().getFoodLevel();
-        drawAttributeIcon(graphics, VANILLA_ICONS, iconX, rowY, FOOD_ICON_U, FOOD_ICON_V, ATTR_ICON_SIZE, FOOD_COLOR, Component.literal(String.valueOf(food)), ATTR_TEXT_SCALE);
+        Component foodText = Component.literal(String.valueOf(food));
+        int foodTextW = mc.font.width((FormattedText)foodText);
+        float foodW = iconSize + 1 + foodTextW * textScale;
 
         // 氧气（秒）
-        rowY += 8;
         int airSeconds = (int)Math.ceil(player.getAirSupply() / 20.0);
-        drawAttributeIcon(graphics, VANILLA_ICONS, iconX, rowY, AIR_ICON_U, AIR_ICON_V, ATTR_ICON_SIZE, AIR_COLOR, Component.literal(String.valueOf(airSeconds)), ATTR_TEXT_SCALE);
+        Component airText = Component.literal(String.valueOf(airSeconds));
+        int airTextW = mc.font.width((FormattedText)airText);
+        float airW = iconSize + 1 + airTextW * textScale;
+
+        // 在头像列宽度（x..x+32）内居中横排，组间固定 1px 间隙
+        int totalW = (int)(foodW + 1 + airW);
+        int startOffset = Math.max(0, (32 - totalW) / 2);
+        int startX = x + startOffset;
+
+        drawAttributeIcon(graphics, VANILLA_ICONS, startX, rowY, FOOD_ICON_U, FOOD_ICON_V, iconSize, FOOD_COLOR, foodText, textScale);
+        int airX = startX + (int)foodW + 1;
+        drawAttributeIcon(graphics, VANILLA_ICONS, airX, rowY, AIR_ICON_U, AIR_ICON_V, iconSize, AIR_COLOR, airText, textScale);
     }
 
     private static void drawAttributeIcon(GuiGraphics graphics, ResourceLocation texture, int x, int y, int u, int v, int iconSize, int color, Component text, float textScale) {
