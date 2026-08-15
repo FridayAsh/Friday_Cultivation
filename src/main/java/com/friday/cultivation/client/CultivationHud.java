@@ -37,7 +37,7 @@ public class CultivationHud {
 
     private static final int HUD_X = 6;
     private static final int HUD_Y = 6;
-    private static final int HUD_WIDTH = 140;
+    private static final int HUD_WIDTH = 200;
     private static final int BAR_HEIGHT = 6;
     private static final int AVATAR_SIZE = 24; // 8 * 3
     private static final int GOLD_TEXT = -1456016;
@@ -58,10 +58,11 @@ public class CultivationHud {
     private static final int WUDAO_TOP = -8355712;
     private static final int WUDAO_BOTTOM = -10592674;
 
-    // 原版属性行（总宽 65px，约为生命条 100px 的 65%）
+    // 原版属性行（位于生命条右侧，与生命条同 y）
     private static final int ATTR_ICON_SIZE = 8;
     private static final float ATTR_TEXT_SCALE = 0.6f;
-    private static final int ATTR_ROW_WIDTH = 65;
+    private static final int ATTR_GROUP_GAP = 4;
+    private static final int ATTR_TO_HEALTH_GAP = 6;
     private static final int FOOD_ICON_U = 52, FOOD_ICON_V = 27;
     private static final int ARMOR_ICON_U = 34, ARMOR_ICON_V = 9;
     private static final int TOUGH_ICON_U = 18, TOUGH_ICON_V = 0;
@@ -132,16 +133,17 @@ public class CultivationHud {
         int realmAvailW = Math.max(20, x + HUD_WIDTH - realmX - 2);
         drawLeftScaled(graphics, mc, realmLine, realmX, topY, realmAvailW, 0.8f, GOLD_TEXT, true);
 
-        // 3. 条带区域：原版属性行 + 生命条（非创造）→ 修为/灵气/悟道（条件显示）
+        // 3. 条带区域：生命条 + 右侧属性行（非创造）→ 修为/灵气/悟道（条件显示）
         int barY = y + 16;
 
         if (!player.isCreative()) {
-            // 原版属性行：饱食 → 盔甲 → 韧性 → 氧气（秒）
-            renderAttributeRow(graphics, player, textBaseX, barY);
-            barY += 8;
-
             // 生命条
             renderHealthBar(graphics, textBaseX, barY, HEALTH_WIDTH, BAR_HEIGHT, player.getHealth(), player.getMaxHealth());
+
+            // 原版属性行：饱食 → 盔甲 → 韧性 → 氧气（秒），位于生命条右侧同 y
+            int attrX = textBaseX + HEALTH_WIDTH + ATTR_TO_HEALTH_GAP;
+            renderAttributeRow(graphics, player, attrX, barY - 1);
+
             barY += 8;
         }
 
@@ -365,8 +367,8 @@ public class CultivationHud {
             contentTotal += contentW[i];
         }
 
-        // 在 65px 总宽内均匀分配剩余间隙
-        float gap = Math.max(0.0f, (ATTR_ROW_WIDTH - contentTotal) / 3.0f);
+        // 等宽间隙
+        float gap = ATTR_GROUP_GAP;
         float gx = x;
         for (int i = 0; i < 4; ++i) {
             int ix = Math.round(gx);
