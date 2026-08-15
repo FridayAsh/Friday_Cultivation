@@ -260,13 +260,20 @@ public class CultivationHud {
             int halfH = Math.max(1, height / 2);
             int topH = halfH;
             int botH = height - halfH;
-            // 上半：colorTop tint，采样贴图上半（v 0..halfH），整宽 texW 等比缩放到 targetW
-            setBarColor(graphics, topColor);
-            graphics.blit(fillTex, x, y, targetW, topH, 0.0f, 0.0f, texW, halfH, texW, texH);
-            // 下半：colorBot tint，采样贴图下半（v halfH..texH）
-            setBarColor(graphics, bottomColor);
-            graphics.blit(fillTex, x, y + topH, targetW, botH, 0.0f, (float)halfH, texW, texH - halfH, texW, texH);
-            graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+            // 进度过低（targetW 小于贴图宽 1/4）时，贴图端角被压缩进几像素会变形
+            // （左下角突出），改用纯色渐变填充，干净无端角
+            if (targetW <= Math.max(3, texW / 4)) {
+                graphics.fill(x, y, x + targetW, y + topH, topColor);
+                graphics.fill(x, y + topH, x + targetW, y + height, bottomColor);
+            } else {
+                // 上半：colorTop tint，采样贴图上半（v 0..halfH），整宽 texW 等比缩放到 targetW
+                setBarColor(graphics, topColor);
+                graphics.blit(fillTex, x, y, targetW, topH, 0.0f, 0.0f, texW, halfH, texW, texH);
+                // 下半：colorBot tint，采样贴图下半（v halfH..texH）
+                setBarColor(graphics, bottomColor);
+                graphics.blit(fillTex, x, y + topH, targetW, botH, 0.0f, (float)halfH, texW, texH - halfH, texW, texH);
+                graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+            }
         }
 
         if (text != null) {
