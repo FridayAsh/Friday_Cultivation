@@ -39,6 +39,8 @@ public class CultivationHud {
     private static final int HUD_Y = 6;
     private static final int HUD_WIDTH = 180;
     private static final int BAR_HEIGHT = 6;
+    /** 贴图左端透明圆角列数（blood_fill 96x6：x=0 全透明、x=1 仅 1 实心点，x=2 起实心），小进度采样时跳过 */
+    private static final int LEFT_PAD = 2;
     private static final int AVATAR_SIZE = 24; // 8 * 3
     private static final int GOLD_TEXT = -1456016;
 
@@ -255,12 +257,17 @@ public class CultivationHud {
             int topH = halfH;
             int botH = height - halfH;
             if (targetW < texW) {
-                // 小进度：9 参 blit 采样贴图左端 targetW 像素（1:1 像素，端角原始尺寸）
-                setBarColor(graphics, topColor);
-                graphics.blit(fillTex, x, y, 0.0f, 0.0f, targetW, topH, texW, texH);
-                setBarColor(graphics, bottomColor);
-                graphics.blit(fillTex, x, y + topH, 0.0f, (float)halfH, targetW, botH, texW, texH);
-                graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+                // 小进度：9 参 blit 1:1 像素采样贴图（跳过左端透明圆角列 LEFT_PAD，
+                // 否则低进度时会把透明列原样采入导致开头少渲染几个像素）
+                int srcU = LEFT_PAD;
+                int drawW = Math.min(targetW, texW - srcU);
+                if (drawW > 0) {
+                    setBarColor(graphics, topColor);
+                    graphics.blit(fillTex, x, y, (float)srcU, 0.0f, drawW, topH, texW, texH);
+                    setBarColor(graphics, bottomColor);
+                    graphics.blit(fillTex, x, y + topH, (float)srcU, (float)halfH, drawW, botH, texW, texH);
+                    graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+                }
             } else {
                 // 大进度：11 参 blit 整图等比缩放
                 setBarColor(graphics, topColor);
