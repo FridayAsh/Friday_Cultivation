@@ -1832,9 +1832,9 @@ implements INBTSerializable<CompoundTag> {
         }
         this.pendingWuDaoBonusName = null;
         this.pendingWuDaoBonusValue = 0L;
-        // 基础：悟道 = 灵气吸收量 * 10%（避免随灵气倍率暴涨），小幅浮动 0.85~1.15
+        // 基础：悟道 = 灵气吸收量 * 20%（约为原速 1/5，避免随灵气倍率暴涨），小幅浮动 0.85~1.15
         double mult = 0.85 + this.wuDaoRandom.nextDouble() * 0.3;
-        long gained = Math.max(1L, Math.round((double)baseAmount * 0.1 * mult));
+        long gained = Math.max(1L, Math.round((double)baseAmount * 0.2 * mult));
         // 额外 2% 档位：数值按悟道上限的小比例（初悟0.5% 小悟1% 明悟2% 彻悟4%），
         // 避免低上限境界（如半圣 40000）触发大额档位一下子补满
         if (this.wuDaoRandom.nextDouble() < 0.02) {
