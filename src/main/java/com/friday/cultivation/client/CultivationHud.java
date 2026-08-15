@@ -119,7 +119,7 @@ public class CultivationHud {
                         : Component.translatable("hud.friday_cultivation.realm_full", realm.displayName(), data.getSubStage().displayName()));
         int realmX = textBaseX + nameScaledW + 4;
         int realmAvailW = Math.max(20, x + HUD_WIDTH - realmX - 2);
-        drawLeftScaled(graphics, mc, realmLine, realmX, topY + 1, realmAvailW, 0.8f, GOLD_TEXT, true);
+        drawLeftScaled(graphics, mc, realmLine, realmX, topY, realmAvailW, 0.8f, GOLD_TEXT, true);
 
         // 3. 条带区域（生命→修为→灵气→悟道）
         int barY = y + 16;
