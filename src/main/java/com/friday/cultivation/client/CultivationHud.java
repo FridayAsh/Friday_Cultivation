@@ -58,6 +58,20 @@ public class CultivationHud {
     private static final int WUDAO_TOP = -8355712;
     private static final int WUDAO_BOTTOM = -10592674;
 
+    // 原版属性行
+    private static final int ATTR_ICON_SIZE = 8;
+    private static final float ATTR_TEXT_SCALE = 0.6f;
+    private static final int ATTR_GROUP_WIDTH = 18;
+    private static final int ATTR_GROUP_GAP = 8;
+    private static final int FOOD_ICON_U = 16, FOOD_ICON_V = 27;
+    private static final int ARMOR_ICON_U = 34, ARMOR_ICON_V = 9;
+    private static final int TOUGH_ICON_U = 18, TOUGH_ICON_V = 0;
+    private static final int AIR_ICON_U = 16, AIR_ICON_V = 18;
+    private static final int FOOD_COLOR = 0xD8A100;
+    private static final int ARMOR_COLOR = 0xAAAAAA;
+    private static final int TOUGH_COLOR = 0x40E0D0;
+    private static final int AIR_COLOR = 0x3FA6FF;
+
     private CultivationHud() {
     }
 
@@ -78,10 +92,6 @@ public class CultivationHud {
         if (data == null) {
             return;
         }
-        boolean soul = data.isSoulState();
-        if (!soul && !data.hasEquippedTechnique()) {
-            return;
-        }
         event.setCanceled(true);
     }
 
@@ -96,9 +106,7 @@ public class CultivationHud {
             return;
         }
         boolean soul = data.isSoulState();
-        if (!soul && !data.hasEquippedTechnique()) {
-            return;
-        }
+        boolean showCultivationBars = data.hasEquippedTechnique() || data.getRealm() != Realm.MORTAL;
         int x = CultivationHud.hudX(screenWidth);
         int y = HUD_Y;
 
@@ -125,42 +133,46 @@ public class CultivationHud {
         int realmAvailW = Math.max(20, x + HUD_WIDTH - realmX - 2);
         drawLeftScaled(graphics, mc, realmLine, realmX, topY, realmAvailW, 0.8f, GOLD_TEXT, true);
 
-        // 3. 条带区域（生命→修为→灵气→悟道）
+        // 3. 条带区域：生命条 + 原版属性行（非创造）→ 修为/灵气/悟道（条件显示）
         int barY = y + 16;
 
-        // 生命条（创造模式隐藏——原版生命值 HUD 已隐藏，创造模式无敌不再显示自定义生命条）
         if (!player.isCreative()) {
+            // 生命条
             renderHealthBar(graphics, textBaseX, barY, HEALTH_WIDTH, BAR_HEIGHT, player.getHealth(), player.getMaxHealth());
-        }
-        barY += 8;
+            barY += 8;
 
-        // 修为条
-        long curCult = data.getCultivationProgress();
-        long maxCult = data.getMaxCultivation();
-        Component cultText = Component.translatable("hud.friday_cultivation.cultivation", curCult, maxCult);
-        renderValueBar(graphics, mc, textBaseX, barY, CULT_WIDTH, BAR_HEIGHT, curCult, maxCult, CULT_TOP, CULT_BOTTOM, CULT_TOP, cultText);
-        barY += 8;
-
-        // 灵气条
-        long curQi = data.getCurrentQi();
-        long maxQi = data.getMaxQi();
-        Component qiText = Component.translatable("hud.friday_cultivation.qi", curQi, maxQi);
-        renderValueBar(graphics, mc, textBaseX, barY, QI_WIDTH, BAR_HEIGHT, curQi, maxQi, QI_TOP, QI_BOTTOM, QI_TOP, qiText);
-        barY += 8;
-
-        // 悟道条（仅 getWuDaoMax() > 0）
-        long maxWudao = data.getWuDaoMax();
-        if (maxWudao > 0L) {
-            long curWudao = data.getWuDaoProgress();
-            Component wudaoText = Component.translatable("hud.friday_cultivation.wudao", curWudao, maxWudao);
-            renderValueBar(graphics, mc, textBaseX, barY, WUDAO_WIDTH, BAR_HEIGHT, curWudao, maxWudao, WUDAO_TOP, WUDAO_BOTTOM, WUDAO_TOP, wudaoText);
+            // 原版属性行：饱食 → 盔甲 → 韧性 → 氧气（秒）
+            renderAttributeRow(graphics, player, textBaseX, barY);
             barY += 8;
         }
 
-        // 4. 头像下方原版属性（盔甲/韧性/氧气），不越过 x+32
-        int statusY = renderVanillaAttributes(graphics, player, x, y, barY + 2);
+        if (showCultivationBars) {
+            // 修为条
+            long curCult = data.getCultivationProgress();
+            long maxCult = data.getMaxCultivation();
+            Component cultText = Component.translatable("hud.friday_cultivation.cultivation", curCult, maxCult);
+            renderValueBar(graphics, mc, textBaseX, barY, CULT_WIDTH, BAR_HEIGHT, curCult, maxCult, CULT_TOP, CULT_BOTTOM, CULT_TOP, cultText);
+            barY += 8;
 
-        // 5. 状态行
+            // 灵气条
+            long curQi = data.getCurrentQi();
+            long maxQi = data.getMaxQi();
+            Component qiText = Component.translatable("hud.friday_cultivation.qi", curQi, maxQi);
+            renderValueBar(graphics, mc, textBaseX, barY, QI_WIDTH, BAR_HEIGHT, curQi, maxQi, QI_TOP, QI_BOTTOM, QI_TOP, qiText);
+            barY += 8;
+
+            // 悟道条（仅 getWuDaoMax() > 0）
+            long maxWudao = data.getWuDaoMax();
+            if (maxWudao > 0L) {
+                long curWudao = data.getWuDaoProgress();
+                Component wudaoText = Component.translatable("hud.friday_cultivation.wudao", curWudao, maxWudao);
+                renderValueBar(graphics, mc, textBaseX, barY, WUDAO_WIDTH, BAR_HEIGHT, curWudao, maxWudao, WUDAO_TOP, WUDAO_BOTTOM, WUDAO_TOP, wudaoText);
+                barY += 8;
+            }
+        }
+
+        // 4. 状态行
+        int statusY = barY + 2;
         int statusW = HUD_WIDTH - 16;
         if (data.canBreakthrough()) {
             MutableComponent bt = Component.translatable("hud.friday_cultivation.breakthrough_ready").withStyle(ChatFormatting.GOLD);
@@ -324,38 +336,27 @@ public class CultivationHud {
         graphics.pose().popPose();
     }
 
-    private static int renderVanillaAttributes(GuiGraphics graphics, LocalPlayer player, int x, int y, int statusY) {
-        int attrX = x + 2;
-        int iconSize = 8;
-        int rowY1 = y + 30;
-        int rowY2 = y + 42;
-        int colGap = 15;
+    private static void renderAttributeRow(GuiGraphics graphics, LocalPlayer player, int x, int y) {
+        int gx = x;
 
+        // 饱食度
+        int food = player.getFoodData().getFoodLevel();
+        drawAttributeIcon(graphics, VANILLA_ICONS, gx, y, FOOD_ICON_U, FOOD_ICON_V, ATTR_ICON_SIZE, FOOD_COLOR, Component.literal(String.valueOf(food)), ATTR_TEXT_SCALE);
+        gx += ATTR_GROUP_WIDTH + ATTR_GROUP_GAP;
+
+        // 盔甲值
         int armor = player.getArmorValue();
+        drawAttributeIcon(graphics, VANILLA_ICONS, gx, y, ARMOR_ICON_U, ARMOR_ICON_V, ATTR_ICON_SIZE, ARMOR_COLOR, Component.literal(String.valueOf(armor)), ATTR_TEXT_SCALE);
+        gx += ATTR_GROUP_WIDTH + ATTR_GROUP_GAP;
+
+        // 韧性值
         double toughness = player.getAttribute(Attributes.ARMOR_TOUGHNESS).getValue();
-        boolean showArmor = armor > 0;
-        boolean showToughness = toughness > 0.0;
-        boolean showAir = player.getAirSupply() < player.getMaxAirSupply();
+        drawAttributeIcon(graphics, OVERFLOWING_ICONS, gx, y, TOUGH_ICON_U, TOUGH_ICON_V, ATTR_ICON_SIZE, TOUGH_COLOR, Component.literal(String.format("%.0f", toughness)), ATTR_TEXT_SCALE);
+        gx += ATTR_GROUP_WIDTH + ATTR_GROUP_GAP;
 
-        int col1X = attrX;
-        int col2X = attrX + colGap;
-
-        if (showArmor) {
-            Component armorText = Component.literal(String.valueOf(armor));
-            drawAttributeIcon(graphics, VANILLA_ICONS, col1X, rowY1, 34, 9, iconSize, 0xAAAAAA, armorText, 0.42f);
-        }
-        if (showToughness) {
-            Component toughText = Component.literal(String.format("%.0f", toughness));
-            int tx = showArmor ? col2X : col1X;
-            drawAttributeIcon(graphics, OVERFLOWING_ICONS, tx, rowY1, 18, 0, iconSize, 0x40E0D0, toughText, 0.42f);
-        }
-        if (showAir) {
-            Component airText = Component.literal(String.valueOf(player.getAirSupply()));
-            drawAttributeIcon(graphics, VANILLA_ICONS, col1X, rowY2, 16, 18, iconSize, 0x3FA6FF, airText, 0.42f);
-        }
-
-        int bottom = (showAir ? rowY2 : rowY1) + iconSize;
-        return Math.max(statusY, bottom + 2);
+        // 氧气（秒）
+        int airSeconds = (int)Math.ceil(player.getAirSupply() / 20.0);
+        drawAttributeIcon(graphics, VANILLA_ICONS, gx, y, AIR_ICON_U, AIR_ICON_V, ATTR_ICON_SIZE, AIR_COLOR, Component.literal(String.valueOf(airSeconds)), ATTR_TEXT_SCALE);
     }
 
     private static void drawAttributeIcon(GuiGraphics graphics, ResourceLocation texture, int x, int y, int u, int v, int iconSize, int color, Component text, float textScale) {
