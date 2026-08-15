@@ -90,24 +90,23 @@ public final class SubStage {
         return EARLY;
     }
 
-    /** realm 感知 byId：支持数字层 id（"1".."10"）及命名 id（"turn_1"/"heaven_1"/"dao_*"/"emperor_*"） */
+    /** realm 感知 byId：支持 4 档 id、数字层 id（"1".."10"）、数字前缀 id（"turn_1"/"heaven_1"/"emperor_1"）及任意命名子阶段 id（"dao_*"/"sage_*"/"half_sage_*"/"half_emperor_*"） */
     public static SubStage byId(String id, Realm realm) {
         if ("early".equals(id)) return EARLY;
         if ("middle".equals(id)) return MIDDLE;
         if ("late".equals(id)) return LATE;
         if ("peak".equals(id)) return PEAK;
         if (realm != null) {
+            // 先按命名子阶段遍历匹配（dao_/sage_/half_sage_/half_emperor_/自定义命名）
+            for (int i = 1; i <= realm.subStageCount(); ++i) {
+                SubStage s = realm.subStageAt(i);
+                if (s != null && id != null && id.equals(s.id())) return s;
+            }
             try {
                 if (id != null && (id.startsWith("turn_") || id.startsWith("heaven_") || id.startsWith("emperor_"))) {
                     int lvl = Integer.parseInt(id.substring(id.indexOf('_') + 1));
                     SubStage s = realm.subStageAt(lvl);
                     if (s != null) return s;
-                }
-                if (id != null && id.startsWith("dao_")) {
-                    for (int i = 1; i <= realm.subStageCount(); ++i) {
-                        SubStage s = realm.subStageAt(i);
-                        if (s != null && id.equals(s.id())) return s;
-                    }
                 }
                 int lvl = Integer.parseInt(id);
                 SubStage s = realm.subStageAt(lvl);
