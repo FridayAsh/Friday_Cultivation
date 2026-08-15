@@ -171,6 +171,11 @@ public final class TechniqueEffectHandler {
             }
             TechniqueEffectHandler.resetStuckSpeed((LivingEntity)sp);
         }
+        // 生命值上限检测：境界/加成变化（如高级境界调回低级）导致最大生命上限降低时，
+        // 当前生命值若超过新上限则回落，避免"当前生命值 > 最大生命上限"异常
+        if (sp.getHealth() > sp.getMaxHealth()) {
+            sp.setHealth(sp.getMaxHealth());
+        }
     }
 
     private static void syncImmortalDarkVision(ServerPlayer sp, boolean enabled) {

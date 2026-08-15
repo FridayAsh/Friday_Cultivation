@@ -16,7 +16,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
@@ -31,24 +30,17 @@ public class CultivationHud {
 
     private static final ResourceLocation BLOOD_EMPTY = new ResourceLocation("friday_cultivation", "textures/gui/blood_empty.png");
     private static final ResourceLocation BLOOD_FILL = new ResourceLocation("friday_cultivation", "textures/gui/blood_fill.png");
-    private static final ResourceLocation BATTERY_EMPTY = new ResourceLocation("friday_cultivation", "textures/gui/battery_empty.png");
-    private static final ResourceLocation BATTERY_FILL_W = new ResourceLocation("friday_cultivation", "textures/gui/battery_fill_w.png");
-    private static final ResourceLocation BATTERY_FILL_B = new ResourceLocation("friday_cultivation", "textures/gui/battery_fill_b.png");
-    private static final ResourceLocation BATTERY_FILL_P = new ResourceLocation("friday_cultivation", "textures/gui/battery_fill_p.png");
-    private static final ResourceLocation BATTERY_FILL_R = new ResourceLocation("friday_cultivation", "textures/gui/battery_fill_r.png");
     private static final String SPIRIT_ROOT_ICON_PREFIX = "textures/gui/spirit_root/";
 
     private static final int HUD_X = 6;
     private static final int HUD_Y = 6;
-    private static final int HUD_WIDTH = 156;
+    private static final int HUD_WIDTH = 140;
     private static final int BAR_HEIGHT = 6;
     private static final int AVATAR_SIZE = 24; // 8 * 3
     private static final int GOLD_TEXT = -1456016;
 
-    // 各条宽度：护盾条收窄到 HUD 宽 1/4 左右
-    private static final int ARMOR_WIDTH = 40;
+    // 各条宽度（递减）
     private static final int HEALTH_WIDTH = 100;
-    private static final int FOOD_WIDTH = 56;
     private static final int CULT_WIDTH = 90;
     private static final int QI_WIDTH = 80;
     private static final int WUDAO_WIDTH = 70;
@@ -62,8 +54,6 @@ public class CultivationHud {
     private static final int QI_BOTTOM = -13729678;
     private static final int WUDAO_TOP = -8355712;
     private static final int WUDAO_BOTTOM = -10592674;
-    private static final int FOOD_TOP = 0xD8A100;
-    private static final int FOOD_BOTTOM = 0xA07000;
 
     private CultivationHud() {
     }
@@ -131,34 +121,11 @@ public class CultivationHud {
         int realmAvailW = Math.max(20, x + HUD_WIDTH - realmX - 2);
         drawLeftScaled(graphics, mc, realmLine, realmX, topY + 1, realmAvailW, 0.8f, GOLD_TEXT, true);
 
-        // 3. 条带区域（盔甲→生命/韧性→饱食→修为→灵气→悟道）
+        // 3. 条带区域（生命→修为→灵气→悟道）
         int barY = y + 16;
 
-        // 盔甲条（护盾条），紧贴生命条上方，最多 1/4 宽
-        int armor = player.getArmorValue();
-        if (armor > 0) {
-            Component armorText = Component.translatable("hud.friday_cultivation.armor", armor);
-            renderArmorBar(graphics, mc, textBaseX, barY, ARMOR_WIDTH, BAR_HEIGHT, armor, armorText);
-            barY += 8;
-        }
-
-        int healthY = barY;
-        // 韧性文本：生命条上方靠右
-        double toughness = player.getAttribute(Attributes.ARMOR_TOUGHNESS).getValue();
-        Component toughText = Component.translatable("hud.friday_cultivation.toughness", String.format("%.0f", toughness));
-        float tScale = 0.6f;
-        int tScaledW = (int)(mc.font.width((FormattedText)toughText) * tScale);
-        int tX = textBaseX + HEALTH_WIDTH - tScaledW - 2;
-        drawScaled(graphics, mc, toughText, tX, healthY - 9, tScale, -1, true);
-
         // 生命条
-        renderHealthBar(graphics, textBaseX, healthY, HEALTH_WIDTH, BAR_HEIGHT, player.getHealth(), player.getMaxHealth());
-        barY = healthY + 8;
-
-        // 饱食度条（紧靠生命条左下方）
-        int food = player.getFoodData().getFoodLevel();
-        Component foodText = Component.translatable("hud.friday_cultivation.food", food);
-        renderValueBar(graphics, mc, textBaseX, barY, FOOD_WIDTH, BAR_HEIGHT, food, 20, FOOD_TOP, FOOD_BOTTOM, FOOD_TOP, foodText);
+        renderHealthBar(graphics, textBaseX, barY, HEALTH_WIDTH, BAR_HEIGHT, player.getHealth(), player.getMaxHealth());
         barY += 8;
 
         // 修为条
@@ -239,67 +206,28 @@ public class CultivationHud {
     }
 
     /**
-     * 统一贴图条渲染：支持 clip 端角修复 + 上半/下半渐变 tint。
+     * 统一贴图条渲染：整张贴图等比缩放，上半/下半分别 tint。
      */
     private static void renderTextureBar(GuiGraphics graphics, Minecraft mc, int x, int y, int width, int height, double ratio, ResourceLocation emptyTex, ResourceLocation fillTex, int texW, int texH, int topColor, int bottomColor, Component text, int textColor) {
+        // 底条：整张贴图等比缩放到目标宽高
         graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
         graphics.blit(emptyTex, x, y, 0.0f, 0.0f, width, height, texW, texH);
 
-        int targetScreen = (int)((double)width * ratio);
-        if (targetScreen > 0) {
-            int clipScreen = Math.max(1, (int)((double)width * 3.0 / (double)texW));
-            int targetTex = (int)((double)texW * ratio);
+        int targetW = (int)((double)width * ratio);
+        if (targetW > 0) {
             int halfH = height / 2;
-
-            // 上半
+            // 上半：colorTop tint
             setBarColor(graphics, topColor);
-            renderTextureBarStrip(graphics, x, y, targetScreen, clipScreen, targetTex, texW, fillTex, 0, halfH, texH);
-            // 下半
+            graphics.blit(fillTex, x, y, 0.0f, 0.0f, targetW, halfH, texW, texH);
+            // 下半：colorBot tint（从贴图下半采样）
             setBarColor(graphics, bottomColor);
-            renderTextureBarStrip(graphics, x, y + halfH, targetScreen, clipScreen, targetTex, texW, fillTex, halfH, height - halfH, texH);
-
+            graphics.blit(fillTex, x, y + halfH, 0.0f, halfH, targetW, height - halfH, texW, texH);
             graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
         }
 
         if (text != null) {
             drawCenteredScaledInRect(graphics, mc, text, x, y, width, height, 0.5f, textColor, true);
         }
-    }
-
-    private static void renderTextureBarStrip(GuiGraphics graphics, int x, int y, int targetScreen, int clipScreen, int targetTex, int texW, ResourceLocation fillTex, int sourceV, int destH, int texH) {
-        if (targetTex >= texW) {
-            // 满值：全宽拉伸
-            graphics.blit(fillTex, x, y, 0.0f, sourceV, targetScreen, destH, texW, texH);
-        } else if (targetTex <= 3) {
-            // 左侧短段直接拉伸
-            graphics.blit(fillTex, x, y, 0.0f, sourceV, targetScreen, destH, texW, texH);
-        } else {
-            // 左侧固定 clip + 右侧从贴图尾部滑入，保持右端角
-            graphics.blit(fillTex, x, y, 0.0f, sourceV, clipScreen, destH, texW, texH);
-            graphics.blit(fillTex, x + clipScreen, y, (float)(texW - targetTex), sourceV, targetScreen - clipScreen, destH, texW, texH);
-        }
-    }
-
-    private static void renderArmorBar(GuiGraphics graphics, Minecraft mc, int x, int y, int width, int height, int armor, Component text) {
-        ResourceLocation fillTex;
-        int topColor, bottomColor;
-        if (armor <= 4) {
-            fillTex = BATTERY_FILL_W;
-            topColor = bottomColor = 0x999999; // 灰
-        } else if (armor <= 8) {
-            fillTex = BATTERY_FILL_B; // 蓝
-            topColor = bottomColor = 0xFFFFFF;
-        } else if (armor <= 12) {
-            fillTex = BATTERY_FILL_P; // 紫
-            topColor = bottomColor = 0xFFFFFF;
-        } else if (armor <= 16) {
-            fillTex = BATTERY_FILL_W;
-            topColor = bottomColor = 0xFFD700; // 金
-        } else {
-            fillTex = BATTERY_FILL_R; // 红
-            topColor = bottomColor = 0xFFFFFF;
-        }
-        renderTextureBar(graphics, mc, x, y, width, height, (double)armor / 20.0, BATTERY_EMPTY, fillTex, 21, 6, topColor, bottomColor, text, -1);
     }
 
     private static void renderHealthBar(GuiGraphics graphics, int x, int y, int width, int height, float value, float max) {
