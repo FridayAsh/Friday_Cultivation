@@ -17,24 +17,73 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
-public final class CultivationHud {
+@Mod.EventBusSubscriber(modid = "friday_cultivation", value = Dist.CLIENT)
+public class CultivationHud {
     public static final IGuiOverlay OVERLAY = (gui, graphics, partialTick, screenWidth, screenHeight) -> CultivationHud.render(graphics, screenWidth);
 
     private static final ResourceLocation BLOOD_EMPTY = new ResourceLocation("friday_cultivation", "textures/gui/blood_empty.png");
     private static final ResourceLocation BLOOD_FILL = new ResourceLocation("friday_cultivation", "textures/gui/blood_fill.png");
+    private static final ResourceLocation BATTERY_EMPTY = new ResourceLocation("friday_cultivation", "textures/gui/battery_empty.png");
+    private static final ResourceLocation BATTERY_FILL_W = new ResourceLocation("friday_cultivation", "textures/gui/battery_fill_w.png");
+    private static final ResourceLocation BATTERY_FILL_B = new ResourceLocation("friday_cultivation", "textures/gui/battery_fill_b.png");
+    private static final ResourceLocation BATTERY_FILL_P = new ResourceLocation("friday_cultivation", "textures/gui/battery_fill_p.png");
+    private static final ResourceLocation BATTERY_FILL_R = new ResourceLocation("friday_cultivation", "textures/gui/battery_fill_r.png");
     private static final String SPIRIT_ROOT_ICON_PREFIX = "textures/gui/spirit_root/";
 
     private static final int HUD_X = 6;
     private static final int HUD_Y = 6;
-    private static final int HUD_WIDTH = 140;
-    private static final int BAR_WIDTH = 96;
+    private static final int HUD_WIDTH = 156;
     private static final int BAR_HEIGHT = 6;
     private static final int AVATAR_SIZE = 24; // 8 * 3
     private static final int GOLD_TEXT = -1456016;
 
+    // 各条差异化宽度
+    private static final int SHIELD_WIDTH = 120;
+    private static final int HEALTH_WIDTH = 100;
+    private static final int CULT_WIDTH = 90;
+    private static final int QI_WIDTH = 80;
+    private static final int WUDAO_WIDTH = 70;
+
+    // 颜色：填充 tint + 文字颜色
+    private static final float HEALTH_R = 1.0f, HEALTH_G = 0.30f, HEALTH_B = 0.30f;
+    private static final int CULT_TEXT = 0xFFA500;
+    private static final float CULT_R = 1.0f, CULT_G = 0.65f, CULT_B = 0.0f;
+    private static final int QI_TEXT = 0x3FA6FF;
+    private static final float QI_R = 0.25f, QI_G = 0.65f, QI_B = 1.0f;
+    private static final int WUDAO_TEXT = 0x50E89A;
+    private static final float WUDAO_R = 0.31f, WUDAO_G = 0.91f, WUDAO_B = 0.60f;
+
     private CultivationHud() {
+    }
+
+    @SubscribeEvent
+    public static void onRenderOverlay(RenderGuiOverlayEvent.Pre event) {
+        if (event.getOverlay() != VanillaGuiOverlay.PLAYER_HEALTH.type()
+                && event.getOverlay() != VanillaGuiOverlay.ARMOR_LEVEL.type()
+                && event.getOverlay() != VanillaGuiOverlay.FOOD_LEVEL.type()) {
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null || mc.options.hideGui) {
+            return;
+        }
+        CultivationData data = CultivationCapability.get((Player)player).orElse(null);
+        if (data == null) {
+            return;
+        }
+        boolean soul = data.isSoulState();
+        if (!soul && !data.hasEquippedTechnique()) {
+            return;
+        }
+        event.setCanceled(true);
     }
 
     private static void render(GuiGraphics graphics, int screenWidth) {
@@ -56,7 +105,7 @@ public final class CultivationHud {
 
         RenderSystem.enableBlend();
 
-        // 1. 2D 头像（电池护盾风格）
+        // 1. 2D 头像
         drawHead(graphics, player, x + 4, y + 4);
 
         // 2. 顶行：玩家名字 + 境界（同一行）
@@ -77,54 +126,68 @@ public final class CultivationHud {
         int realmAvailW = Math.max(20, x + HUD_WIDTH - realmX - 2);
         drawLeftScaled(graphics, mc, realmLine, realmX, topY + 1, realmAvailW, 0.6f, GOLD_TEXT, true);
 
-        // 3. 生命值条
-        renderHealthBar(graphics, textBaseX, y + 16, BAR_WIDTH, BAR_HEIGHT, player.getHealth(), player.getMaxHealth());
+        // 3. 条带区域（护盾→生命→修为→灵气→悟道）
+        int barY = y + 16;
 
-        // 4. 修为条（blood 贴图）
+        // 护盾条（盔甲值），仅 armor > 0 显示
+        int armor = player.getArmorValue();
+        if (armor > 0) {
+            renderShieldBar(graphics, textBaseX, barY, SHIELD_WIDTH, BAR_HEIGHT, armor);
+            barY += 8;
+        }
+
+        // 生命条（红色 tint）
+        renderHealthBar(graphics, textBaseX, barY, HEALTH_WIDTH, BAR_HEIGHT, player.getHealth(), player.getMaxHealth());
+        barY += 8;
+
+        // 修为条（金橙）
         long curCult = data.getCultivationProgress();
         long maxCult = data.getMaxCultivation();
         Component cultText = Component.translatable("hud.friday_cultivation.cultivation", curCult, maxCult);
-        renderValueBar(graphics, mc, textBaseX, y + 24, BAR_WIDTH, BAR_HEIGHT, curCult, maxCult, cultText);
+        renderValueBar(graphics, mc, textBaseX, barY, CULT_WIDTH, BAR_HEIGHT, curCult, maxCult, CULT_R, CULT_G, CULT_B, CULT_TEXT, cultText);
+        barY += 8;
 
-        // 5. 灵气条（blood 贴图）
+        // 灵气条（蓝色）
         long curQi = data.getCurrentQi();
         long maxQi = data.getMaxQi();
         Component qiText = Component.translatable("hud.friday_cultivation.qi", curQi, maxQi);
-        renderValueBar(graphics, mc, textBaseX, y + 32, BAR_WIDTH, BAR_HEIGHT, curQi, maxQi, qiText);
+        renderValueBar(graphics, mc, textBaseX, barY, QI_WIDTH, BAR_HEIGHT, curQi, maxQi, QI_R, QI_G, QI_B, QI_TEXT, qiText);
+        barY += 8;
 
-        // 6. 悟道条（blood 贴图，仅当 getWuDaoMax() > 0 时显示）
-        int statusY = y + 42;
+        // 悟道条（翠绿，仅 getWuDaoMax() > 0 显示）
         long maxWudao = data.getWuDaoMax();
         if (maxWudao > 0L) {
             long curWudao = data.getWuDaoProgress();
             Component wudaoText = Component.translatable("hud.friday_cultivation.wudao", curWudao, maxWudao);
-            renderValueBar(graphics, mc, textBaseX, y + 40, BAR_WIDTH, BAR_HEIGHT, curWudao, maxWudao, wudaoText);
-            statusY = y + 50;
+            renderValueBar(graphics, mc, textBaseX, barY, WUDAO_WIDTH, BAR_HEIGHT, curWudao, maxWudao, WUDAO_R, WUDAO_G, WUDAO_B, WUDAO_TEXT, wudaoText);
+            barY += 8;
         }
 
-        // 7. 状态行（全部保留）
+        // 4. 状态行（全部保留）
+        int statusY = barY + 2;
+        int statusW = HUD_WIDTH - 16;
         if (data.canBreakthrough()) {
             MutableComponent bt = Component.translatable("hud.friday_cultivation.breakthrough_ready").withStyle(ChatFormatting.GOLD);
-            drawPlainStatus(graphics, mc, bt, x + 8, statusY, 124, -11930);
+            drawPlainStatus(graphics, mc, bt, x + 8, statusY, statusW, -11930);
             statusY += 9;
         }
         if (data.isMeditating()) {
             MutableComponent med = Component.translatable("hud.friday_cultivation.meditating").withStyle(ChatFormatting.GREEN);
-            drawPlainStatus(graphics, mc, med, x + 8, statusY, 124, -7471203, false);
+            drawPlainStatus(graphics, mc, med, x + 8, statusY, statusW, -7471203, false);
             statusY += 9;
         }
         long gameTime;
         if (data.hasActiveInverseFiveElementMark(gameTime = player.level().getGameTime())) {
-            drawInverseFiveElementStatus(graphics, mc, data, gameTime, x + 8, statusY, 124);
+            drawInverseFiveElementStatus(graphics, mc, data, gameTime, x + 8, statusY, statusW);
             statusY += 10;
         }
         if (data.isInTribulation()) {
             MutableComponent trib = Component.translatable("hud.friday_cultivation.tribulation", Realm.formatTribulationCount(data.getTribulationStrikesRemaining(), data.getTribulationBoltsPerWave())).withStyle(ChatFormatting.RED);
-            drawPlainStatus(graphics, mc, trib, x + 8, statusY, 124, -35483, false);
+            drawPlainStatus(graphics, mc, trib, x + 8, statusY, statusW, -35483, false);
             statusY += 9;
         }
         if (soul) {
-            renderSoulStatus(graphics, mc, player, data, x, statusY);
+            renderSoulStatus(graphics, mc, player, data, x, statusY, statusW);
         }
 
         RenderSystem.disableBlend();
@@ -147,56 +210,85 @@ public final class CultivationHud {
         graphics.pose().popPose();
     }
 
+    private static void renderShieldBar(GuiGraphics graphics, int x, int y, int width, int height, int armor) {
+        int cells = 5;
+        int cellW = width / cells;
+        float cellMax = 4.0f; // 20 护甲分 5 段，每段 4
+
+        ResourceLocation fillTex;
+        float tr = 1.0f, tg = 1.0f, tb = 1.0f;
+        if (armor <= 4) {
+            fillTex = BATTERY_FILL_W;
+            tr = tg = tb = 0.6f; // 灰
+        } else if (armor <= 8) {
+            fillTex = BATTERY_FILL_B; // 蓝
+        } else if (armor <= 12) {
+            fillTex = BATTERY_FILL_P; // 紫
+        } else if (armor <= 16) {
+            fillTex = BATTERY_FILL_W;
+            tr = 1.0f; tg = 0.85f; tb = 0.2f; // 金
+        } else {
+            fillTex = BATTERY_FILL_R; // 红
+        }
+
+        for (int i = 0; i < cells; ++i) {
+            int cx = x + i * cellW;
+            graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+            graphics.blit(BATTERY_EMPTY, cx, y, 0.0f, 0.0f, cellW, height, 21, 6);
+
+            float cellVal = armor - i * cellMax;
+            if (cellVal < 0.0f) cellVal = 0.0f;
+            if (cellVal > cellMax) cellVal = cellMax;
+            if (cellVal > 0.0f) {
+                graphics.setColor(tr, tg, tb, 1.0f);
+                int target = (int)((float)cellW * cellVal / cellMax);
+                graphics.blit(fillTex, cx, y, 0.0f, 0.0f, target, height, 21, 6);
+            }
+        }
+        graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+
     private static void renderHealthBar(GuiGraphics graphics, int x, int y, int width, int height, float value, float max) {
         if (max <= 0.0f) max = 1.0f;
-        graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-        graphics.blit(BLOOD_EMPTY, x, y, 0.0f, 0.0f, width, height, 96, 6);
-        int target = (int)((double)width * (double)value / (double)max);
-        if (target > 0) {
-            renderBloodFill(graphics, x, y, width, height, target);
-        }
+        double ratio = (double)value / (double)max;
+        renderBloodTextureBar(graphics, x, y, width, height, ratio, HEALTH_R, HEALTH_G, HEALTH_B);
     }
 
-    private static void renderValueBar(GuiGraphics graphics, Minecraft mc, int x, int y, int width, int height, long current, long max, Component text) {
+    private static void renderValueBar(GuiGraphics graphics, Minecraft mc, int x, int y, int width, int height, long current, long max, float r, float g, float b, int textColor, Component text) {
         if (max <= 0L) max = 1L;
+        double ratio = (double)current / (double)max;
+        renderBloodTextureBar(graphics, x, y, width, height, ratio, r, g, b);
+        drawCenteredScaledInRect(graphics, mc, text, x, y, width, height, 0.5f, textColor, true);
+    }
+
+    private static void renderBloodTextureBar(GuiGraphics graphics, int x, int y, int width, int height, double ratio, float fr, float fg, float fb) {
         graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
         graphics.blit(BLOOD_EMPTY, x, y, 0.0f, 0.0f, width, height, 96, 6);
-        int target = (int)((double)width * (double)current / (double)max);
+        int target = (int)((double)width * ratio);
         if (target > 0) {
-            renderBloodFill(graphics, x, y, width, height, target);
-        }
-        drawCenteredScaledInRect(graphics, mc, text, x, y, width, height, 0.5f, -1, true);
-    }
-
-    private static void renderBloodFill(GuiGraphics graphics, int x, int y, int width, int height, int target) {
-        int clip = (int)(1.0 * (double)width / 96.0 * 3.0);
-        if (target >= 96) {
-            graphics.blit(BLOOD_FILL, x, y, 0.0f, 0.0f, 96, height, 96, 6);
-        } else if (target <= clip) {
+            graphics.setColor(fr, fg, fb, 1.0f);
             graphics.blit(BLOOD_FILL, x, y, 0.0f, 0.0f, target, height, 96, 6);
-        } else {
-            graphics.blit(BLOOD_FILL, x, y, 0.0f, 0.0f, clip, height, 96, 6);
-            graphics.blit(BLOOD_FILL, x + clip, y, (float)(96 - target), 0.0f, target, height, 96, 6);
+            graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
         }
     }
 
-    private static void renderSoulStatus(GuiGraphics graphics, Minecraft mc, LocalPlayer player, CultivationData data, int x, int statusY) {
+    private static void renderSoulStatus(GuiGraphics graphics, Minecraft mc, LocalPlayer player, CultivationData data, int x, int statusY, int width) {
         MutableComponent title = Component.translatable("hud.friday_cultivation.soul.title");
-        drawPlainStatus(graphics, mc, title, x + 8, statusY, 124, -4724737, true);
+        drawPlainStatus(graphics, mc, title, x + 8, statusY, width, -4724737, true);
         statusY += 9;
         boolean inDifu = player.level().dimension() == ModDimensions.DIFU;
         if (!inDifu) {
             MutableComponent hint = Component.translatable("hud.friday_cultivation.soul.go_difu_hint");
-            drawPlainStatus(graphics, mc, hint, x + 8, statusY, 124, -4151578, false);
+            drawPlainStatus(graphics, mc, hint, x + 8, statusY, width, -4151578, false);
         } else if (data.isReincarnationReady()) {
             MutableComponent ready = Component.translatable("hud.friday_cultivation.soul.can_reincarnate");
-            drawPlainStatus(graphics, mc, ready, x + 8, statusY, 124, -11930, false);
+            drawPlainStatus(graphics, mc, ready, x + 8, statusY, width, -11930, false);
         } else {
             int remainTicks = Math.max(0, 1200 - data.getDifuTicks());
             int totalSec = (remainTicks + 19) / 20;
             String timeStr = String.format("%d:%02d", totalSec / 60, totalSec % 60);
             MutableComponent cd = Component.translatable("hud.friday_cultivation.soul.countdown", timeStr);
-            drawPlainStatus(graphics, mc, cd, x + 8, statusY, 124, -1456016, false);
+            drawPlainStatus(graphics, mc, cd, x + 8, statusY, width, -1456016, false);
         }
     }
 
