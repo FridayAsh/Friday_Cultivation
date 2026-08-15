@@ -239,10 +239,10 @@ public class CultivationHud {
     }
 
     /**
-     * 统一贴图条渲染：整张贴图等比缩放，上半/下半分别 tint。
-     * 注意：必须用 11 参 blit（目标尺寸与采样尺寸分离）——
-     * 9 参 blit 的采样尺寸 = 目标尺寸，当目标宽 ≠ 贴图宽时
-     * 会采样超界回绕（多出一角）或采样不足（缺角）。
+     * 统一贴图条渲染（参考电池护盾 clip 逻辑）：
+     * - 大进度（targetW >= 贴图宽）：11 参 blit 整图等比缩放，端角自然
+     * - 小进度（targetW < 贴图宽）：9 参 blit 1:1 像素采样贴图左端 targetW 宽，
+     *   端角保持贴图原始尺寸不变形（避免整图压进几像素导致左下角突出）
      */
     private static void renderTextureBar(GuiGraphics graphics, Minecraft mc, int x, int y, int width, int height, double ratio, ResourceLocation emptyTex, ResourceLocation fillTex, int texW, int texH, int topColor, int bottomColor, Component text, int textColor) {
         // 底条：整张贴图（texW x texH）等比缩放到目标宽高
@@ -254,16 +254,17 @@ public class CultivationHud {
             int halfH = Math.max(1, height / 2);
             int topH = halfH;
             int botH = height - halfH;
-            // 进度过低（targetW 小于贴图宽 1/4）时，贴图端角被压缩进几像素会变形
-            // （左下角突出），改用纯色渐变填充，干净无端角
-            if (targetW <= Math.max(3, texW / 4)) {
-                graphics.fill(x, y, x + targetW, y + topH, topColor);
-                graphics.fill(x, y + topH, x + targetW, y + height, bottomColor);
+            if (targetW < texW) {
+                // 小进度：9 参 blit 采样贴图左端 targetW 像素（1:1 像素，端角原始尺寸）
+                setBarColor(graphics, topColor);
+                graphics.blit(fillTex, x, y, 0.0f, 0.0f, targetW, topH, texW, texH);
+                setBarColor(graphics, bottomColor);
+                graphics.blit(fillTex, x, y + topH, 0.0f, (float)halfH, targetW, botH, texW, texH);
+                graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
             } else {
-                // 上半：colorTop tint，采样贴图上半（v 0..halfH），整宽 texW 等比缩放到 targetW
+                // 大进度：11 参 blit 整图等比缩放
                 setBarColor(graphics, topColor);
                 graphics.blit(fillTex, x, y, targetW, topH, 0.0f, 0.0f, texW, halfH, texW, texH);
-                // 下半：colorBot tint，采样贴图下半（v halfH..texH）
                 setBarColor(graphics, bottomColor);
                 graphics.blit(fillTex, x, y + topH, targetW, botH, 0.0f, (float)halfH, texW, texH - halfH, texW, texH);
                 graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
