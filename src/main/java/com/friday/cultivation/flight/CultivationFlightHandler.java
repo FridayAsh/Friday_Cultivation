@@ -218,14 +218,15 @@ public final class CultivationFlightHandler {
         }
     }
 
-    /** 撤销飞行：恢复重力 + 移除 mayfly/flying */
+    /** 撤销飞行：恢复重力 + 移除 mayfly/flying。
+     *  注意：创造/旁观模式仅跳过 mayfly/flying 清除（保留原生创造飞行权限），
+     *  但仍须恢复 noGravity —— 否则创造模式下停止飞行后玩家持续上浮无法降落。 */
     private static void disableFlight(ServerPlayer player) {
-        if (player.isCreative() || player.isSpectator()) {
-            return;
-        }
-        if (player.getAbilities().mayfly || player.getAbilities().flying) {
-            player.getAbilities().mayfly = false;
-            player.getAbilities().flying = false;
+        if (!player.isCreative() && !player.isSpectator()) {
+            if (player.getAbilities().mayfly || player.getAbilities().flying) {
+                player.getAbilities().mayfly = false;
+                player.getAbilities().flying = false;
+            }
         }
         if (player.isNoGravity()) {
             player.setNoGravity(false);

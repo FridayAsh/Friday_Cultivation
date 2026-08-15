@@ -125,8 +125,10 @@ public class CultivationHud {
         // 3. 条带区域（生命→修为→灵气→悟道）
         int barY = y + 16;
 
-        // 生命条
-        renderHealthBar(graphics, textBaseX, barY, HEALTH_WIDTH, BAR_HEIGHT, player.getHealth(), player.getMaxHealth());
+        // 生命条（创造模式隐藏——原版生命值 HUD 已隐藏，创造模式无敌不再显示自定义生命条）
+        if (!player.isCreative()) {
+            renderHealthBar(graphics, textBaseX, barY, HEALTH_WIDTH, BAR_HEIGHT, player.getHealth(), player.getMaxHealth());
+        }
         barY += 8;
 
         // 修为条
