@@ -1835,25 +1835,31 @@ implements INBTSerializable<CompoundTag> {
         // 基础浮动：60% 落在 [0.7,1.0)，40% 落在 [1.0,1.3]
         double mult = this.wuDaoRandom.nextDouble() < 0.6 ? 0.7 + this.wuDaoRandom.nextDouble() * 0.3 : 1.0 + this.wuDaoRandom.nextDouble() * 0.3;
         long gained = Math.max(1L, Math.round((double)baseAmount * mult));
-        // 额外 5%：权重 40/30/20/9/1
+        // 额外 5% 档位：数值按悟道上限比例缩放（半圣 40000/圣人 100000/半帝 300000/大帝 900000），
+        // 避免低上限境界（如半圣）触发固定大额档位一下子补满；比例：初悟3% 小悟8% 明悟15% 彻悟30%
         if (this.wuDaoRandom.nextDouble() < 0.05) {
+            long max = this.getWuDaoMax();
+            long pct3 = Math.max(1L, max * 3L / 100L);
+            long pct8 = Math.max(1L, max * 8L / 100L);
+            long pct15 = Math.max(1L, max * 15L / 100L);
+            long pct30 = Math.max(1L, max * 30L / 100L);
             int roll = this.wuDaoRandom.nextInt(100);
             if (roll < 40) {
-                gained += 1000L;
+                gained += pct3;
                 this.pendingWuDaoBonusName = "wudao_bonus.friday_cultivation.initial";
-                this.pendingWuDaoBonusValue = 1000L;
+                this.pendingWuDaoBonusValue = pct3;
             } else if (roll < 70) {
-                gained += 5000L;
+                gained += pct8;
                 this.pendingWuDaoBonusName = "wudao_bonus.friday_cultivation.small";
-                this.pendingWuDaoBonusValue = 5000L;
+                this.pendingWuDaoBonusValue = pct8;
             } else if (roll < 90) {
-                gained += 10000L;
+                gained += pct15;
                 this.pendingWuDaoBonusName = "wudao_bonus.friday_cultivation.medium";
-                this.pendingWuDaoBonusValue = 10000L;
+                this.pendingWuDaoBonusValue = pct15;
             } else if (roll < 99) {
-                gained += 50000L;
+                gained += pct30;
                 this.pendingWuDaoBonusName = "wudao_bonus.friday_cultivation.great";
-                this.pendingWuDaoBonusValue = 50000L;
+                this.pendingWuDaoBonusValue = pct30;
             } else {
                 // 顿悟：悟道值直接补满
                 long remain = this.getWuDaoMax() - this.wuDaoProgress;

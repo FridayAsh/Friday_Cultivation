@@ -2363,7 +2363,7 @@
   "message.friday_cultivation.qi_flight.no_qi": "灵气不足，无法开始灵气飞行。",
   "message.friday_cultivation.qi_flight.started": "御气腾空，灵气飞行开始。",
   "message.friday_cultivation.qi_flight.stopped": "灵气飞行结束。",
-  "message.friday_cultivation.wudao_bonus": "%s天资聪慧，悟道进展%s幅增加（%s）",
+  "message.friday_cultivation.wudao_bonus": "%s天资聪慧，进入了%s状态（获得%s悟道值）",
   "sub_stage.friday_cultivation.half_sage_qing": "斩情",
   "sub_stage.friday_cultivation.half_sage_nian": "斩念",
   "sub_stage.friday_cultivation.half_sage_wo": "斩我",

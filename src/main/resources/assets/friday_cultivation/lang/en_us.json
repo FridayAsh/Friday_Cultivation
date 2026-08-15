@@ -2350,7 +2350,7 @@
   "message.friday_cultivation.qi_flight.no_qi": "Not enough qi to start Qi Flight.",
   "message.friday_cultivation.qi_flight.started": "Riding the qi, flight begins.",
   "message.friday_cultivation.qi_flight.stopped": "Qi Flight ended.",
-  "message.friday_cultivation.wudao_bonus": "%s is gifted with wisdom, %s enlightenment increases by %s",
+  "message.friday_cultivation.wudao_bonus": "%s is gifted with wisdom, entered %s state (gained %s comprehension)",
   "screen.friday_cultivation.realm_selector.title": "Realm Selector",
   "screen.friday_cultivation.realm_selector.realm": "Major Realm: %s",
   "screen.friday_cultivation.realm_selector.substage": "Minor Realm: %s",
