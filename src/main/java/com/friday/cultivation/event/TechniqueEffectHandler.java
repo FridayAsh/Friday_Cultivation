@@ -281,6 +281,39 @@ public final class TechniqueEffectHandler {
     private static final String TAG_MAX_BODY_TEMPERING_LEVEL = "friday_cultivation_max_body_tempering_level";
 
     /**
+     * 生命值上限检测/强制重算：按当前境界与真元设定重算全部 MAX_HEALTH 加成，
+     * 并将当前生命值 clamp 到新上限（用于境界令牌调整境界后立即生效，
+     * 避免"切回低境界仍保留高境界血量"）。
+     */
+    public static void refreshMaxHealth(ServerPlayer sp) {
+        if (sp == null) {
+            return;
+        }
+        CultivationData data = CultivationCapability.get((Player)sp).orElse(null);
+        if (data == null) {
+            return;
+        }
+        // 与 onPlayerTick 完全一致的 MAX_HEALTH 加成重算
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_MAX_HP, "xiaoxiang_tech_maxHp", TechniqueBonusHelper.maxHpBonus((Player)sp), AttributeModifier.Operation.ADDITION);
+        double spiritHp = SpiritRootBonusHelper.hpBonus((Player)sp);
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_SPIRIT_HP, "xiaoxiang_spirit_hp", spiritHp, AttributeModifier.Operation.ADDITION);
+        double zhenyuanHp = ZhenyuanBonusHelper.constitutionHpBonus((Player)sp);
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_ZHENYUAN_HP, "xiaoxiang_zhenyuan_hp", zhenyuanHp, AttributeModifier.Operation.ADDITION);
+        double foundationHp = FoundationDaoBonusHelper.maxHpMultiplyTotal((Player)sp);
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_FOUNDATION_HP, "xiaoxiang_foundation_hp", foundationHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
+        double goldenCoreHp = GoldenCoreDaoBonusHelper.maxHpMultiplyTotal((Player)sp);
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_GOLDEN_CORE_HP, "xiaoxiang_golden_core_hp", goldenCoreHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
+        double looseImmortalHp = LooseImmortalBonusHelper.maxHpMultiplyTotal((Player)sp);
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_LOOSE_IMMORTAL_HP, "xiaoxiang_loose_immortal_hp", looseImmortalHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
+        double bodyTemperingHp = TechniqueEffectHandler.bodyTemperingHpBonus(sp, data);
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BODY_TEMPERING_HP, "xiaoxiang_body_tempering_hp", bodyTemperingHp, AttributeModifier.Operation.ADDITION);
+        // clamp 当前生命值到新上限
+        if (sp.getHealth() > sp.getMaxHealth()) {
+            sp.setHealth(sp.getMaxHealth());
+        }
+    }
+
+    /**
      * 清除锻体最高层数记录（转世重生时调用，重生后为全新凡人）。
      */
     public static void clearBodyTemperingHpBonus(ServerPlayer sp) {

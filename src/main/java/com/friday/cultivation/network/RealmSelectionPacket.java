@@ -71,6 +71,10 @@ public class RealmSelectionPacket {
             data.setCultivationProgress(0L);
             // 切换境界后重置悟道进度（新境界/子阶段应有全新悟道上限与进度，避免沿用旧值）
             data.setWuDaoProgress(0L);
+            // 切换境界后清除锻体历史层数记录（避免凡人/低境界仍享受高境界锻体 HP 加成，
+            // 如切回凡人仍 80 血），并强制重算 MAX_HEALTH 加成 + clamp 当前生命值
+            com.friday.cultivation.event.TechniqueEffectHandler.clearBodyTemperingHpBonus(player);
+            com.friday.cultivation.event.TechniqueEffectHandler.refreshMaxHealth(player);
             CapabilityEvents.syncToClient(player);
             player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.realm_token.set_synced_zhenyuan", (Object[])new Object[]{realm.displayName(), zhenyuan.automaticPerAttribute(), zhenyuan.unallocatedZhenyuan()}), false);
         });
