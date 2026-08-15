@@ -62,7 +62,8 @@ public class CultivationHud {
     public static void onRenderOverlay(RenderGuiOverlayEvent.Pre event) {
         if (event.getOverlay() != VanillaGuiOverlay.PLAYER_HEALTH.type()
                 && event.getOverlay() != VanillaGuiOverlay.ARMOR_LEVEL.type()
-                && event.getOverlay() != VanillaGuiOverlay.FOOD_LEVEL.type()) {
+                && event.getOverlay() != VanillaGuiOverlay.FOOD_LEVEL.type()
+                && event.getOverlay() != VanillaGuiOverlay.AIR_LEVEL.type()) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
