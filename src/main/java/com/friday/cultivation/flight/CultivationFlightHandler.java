@@ -208,13 +208,14 @@ public final class CultivationFlightHandler {
         }
     }
 
-    /** 授权飞行：mayfly+flying（创造模式手感/动画）+ setNoGravity（防覆盖） */
+    /** 授权飞行：客户端补设 mayfly+flying（创造手感/动画）；服务端仅 noGravity 防 Caelus 覆盖。
+     *  注意：不能调 onUpdateAbilities() —— 服务端 abilities.mayfly/flying 为 false，
+     *  广播会覆盖客户端补设的飞行状态，导致飞行姿态闪断（变回空中走路）与 FOV 抖动（视角抽搐）。 */
     private static void enableFlight(ServerPlayer player) {
-        // 悬浮飞行：setNoGravity 不受重力，客户端本地控制运动（不依赖 mayfly/flying）
+        // 悬浮飞行：setNoGravity 不受重力，客户端本地补设 mayfly+flying 控制运动
         if (!player.isNoGravity()) {
             player.setNoGravity(true);
         }
-        player.onUpdateAbilities();
     }
 
     /** 撤销飞行：恢复重力 + 移除 mayfly/flying */

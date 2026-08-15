@@ -81,8 +81,9 @@ public final class NaturalQiSpawner {
         if (nearbyOrbs >= 48) {
             return;
         }
-        // 环境灵气：不依赖任何方块，任何位置（空中/水中/洞穴）都持续生成，保证随时随地可修炼
-        if (level.random.nextDouble() < 0.08) {
+        // 环境灵气：唯一灵气来源，任何位置（空中/水中/洞穴）都持续生成，保证随时随地可修炼
+        // 平衡：单源每 tick 3% 概率（约每秒 0.6 球），低境界（锻体 60-150 点）约 1.5-4 分钟一层
+        if (level.random.nextDouble() < 0.03) {
             double ax = (double)player.getX() + (level.random.nextDouble() - 0.5) * 8.0;
             double ay = (double)player.getY() + (level.random.nextDouble() - 0.5) * 4.0;
             double az = (double)player.getZ() + (level.random.nextDouble() - 0.5) * 8.0;
@@ -91,25 +92,6 @@ public final class NaturalQiSpawner {
             if (++nearbyOrbs >= 48) {
                 return;
             }
-        }
-        BlockPos.MutableBlockPos cur = new BlockPos.MutableBlockPos();
-        for (int i = 0; i < Math.max(0, samples); ++i) {
-            int drained;
-            BlockPos firmPos;
-            int dx = level.random.nextInt(15) - 7;
-            int dy = level.random.nextInt(9) - 4;
-            int dz = level.random.nextInt(15) - 7;
-            cur.set(player.getBlockX() + dx, player.getBlockY() + dy, player.getBlockZ() + dz);
-            BlockState state = level.getBlockState((BlockPos)cur);
-            BlockQiSpec rawSpec = BlockQiSpecs.of(state);
-            if (rawSpec == null) continue;
-            QiModifier modifier = QiFieldRegistry.of(level).composedModifierAt((BlockPos)cur, rawSpec);
-            BlockQiSpec spec = modifier.applyTo(rawSpec);
-            double perTickChance = spec.baseEmitRate() * 2.0 / 20.0;
-            if (level.random.nextDouble() >= perTickChance || SpiritLockHandler.isBlockLocked((Level)level, firmPos = cur.east()) || (drained = QiEcosystem.tryDrainBlock(level, firmPos, 1)) <= 0) continue;
-            NaturalQiSpawner.spawnOrbFromBlock(level, firmPos, state, spec);
-            if (++nearbyOrbs < 48) continue;
-            return;
         }
     }
 

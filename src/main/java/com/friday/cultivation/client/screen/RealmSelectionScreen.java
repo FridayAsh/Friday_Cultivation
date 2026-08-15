@@ -36,13 +36,14 @@ public class RealmSelectionScreen extends Screen {
 
     // 新增：统一用色
     private static final int CHIP_BG = -12635095;
-    private static final int CHIP_HOVER_BG = -11385542;
+    private static final int CHIP_HOVER_BG = JADE;
     private static final int POPUP_BG = -14739438;
     private static final int TEXT_LIGHT = -5720;
     private static final int TEXT_MUTED = -726312;
     private static final int TEXT_HINT = -3888992;
     private static final int SHADOW = 0x55000000;
     private static final int HIGHLIGHT = 0x33FFFFFF;
+    private static final int TITLE_HIGHLIGHT = 0xFFD65A5A;
 
     private final List<Realm> realms;
     private Realm selectedRealm;
@@ -62,6 +63,13 @@ public class RealmSelectionScreen extends Screen {
     private int subChipW;
     private int subChipH;
     private final List<int[]> dropdownOptionRects = new ArrayList<>();
+
+    // 按钮引用，用于主按钮描边高亮
+    private Button confirmButton;
+    private Button cancelButton;
+
+    // 当前渲染动画时间（tickCount + partialTick）
+    private float animTime;
 
     public RealmSelectionScreen() {
         super(Component.translatable("screen.friday_cultivation.realm_selector.title"));
@@ -136,10 +144,10 @@ public class RealmSelectionScreen extends Screen {
         this.panelTop = (this.height - PANEL_H) / 2;
         int cx = this.width / 2;
 
-        // 下拉器尺寸：略高、更舒展
+        // 下拉器尺寸：玉简高度，给箭头与装饰留空间
         int chipY = this.panelTop + 64;
         int chipW = 136;
-        int chipH = 18;
+        int chipH = 20;
         this.realmChipX = cx - 140;
         this.realmChipY = chipY;
         this.realmChipW = chipW;
@@ -150,12 +158,14 @@ public class RealmSelectionScreen extends Screen {
         this.subChipH = chipH;
 
         int bottomY = this.panelTop + PANEL_H - 28;
-        this.addRenderableWidget(new CinnabarButton(cx - 140, bottomY, 136, 18,
+        this.confirmButton = new CinnabarButton(cx - 140, bottomY, 136, 18,
                 Component.translatable("screen.friday_cultivation.realm_selector.confirm"),
-                b -> this.confirm()));
-        this.addRenderableWidget(new CinnabarButton(cx + 4, bottomY, 136, 18,
+                b -> this.confirm());
+        this.cancelButton = new CinnabarButton(cx + 4, bottomY, 136, 18,
                 Component.translatable("screen.friday_cultivation.realm_selector.cancel"),
-                b -> Minecraft.getInstance().setScreen(null)));
+                b -> Minecraft.getInstance().setScreen(null));
+        this.addRenderableWidget(this.confirmButton);
+        this.addRenderableWidget(this.cancelButton);
     }
 
     private int chipTextWidth(Component c) {
@@ -170,21 +180,56 @@ public class RealmSelectionScreen extends Screen {
         gfx.pose().popPose();
     }
 
-    private void drawPanelDecorations(GuiGraphics gfx, int cx, int bottomY) {
-        // 标题下方装饰线（金线+墨晕）
-        int lineY = this.panelTop + 30;
-        gfx.fill(this.panelLeft + 40, lineY, this.panelLeft + 280, lineY + 1, GOLD);
+    private void drawScaledShadowed(GuiGraphics gfx, Component text, int x, int y, int color, float scale) {
+        gfx.pose().pushPose();
+        gfx.pose().translate(x, y, 0.0f);
+        gfx.pose().scale(scale, scale, 1.0f);
+        gfx.drawString(this.font, text, 0, 0, color, true);
+        gfx.pose().popPose();
+    }
+
+    /**
+     * 呼吸 alpha：把 rgb 的 alpha 通道按正弦波动，用于装饰线、选中标、主按钮框。
+     */
+    private int pulseColor(int rgb, float speed, float minA, float maxA) {
+        float t = (float) Math.sin(this.animTime * speed);
+        int a = (int) (minA + (maxA - minA) * (t * 0.5f + 0.5f));
+        if (a < 0) a = 0;
+        if (a > 255) a = 255;
+        return (a << 24) | (rgb & 0xFFFFFF);
+    }
+
+    private void drawTitleHeader(GuiGraphics gfx) {
+        int x1 = this.panelLeft + 8;
+        int y1 = this.panelTop + 8;
+        int x2 = this.panelLeft + PANEL_W - 8;
+        int y2 = this.panelTop + 32;
+
+        // 外框
+        gfx.fill(x1 - 1, y1 - 1, x2 + 1, y2 + 1, INK_BLACK);
+        // 朱砂底
+        gfx.fill(x1, y1, x2, y2, VERMILLION);
+        // 顶部呼吸高光
+        gfx.fill(x1, y1, x2, y1 + 2, pulseColor(TITLE_HIGHLIGHT, 0.12f, 100, 200));
+        // 底部暗化阴影带，制造微立体感
+        gfx.fill(x1, y2 - 4, x2, y2, 0x44000000);
+
+        // 标题下金线（带呼吸）
+        int lineY = this.panelTop + 31;
+        int goldPulse = pulseColor(GOLD, 0.10f, 120, 230);
+        gfx.fill(this.panelLeft + 40, lineY, this.panelLeft + 280, lineY + 1, goldPulse);
         gfx.fill(this.panelLeft + 40, lineY + 1, this.panelLeft + 280, lineY + 2, INK_SOFT);
         // 线端小印
-        gfx.fill(this.panelLeft + 36, lineY - 1, this.panelLeft + 39, lineY + 2, GOLD);
-        gfx.fill(this.panelLeft + 281, lineY - 1, this.panelLeft + 284, lineY + 2, GOLD);
+        gfx.fill(this.panelLeft + 36, lineY - 1, this.panelLeft + 39, lineY + 2, goldPulse);
+        gfx.fill(this.panelLeft + 281, lineY - 1, this.panelLeft + 284, lineY + 2, goldPulse);
+    }
 
+    private void drawPanelDecorations(GuiGraphics gfx, int cx, int bottomY) {
         // 按钮上方 subtle 分隔
         int botLineY = bottomY - 10;
         gfx.fill(this.panelLeft + 56, botLineY, this.panelLeft + 264, botLineY + 1, INK_SOFT);
 
         // 四角回纹角标
-        int offset = 6;
         int len = 8;
         // 左上
         gfx.fill(this.panelLeft + 4, this.panelTop + 4, this.panelLeft + 4 + len, this.panelTop + 5, BORDER_LIGHT);
@@ -200,32 +245,46 @@ public class RealmSelectionScreen extends Screen {
         gfx.fill(this.panelLeft + 315, this.panelTop + 196 - len, this.panelLeft + 316, this.panelTop + 196, BORDER_LIGHT);
     }
 
+    private void drawDropdownArrow(GuiGraphics gfx, int x, int y, int color) {
+        // 精致的 5x3 下三角箭头
+        gfx.fill(x, y, x + 5, y + 1, color);
+        gfx.fill(x + 1, y + 1, x + 4, y + 2, color);
+        gfx.fill(x + 2, y + 2, x + 3, y + 3, color);
+    }
+
     private void drawDropdownChip(GuiGraphics gfx, int x, int y, int w, int h, Component currentValue, boolean open, int mouseX, int mouseY) {
         boolean hover = mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
         int bg = open ? VERMILLION : (hover ? CHIP_HOVER_BG : CHIP_BG);
+        int edgeColor = open ? 0x66FFD700 : (hover ? 0x55FFFFFF : 0x33000000);
 
         // 外框
         gfx.fill(x, y, x + w, y + h, INK_BLACK);
-        // 底色
+        // 主底色
         gfx.fill(x + 1, y + 1, x + w - 1, y + h - 1, bg);
+        // 左右玉简卷边
+        gfx.fill(x + 2, y + 2, x + 4, y + h - 2, edgeColor);
+        gfx.fill(x + w - 4, y + 2, x + w - 2, y + h - 2, edgeColor);
+        // 中央微亮带
+        gfx.fill(x + 5, y + 3, x + w - 5, y + h - 3, open ? 0x55FFFFFF : 0x11FFFFFF);
         // 顶部高光
         gfx.fill(x + 1, y + 1, x + w - 1, y + 2, HIGHLIGHT);
         // 底部阴影
         gfx.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, SHADOW);
-        // 展开时左侧金线点缀
+        // 展开时左侧金色呼吸标线
         if (open) {
-            gfx.fill(x, y + 2, x + 2, y + h - 2, GOLD);
+            gfx.fill(x, y + 2, x + 3, y + h - 2, pulseColor(GOLD, 0.15f, 160, 255));
         }
 
-        String arrow = " \u25be";
+        // 文字居中对齐，右侧预留箭头区域
+        int arrowMargin = 14;
         int vw = this.chipTextWidth(currentValue);
-        int aw = (int) Math.ceil(this.font.width(arrow) * 0.72f);
-        int totalW = vw + aw;
-        int textX = x + (w - totalW) / 2;
+        int textX = x + (w - arrowMargin - vw) / 2;
         int textY = y + (h - 7) / 2;
-        int valueColor = open ? GOLD : (hover ? TEXT_LIGHT : TEXT_MUTED);
-        this.drawScaled(gfx, currentValue, textX, textY, valueColor, 0.72f);
-        this.drawScaled(gfx, Component.literal(arrow), textX + vw, textY, valueColor, 0.72f);
+        int textColor = open ? GOLD : (hover ? TEXT_LIGHT : TEXT_MUTED);
+        this.drawScaled(gfx, currentValue, textX, textY, textColor, 0.72f);
+
+        int arrowColor = open ? pulseColor(GOLD, 0.15f, 180, 255) : (hover ? TEXT_LIGHT : TEXT_MUTED);
+        this.drawDropdownArrow(gfx, x + w - 11, y + (h - 5) / 2, arrowColor);
     }
 
     private void renderOpenDropdown(GuiGraphics gfx, int mouseX, int mouseY) {
@@ -263,7 +322,7 @@ public class RealmSelectionScreen extends Screen {
         }
         int popupW = Math.max(anchorX2 - anchorX1, maxW + 16);
         int optionH = 13;
-        int popupH = options.size() * optionH + 4; // 上下各 2px 内边距
+        int popupH = options.size() * optionH + 4;
         int popupX = anchorX1;
         int popupY = anchorY2 + 3;
         if (popupY + popupH > this.height - 4) {
@@ -287,7 +346,8 @@ public class RealmSelectionScreen extends Screen {
             int bg = hover ? VERMILLION : (selected ? CHIP_HOVER_BG : POPUP_BG);
             gfx.fill(popupX, oy, popupX + popupW, oy + optionH, bg);
             if (selected) {
-                gfx.fill(popupX + 1, oy, popupX + 3, oy + optionH, GOLD);
+                // 金色呼吸左标
+                gfx.fill(popupX + 1, oy, popupX + 3, oy + optionH, pulseColor(GOLD, 0.18f, 150, 255));
             }
             int textColor = hover || selected ? TEXT_LIGHT : TEXT_MUTED;
             int tw = this.chipTextWidth(opt);
@@ -304,9 +364,41 @@ public class RealmSelectionScreen extends Screen {
         gfx.pose().popPose();
     }
 
+    /**
+     * 给主按钮（确认）加一层金色呼吸外框，使其在视觉上强于取消按钮。
+     */
+    private void drawPrimaryButtonFrame(GuiGraphics gfx, Button btn) {
+        if (btn == null) return;
+        int x = btn.getX();
+        int y = btn.getY();
+        int w = btn.getWidth();
+        int h = btn.getHeight();
+        int pad = 2;
+        int gold = pulseColor(GOLD, 0.12f, 140, 240);
+
+        gfx.pose().pushPose();
+        gfx.pose().translate(0.0f, 0.0f, 10.0f);
+
+        // 外阴影底
+        gfx.fill(x - pad - 1, y - pad - 1, x + w + pad + 1, y + h + pad + 1, INK_BLACK);
+        // 金色框
+        gfx.fill(x - pad, y - pad, x + w + pad, y - pad + 1, gold);
+        gfx.fill(x - pad, y + h + pad - 1, x + w + pad, y + h + pad, gold);
+        gfx.fill(x - pad, y - pad, x - pad + 1, y + h + pad, gold);
+        gfx.fill(x + w + pad - 1, y - pad, x + w + pad, y + h + pad, gold);
+        // 四角小印
+        gfx.fill(x - pad - 1, y - pad - 1, x - pad + 2, y - pad + 2, gold);
+        gfx.fill(x + w + pad - 2, y - pad - 1, x + w + pad + 1, y - pad + 2, gold);
+        gfx.fill(x - pad - 1, y + h + pad - 2, x - pad + 2, y + h + pad + 1, gold);
+        gfx.fill(x + w + pad - 2, y + h + pad - 2, x + w + pad + 1, y + h + pad + 1, gold);
+
+        gfx.pose().popPose();
+    }
+
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partial) {
         this.renderBackground(gfx);
+        this.animTime = (Minecraft.getInstance().level != null ? Minecraft.getInstance().level.getGameTime() : 0) + partial;
         int cx = this.width / 2;
         int bottomY = this.panelTop + PANEL_H - 28;
 
@@ -321,16 +413,14 @@ public class RealmSelectionScreen extends Screen {
         gfx.fill(this.panelLeft, this.panelTop, this.panelLeft + 1, this.panelTop + PANEL_H, BORDER_LIGHT);
         gfx.fill(this.panelLeft + PANEL_W - 1, this.panelTop, this.panelLeft + PANEL_W, this.panelTop + PANEL_H, BORDER_LIGHT);
 
-        // 标题区暗化背景
-        gfx.fill(this.panelLeft + 8, this.panelTop + 8, this.panelLeft + PANEL_W - 8, this.panelTop + 32, 0x22000000);
-
+        this.drawTitleHeader(gfx);
         this.drawPanelDecorations(gfx, cx, bottomY);
 
-        // 标题：居中、0.85 缩放、金色
+        // 标题：带投影的金色大字
         int titleW = (int) (this.font.width(this.title) * 0.85f);
-        this.drawScaled(gfx, this.title, cx - titleW / 2, this.panelTop + 14, GOLD, 0.85f);
+        this.drawScaledShadowed(gfx, this.title, cx - titleW / 2, this.panelTop + 13, GOLD, 0.85f);
 
-        // 提示：0.72 缩放、更清晰
+        // 提示
         Component hint = Component.translatable("screen.friday_cultivation.realm_selector.hint");
         int hintW = this.chipTextWidth(hint);
         this.drawScaled(gfx, hint, cx - hintW / 2, this.panelTop + 36, TEXT_HINT, 0.72f);
@@ -344,9 +434,13 @@ public class RealmSelectionScreen extends Screen {
         }
 
         this.renderOpenDropdown(gfx, mouseX, mouseY);
-        RenderSystem.disableBlend();
 
         super.render(gfx, mouseX, mouseY, partial);
+
+        // 在按钮绘制完成后再给确认按钮加主按钮高亮框
+        this.drawPrimaryButtonFrame(gfx, this.confirmButton);
+
+        RenderSystem.disableBlend();
     }
 
     @Override
