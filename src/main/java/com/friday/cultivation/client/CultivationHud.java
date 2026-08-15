@@ -207,21 +207,26 @@ public class CultivationHud {
 
     /**
      * 统一贴图条渲染：整张贴图等比缩放，上半/下半分别 tint。
+     * 注意：必须用 11 参 blit（目标尺寸与采样尺寸分离）——
+     * 9 参 blit 的采样尺寸 = 目标尺寸，当目标宽 ≠ 贴图宽时
+     * 会采样超界回绕（多出一角）或采样不足（缺角）。
      */
     private static void renderTextureBar(GuiGraphics graphics, Minecraft mc, int x, int y, int width, int height, double ratio, ResourceLocation emptyTex, ResourceLocation fillTex, int texW, int texH, int topColor, int bottomColor, Component text, int textColor) {
-        // 底条：整张贴图等比缩放到目标宽高
+        // 底条：整张贴图（texW x texH）等比缩放到目标宽高
         graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-        graphics.blit(emptyTex, x, y, 0.0f, 0.0f, width, height, texW, texH);
+        graphics.blit(emptyTex, x, y, width, height, 0.0f, 0.0f, texW, texH, texW, texH);
 
         int targetW = (int)((double)width * ratio);
         if (targetW > 0) {
-            int halfH = height / 2;
-            // 上半：colorTop tint
+            int halfH = Math.max(1, height / 2);
+            int topH = halfH;
+            int botH = height - halfH;
+            // 上半：colorTop tint，采样贴图上半（v 0..halfH），整宽 texW 等比缩放到 targetW
             setBarColor(graphics, topColor);
-            graphics.blit(fillTex, x, y, 0.0f, 0.0f, targetW, halfH, texW, texH);
-            // 下半：colorBot tint（从贴图下半采样）
+            graphics.blit(fillTex, x, y, targetW, topH, 0.0f, 0.0f, texW, halfH, texW, texH);
+            // 下半：colorBot tint，采样贴图下半（v halfH..texH）
             setBarColor(graphics, bottomColor);
-            graphics.blit(fillTex, x, y + halfH, 0.0f, halfH, targetW, height - halfH, texW, texH);
+            graphics.blit(fillTex, x, y + topH, targetW, botH, 0.0f, (float)halfH, texW, texH - halfH, texW, texH);
             graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
         }
 
