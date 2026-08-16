@@ -41,7 +41,26 @@ public final class ZhenyuanBonusHelper {
         if (d == null) {
             return 0.0;
         }
-        return (double)d.getAttrConstitution() * 1.0;
+        // 每点真元体质 +10 生命值
+        return (double)d.getAttrConstitution() * 10.0;
+    }
+
+    /** 每点真元体质 +8 盔甲值 */
+    public static double constitutionArmorBonus(Player player) {
+        CultivationData d = ZhenyuanBonusHelper.dataOf(player);
+        if (d == null) {
+            return 0.0;
+        }
+        return (double)d.getAttrConstitution() * 8.0;
+    }
+
+    /** 每点真元体质 +3 韧性 */
+    public static double constitutionToughnessBonus(Player player) {
+        CultivationData d = ZhenyuanBonusHelper.dataOf(player);
+        if (d == null) {
+            return 0.0;
+        }
+        return (double)d.getAttrConstitution() * 3.0;
     }
 
     public static int physiqueAttackBonus(Player player) {

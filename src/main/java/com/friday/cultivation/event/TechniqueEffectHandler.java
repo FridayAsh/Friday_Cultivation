@@ -104,11 +104,15 @@ public final class TechniqueEffectHandler {
     private static final UUID UUID_KB_RESIST = UUID.nameUUIDFromBytes("xiaoxiang.tech.kbResist".getBytes());
     private static final UUID UUID_SPIRIT_HP = UUID.nameUUIDFromBytes("xiaoxiang.spiritroot.hp".getBytes());
     private static final UUID UUID_ZHENYUAN_HP = UUID.nameUUIDFromBytes("xiaoxiang.zhenyuan.hp".getBytes());
+    private static final UUID UUID_ZHENYUAN_ARMOR = UUID.nameUUIDFromBytes("xiaoxiang.zhenyuan.armor".getBytes());
+    private static final UUID UUID_ZHENYUAN_TOUGHNESS = UUID.nameUUIDFromBytes("xiaoxiang.zhenyuan.toughness".getBytes());
     private static final UUID UUID_ZHENYUAN_SPEED = UUID.nameUUIDFromBytes("xiaoxiang.zhenyuan.speed".getBytes());
     private static final UUID UUID_FOUNDATION_HP = UUID.nameUUIDFromBytes("xiaoxiang.foundation.hp".getBytes());
     private static final UUID UUID_GOLDEN_CORE_HP = UUID.nameUUIDFromBytes("xiaoxiang.goldenCore.hp".getBytes());
     private static final UUID UUID_LOOSE_IMMORTAL_HP = UUID.nameUUIDFromBytes("xiaoxiang.looseImmortal.hp".getBytes());
     private static final UUID UUID_BODY_TEMPERING_HP = UUID.nameUUIDFromBytes("xiaoxiang.bodyTempering.hp".getBytes());
+    /** 全局生命倍率（×4，含所有加成）：境界标准生命整体放大 */
+    private static final UUID UUID_REALM_HP_MULT = UUID.nameUUIDFromBytes("xiaoxiang.realm.hpMult".getBytes());
 
     private TechniqueEffectHandler() {
     }
@@ -139,6 +143,11 @@ public final class TechniqueEffectHandler {
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_SPIRIT_HP, "xiaoxiang_spirit_hp", spiritHp, AttributeModifier.Operation.ADDITION);
         double zhenyuanHp = ZhenyuanBonusHelper.constitutionHpBonus((Player)sp);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_ZHENYUAN_HP, "xiaoxiang_zhenyuan_hp", zhenyuanHp, AttributeModifier.Operation.ADDITION);
+        // 真元体质加成：每点 +8 盔甲、+3 韧性
+        double zhenyuanArmor = ZhenyuanBonusHelper.constitutionArmorBonus((Player)sp);
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.ARMOR, UUID_ZHENYUAN_ARMOR, "xiaoxiang_zhenyuan_armor", zhenyuanArmor, AttributeModifier.Operation.ADDITION);
+        double zhenyuanToughness = ZhenyuanBonusHelper.constitutionToughnessBonus((Player)sp);
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.ARMOR_TOUGHNESS, UUID_ZHENYUAN_TOUGHNESS, "xiaoxiang_zhenyuan_toughness", zhenyuanToughness, AttributeModifier.Operation.ADDITION);
         double foundationHp = FoundationDaoBonusHelper.maxHpMultiplyTotal((Player)sp);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_FOUNDATION_HP, "xiaoxiang_foundation_hp", foundationHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
         double goldenCoreHp = GoldenCoreDaoBonusHelper.maxHpMultiplyTotal((Player)sp);
@@ -147,6 +156,8 @@ public final class TechniqueEffectHandler {
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_LOOSE_IMMORTAL_HP, "xiaoxiang_loose_immortal_hp", looseImmortalHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
         double bodyTemperingHp = TechniqueEffectHandler.bodyTemperingHpBonus(sp, data);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BODY_TEMPERING_HP, "xiaoxiang_body_tempering_hp", bodyTemperingHp, AttributeModifier.Operation.ADDITION);
+        // 全局生命倍率 ×4（含所有加成，最终数值放大）
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_REALM_HP_MULT, "xiaoxiang_realm_hp_mult", 3.0, AttributeModifier.Operation.MULTIPLY_TOTAL);
         double zhenyuanSpeed = movementBonusEnabled ? ZhenyuanBonusHelper.agilityMoveSpeedMult((Player)sp) : 0.0;
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MOVEMENT_SPEED, UUID_ZHENYUAN_SPEED, "xiaoxiang_zhenyuan_speed", zhenyuanSpeed, AttributeModifier.Operation.MULTIPLY_BASE);
         TechniqueEffectHandler.syncInfiniteEffect(sp, MobEffects.NIGHT_VISION, bonus.nightVision);
@@ -299,6 +310,11 @@ public final class TechniqueEffectHandler {
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_SPIRIT_HP, "xiaoxiang_spirit_hp", spiritHp, AttributeModifier.Operation.ADDITION);
         double zhenyuanHp = ZhenyuanBonusHelper.constitutionHpBonus((Player)sp);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_ZHENYUAN_HP, "xiaoxiang_zhenyuan_hp", zhenyuanHp, AttributeModifier.Operation.ADDITION);
+        // 真元体质加成：每点 +8 盔甲、+3 韧性
+        double zhenyuanArmor = ZhenyuanBonusHelper.constitutionArmorBonus((Player)sp);
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.ARMOR, UUID_ZHENYUAN_ARMOR, "xiaoxiang_zhenyuan_armor", zhenyuanArmor, AttributeModifier.Operation.ADDITION);
+        double zhenyuanToughness = ZhenyuanBonusHelper.constitutionToughnessBonus((Player)sp);
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.ARMOR_TOUGHNESS, UUID_ZHENYUAN_TOUGHNESS, "xiaoxiang_zhenyuan_toughness", zhenyuanToughness, AttributeModifier.Operation.ADDITION);
         double foundationHp = FoundationDaoBonusHelper.maxHpMultiplyTotal((Player)sp);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_FOUNDATION_HP, "xiaoxiang_foundation_hp", foundationHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
         double goldenCoreHp = GoldenCoreDaoBonusHelper.maxHpMultiplyTotal((Player)sp);
@@ -307,6 +323,8 @@ public final class TechniqueEffectHandler {
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_LOOSE_IMMORTAL_HP, "xiaoxiang_loose_immortal_hp", looseImmortalHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
         double bodyTemperingHp = TechniqueEffectHandler.bodyTemperingHpBonus(sp, data);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BODY_TEMPERING_HP, "xiaoxiang_body_tempering_hp", bodyTemperingHp, AttributeModifier.Operation.ADDITION);
+        // 全局生命倍率 ×4（含所有加成，最终数值放大）
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_REALM_HP_MULT, "xiaoxiang_realm_hp_mult", 3.0, AttributeModifier.Operation.MULTIPLY_TOTAL);
         // clamp 当前生命值到新上限
         if (sp.getHealth() > sp.getMaxHealth()) {
             sp.setHealth(sp.getMaxHealth());
@@ -347,7 +365,20 @@ public final class TechniqueEffectHandler {
         } else {
             effective = stored;
         }
-        return (double)effective * 10.0;
+        // 锻体阶梯生命：1-3层 +10，4-6层 +20，7-9层 +30，10层 +100
+        if (effective <= 0) {
+            return 0.0;
+        }
+        if (effective >= 10) {
+            return 100.0;
+        }
+        if (effective >= 7) {
+            return 30.0;
+        }
+        if (effective >= 4) {
+            return 20.0;
+        }
+        return 10.0;
     }
 
     private static void applyAttributeModifier(Player p, Attribute attr, UUID uuid, String name, double value, AttributeModifier.Operation op) {

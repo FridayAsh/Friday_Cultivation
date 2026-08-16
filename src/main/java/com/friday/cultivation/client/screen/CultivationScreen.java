@@ -1160,6 +1160,13 @@ extends Screen {
         long maxCult = data.getMaxCultivation();
         this.drawThinBar(gfx, x + 4, y, width - 8, maxCult == 0L ? 0.0f : (float)curCult / (float)maxCult, Component.translatable((String)"screen.friday_cultivation.cult_short").getString(), curCult + " / " + maxCult, -928374, -3631046);
         y += 13;
+
+        long maxWudao = data.getWuDaoMax();
+        if (maxWudao > 0L) {
+            long curWudao = data.getWuDaoProgress();
+            this.drawLeftStatusBar(gfx, ICON_WUDAO, x + 4, y, width - 8, (float)curWudao / (float)maxWudao, Component.translatable((String)"screen.friday_cultivation.wudao_short"), curWudao + " / " + maxWudao, -8355712, -10592674);
+            y += 13;
+        }
         int boneAge = LifespanHelper.displayBoneAge(data);
         boolean hasBloodTalisman = this.hasBloodTransformationTalisman(player);
         if (realm == Realm.BODY_TEMPERING) {

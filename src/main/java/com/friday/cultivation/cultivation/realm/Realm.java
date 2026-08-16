@@ -176,43 +176,43 @@ public enum Realm {
 
     public int maxQi(SubStage subStage) {
         if (this == MORTAL) {
-            return 100;
+            return 100 * 2;
         }
         if (this == BODY_TEMPERING) {
-            return 100;
+            return 100 * 2;
         }
         if (this == QI_REFINING) {
             int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
-            return 100 * lvl;
+            return 100 * lvl * 2;
         }
         if (this == GOLDEN_CORE) {
             int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
-            return 2200 + 1000 + (lvl - 1) * 100;
+            return (2200 + 1000 + (lvl - 1) * 100) * 2;
         }
         if (this == BODY_INTEGRATION) {
             int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
-            return 7400 + 1000 + (lvl - 1) * 100;
+            return (7400 + 1000 + (lvl - 1) * 100) * 2;
         }
         if (this == TRUE_IMMORTAL) {
             int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
-            return 19000 + lvl * 200;
+            return (19000 + lvl * 200) * 2;
         }
         if (this == HALF_SAGE) {
-            return 22000;
+            return 22000 * 2;
         }
         if (this == SAGE) {
             int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
-            return 22500 + lvl * 300;
+            return (22500 + lvl * 300) * 2;
         }
         if (this == HALF_EMPEROR) {
-            return 25000;
+            return 25000 * 2;
         }
         if (this == GREAT_EMPEROR) {
             int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
-            return 26000 + lvl * 300;
+            return (26000 + lvl * 300) * 2;
         }
         if (this == LOOSE_IMMORTAL) {
-            return 18000;
+            return 18000 * 2;
         }
         int prevPeak = Realm.MAX_QI_PREV_PEAK.getOrDefault(this, 500);
         int delta = 1000;
@@ -227,7 +227,7 @@ public enum Realm {
                 delta = 1300;
             }
         }
-        return prevPeak + delta;
+        return (prevPeak + delta) * 2;
     }
 
     public int baseLifespan() {
