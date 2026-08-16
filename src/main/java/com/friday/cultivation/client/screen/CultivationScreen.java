@@ -700,14 +700,18 @@ extends Screen {
         float maxHp = player.getMaxHealth();
         int statusBarW = half - 24;
         this.drawLeftStatusBar(gfx, ICON_HP, contentX, infoY += rowH + 3, statusBarW, maxHp <= 0.0f ? 0.0f : hp / maxHp, (Component)Component.translatable((String)"screen.friday_cultivation.hp_short"), String.format("%.0f / %.0f", Float.valueOf(hp), Float.valueOf(maxHp)), -1944235, -5758944);
+        // 第九帝界（大帝巅峰）后无下一境界：隐藏修为条与悟道条，其余条上移
+        boolean peakGreatEmperor = data.getRealm() == Realm.GREAT_EMPEROR && data.getSubStage().isPeakFor(Realm.GREAT_EMPEROR);
         long curCult = data.getCultivationProgress();
         long maxCult = data.getMaxCultivation();
-        this.drawLeftStatusBar(gfx, ICON_CULTIVATION, contentX, infoY += 11, statusBarW, maxCult == 0L ? 0.0f : (float)curCult / (float)maxCult, (Component)Component.translatable((String)"screen.friday_cultivation.cult_short"), curCult + " / " + maxCult, -928374, -3631046);
+        if (!peakGreatEmperor) {
+            this.drawLeftStatusBar(gfx, ICON_CULTIVATION, contentX, infoY += 11, statusBarW, maxCult == 0L ? 0.0f : (float)curCult / (float)maxCult, (Component)Component.translatable((String)"screen.friday_cultivation.cult_short"), curCult + " / " + maxCult, -928374, -3631046);
+        }
         long curQi = data.getCurrentQi();
         long maxQi = data.getMaxQi();
         this.drawLeftStatusBar(gfx, ICON_QI, contentX, infoY += 11, statusBarW, maxQi == 0L ? 0.0f : (float)curQi / (float)maxQi, (Component)Component.translatable((String)"screen.friday_cultivation.qi_short"), curQi + " / " + maxQi, -9583434, -13729678);
-        // 悟道条（半圣/圣人/半帝/大帝专用）：位于灵气条下方，灰色图标与灰色渐变
-        if (data.getWuDaoMax() > 0L) {
+        // 悟道条（半圣/圣人/半帝/大帝专用）：位于灵气条下方，灰色图标与灰色渐变；第九帝界后隐藏
+        if (data.getWuDaoMax() > 0L && !peakGreatEmperor) {
             long curWudao = data.getWuDaoProgress();
             long maxWudao = data.getWuDaoMax();
             this.drawLeftStatusBar(gfx, ICON_WUDAO, contentX, infoY += 11, statusBarW, maxWudao == 0L ? 0.0f : (float)curWudao / (float)maxWudao, (Component)Component.translatable((String)"screen.friday_cultivation.wudao_short"), curWudao + " / " + maxWudao, -8355712, -10592674);

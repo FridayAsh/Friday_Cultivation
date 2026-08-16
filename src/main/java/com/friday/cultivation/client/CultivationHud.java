@@ -108,9 +108,9 @@ public class CultivationHud {
             return;
         }
         boolean soul = data.isSoulState();
-        // 第九帝界（大帝巅峰）后没有下一个境界：隐藏修为条与悟道条
+        // 第九帝界（大帝巅峰）后没有下一个境界：仅隐藏修为条与悟道条，灵气条保留
         boolean peakGreatEmperor = data.getRealm() == Realm.GREAT_EMPEROR && data.getSubStage().isPeakFor(Realm.GREAT_EMPEROR);
-        boolean showCultivationBars = (data.hasEquippedTechnique() || data.getRealm() != Realm.MORTAL) && !peakGreatEmperor;
+        boolean showCultivationBars = data.hasEquippedTechnique() || data.getRealm() != Realm.MORTAL;
         int x = CultivationHud.hudX(screenWidth);
         int y = HUD_Y;
 
@@ -158,23 +158,25 @@ public class CultivationHud {
         }
 
         if (showCultivationBars) {
-            // 修为条
-            long curCult = data.getCultivationProgress();
-            long maxCult = data.getMaxCultivation();
-            Component cultText = Component.translatable("hud.friday_cultivation.cultivation", curCult, maxCult);
-            renderValueBar(graphics, mc, textBaseX, barY, CULT_WIDTH, BAR_HEIGHT, curCult, maxCult, CULT_TOP, CULT_BOTTOM, CULT_TOP, cultText);
-            barY += 8;
+            // 修为条（第九帝界后无下一境界，隐藏）
+            if (!peakGreatEmperor) {
+                long curCult = data.getCultivationProgress();
+                long maxCult = data.getMaxCultivation();
+                Component cultText = Component.translatable("hud.friday_cultivation.cultivation", curCult, maxCult);
+                renderValueBar(graphics, mc, textBaseX, barY, CULT_WIDTH, BAR_HEIGHT, curCult, maxCult, CULT_TOP, CULT_BOTTOM, CULT_TOP, cultText);
+                barY += 8;
+            }
 
-            // 灵气条
+            // 灵气条（始终显示）
             long curQi = data.getCurrentQi();
             long maxQi = data.getMaxQi();
             Component qiText = Component.translatable("hud.friday_cultivation.qi", curQi, maxQi);
             renderValueBar(graphics, mc, textBaseX, barY, QI_WIDTH, BAR_HEIGHT, curQi, maxQi, QI_TOP, QI_BOTTOM, QI_TOP, qiText);
             barY += 8;
 
-            // 悟道条（仅 getWuDaoMax() > 0）
+            // 悟道条（仅 getWuDaoMax() > 0；第九帝界后隐藏）
             long maxWudao = data.getWuDaoMax();
-            if (maxWudao > 0L) {
+            if (maxWudao > 0L && !peakGreatEmperor) {
                 long curWudao = data.getWuDaoProgress();
                 Component wudaoText = Component.translatable("hud.friday_cultivation.wudao", curWudao, maxWudao);
                 renderValueBar(graphics, mc, textBaseX, barY, WUDAO_WIDTH, BAR_HEIGHT, curWudao, maxWudao, WUDAO_TOP, WUDAO_BOTTOM, WUDAO_TOP, wudaoText);
