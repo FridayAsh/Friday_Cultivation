@@ -260,26 +260,13 @@ public class CultivationHud {
             int halfH = Math.max(1, height / 2);
             int topH = halfH;
             int botH = height - halfH;
-            if (targetW < texW) {
-                // 小进度：9 参 blit 1:1 像素采样贴图（跳过左端透明圆角列 LEFT_PAD，
-                // 否则低进度时会把透明列原样采入导致开头少渲染几个像素）
-                int srcU = LEFT_PAD;
-                int drawW = Math.min(targetW, texW - srcU);
-                if (drawW > 0) {
-                    setBarColor(graphics, topColor);
-                    graphics.blit(fillTex, x, y, (float)srcU, 0.0f, drawW, topH, texW, texH);
-                    setBarColor(graphics, bottomColor);
-                    graphics.blit(fillTex, x, y + topH, (float)srcU, (float)halfH, drawW, botH, texW, texH);
-                    graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-                }
-            } else {
-                // 大进度：11 参 blit 整图等比缩放
-                setBarColor(graphics, topColor);
-                graphics.blit(fillTex, x, y, targetW, topH, 0.0f, 0.0f, texW, halfH, texW, texH);
-                setBarColor(graphics, bottomColor);
-                graphics.blit(fillTex, x, y + topH, targetW, botH, 0.0f, (float)halfH, texW, texH - halfH, texW, texH);
-                graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-            }
+            // 统一 11 参 blit 整图等比缩放（含两端圆角），与生命条一致——
+            // 修为/灵气/悟道条宽度虽小于贴图宽，也必须等比缩放，端角完整
+            setBarColor(graphics, topColor);
+            graphics.blit(fillTex, x, y, targetW, topH, 0.0f, 0.0f, texW, halfH, texW, texH);
+            setBarColor(graphics, bottomColor);
+            graphics.blit(fillTex, x, y + topH, targetW, botH, 0.0f, (float)halfH, texW, texH - halfH, texW, texH);
+            graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
         }
 
         if (text != null) {
@@ -340,8 +327,9 @@ public class CultivationHud {
 
     private static void drawCenteredScaled(GuiGraphics graphics, Minecraft mc, Component text, int x, int y, int width, float scale, int color, boolean shadow) {
         int textWidth = mc.font.width((FormattedText)text);
-        float actualScale = textWidth <= 0 ? scale : Math.min(scale, Math.max(0.62f, (float)width / (float)textWidth));
-        int drawX = x + (width - (int)((float)textWidth * actualScale)) / 2;
+        // 下限 0.45f：长文本可继续缩小以适配宽度，始终在区域内居中（避免 drawX 为负左移）
+        float actualScale = textWidth <= 0 ? scale : Math.min(scale, Math.max(0.45f, (float)width / (float)textWidth));
+        int drawX = x + Math.max(0, (width - (int)((float)textWidth * actualScale)) / 2);
         drawScaled(graphics, mc, text, drawX, y, actualScale, color, shadow);
     }
 
