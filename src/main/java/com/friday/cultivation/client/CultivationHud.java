@@ -69,6 +69,10 @@ public class CultivationHud {
     private static final float ATTR_TEXT_SCALE = 0.6f;
     private static final int ATTR_GROUP_GAP = 4;
     private static final int ATTR_TO_HEALTH_GAP = 6;
+    /** 状态行文本区相对于 HUD 左侧 x 的偏移；0 表示与 HUD 左边缘对齐（头像在 x+4，状态行在其下方，不重叠） */
+    private static final int STATUS_TEXT_LEFT = 0;
+    /** 状态行文本近似高度（缩放后），用于判断是否会与头像下方饱食/氧气横排重叠 */
+    private static final int STATUS_LINE_HEIGHT = 7;
     private static final int FOOD_ICON_U = 52, FOOD_ICON_V = 27;
     private static final int ARMOR_ICON_U = 34, ARMOR_ICON_V = 9;
     private static final int TOUGH_ICON_U = 18, TOUGH_ICON_V = 0;
@@ -194,29 +198,29 @@ public class CultivationHud {
         int statusY = barY + 2;
         int statusW = HUD_WIDTH - 16;
 
-        // 避免状态行与头像下方饱食/氧气重叠
+        // 仅在状态行真的会与头像下方饱食/氧气横排重叠时才下推；否则紧贴最后一条可见属性条
         int avatarAttrBottom = y + 32 + ATTR_ICON_SIZE;
-        if (!player.isCreative() && statusY < avatarAttrBottom + 2) {
+        if (!player.isCreative() && statusY + STATUS_LINE_HEIGHT > avatarAttrBottom) {
             statusY = avatarAttrBottom + 2;
         }
         if (data.canBreakthrough()) {
             MutableComponent bt = Component.translatable("hud.friday_cultivation.breakthrough_ready").withStyle(ChatFormatting.GOLD);
-            drawPlainStatus(graphics, mc, bt, x + 4, statusY, statusW, -11930);
+            drawPlainStatus(graphics, mc, bt, x + STATUS_TEXT_LEFT, statusY, statusW, -11930);
             statusY += 9;
         }
         if (data.isMeditating()) {
             MutableComponent med = Component.translatable("hud.friday_cultivation.meditating").withStyle(ChatFormatting.GREEN);
-            drawPlainStatus(graphics, mc, med, x + 4, statusY, statusW, -7471203, false);
+            drawPlainStatus(graphics, mc, med, x + STATUS_TEXT_LEFT, statusY, statusW, -7471203, false);
             statusY += 9;
         }
         long gameTime;
         if (data.hasActiveInverseFiveElementMark(gameTime = player.level().getGameTime())) {
-            drawInverseFiveElementStatus(graphics, mc, data, gameTime, x + 4, statusY, statusW);
+            drawInverseFiveElementStatus(graphics, mc, data, gameTime, x + STATUS_TEXT_LEFT, statusY, statusW);
             statusY += 10;
         }
         if (data.isInTribulation()) {
             MutableComponent trib = Component.translatable("hud.friday_cultivation.tribulation", Realm.formatTribulationCount(data.getTribulationStrikesRemaining(), data.getTribulationBoltsPerWave())).withStyle(ChatFormatting.RED);
-            drawPlainStatus(graphics, mc, trib, x + 4, statusY, statusW, -35483, false);
+            drawPlainStatus(graphics, mc, trib, x + STATUS_TEXT_LEFT, statusY, statusW, -35483, false);
             statusY += 9;
         }
         if (soul) {
@@ -321,21 +325,21 @@ public class CultivationHud {
 
     private static void renderSoulStatus(GuiGraphics graphics, Minecraft mc, LocalPlayer player, CultivationData data, int x, int statusY, int width) {
         MutableComponent title = Component.translatable("hud.friday_cultivation.soul.title");
-        drawPlainStatus(graphics, mc, title, x + 4, statusY, width, -4724737, true);
+        drawPlainStatus(graphics, mc, title, x + STATUS_TEXT_LEFT, statusY, width, -4724737, true);
         statusY += 9;
         boolean inDifu = player.level().dimension() == ModDimensions.DIFU;
         if (!inDifu) {
             MutableComponent hint = Component.translatable("hud.friday_cultivation.soul.go_difu_hint");
-            drawPlainStatus(graphics, mc, hint, x + 4, statusY, width, -4151578, false);
+            drawPlainStatus(graphics, mc, hint, x + STATUS_TEXT_LEFT, statusY, width, -4151578, false);
         } else if (data.isReincarnationReady()) {
             MutableComponent ready = Component.translatable("hud.friday_cultivation.soul.can_reincarnate");
-            drawPlainStatus(graphics, mc, ready, x + 4, statusY, width, -11930, false);
+            drawPlainStatus(graphics, mc, ready, x + STATUS_TEXT_LEFT, statusY, width, -11930, false);
         } else {
             int remainTicks = Math.max(0, 1200 - data.getDifuTicks());
             int totalSec = (remainTicks + 19) / 20;
             String timeStr = String.format("%d:%02d", totalSec / 60, totalSec % 60);
             MutableComponent cd = Component.translatable("hud.friday_cultivation.soul.countdown", timeStr);
-            drawPlainStatus(graphics, mc, cd, x + 4, statusY, width, -1456016, false);
+            drawPlainStatus(graphics, mc, cd, x + STATUS_TEXT_LEFT, statusY, width, -1456016, false);
         }
     }
 

@@ -6,7 +6,6 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
@@ -61,8 +60,6 @@ public class EntityStatusHudRenderer {
         Player player = mc.player;
         Vec3 cam = event.getCamera().getPosition();
         float partial = event.getPartialTick();
-        float yaw = event.getCamera().getYRot();
-        float pitch = event.getCamera().getXRot();
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -72,7 +69,7 @@ public class EntityStatusHudRenderer {
         AABB box = player.getBoundingBox().inflate(MAX_DISTANCE, MAX_DISTANCE, MAX_DISTANCE);
         for (Entity e : mc.level.getEntities(player, box, EntityStatusHudRenderer::canShowStatus)) {
             LivingEntity living = (LivingEntity) e;
-            renderEntityStatus(event, living, cam, partial, yaw, pitch);
+            renderEntityStatus(event, living, cam, partial);
         }
 
         mc.renderBuffers().bufferSource().endBatch();
@@ -85,15 +82,17 @@ public class EntityStatusHudRenderer {
         return e instanceof LivingEntity && e.isAlive();
     }
 
-    private static void renderEntityStatus(RenderLevelStageEvent event, LivingEntity living, Vec3 cam, float partial, float yaw, float pitch) {
+    private static void renderEntityStatus(RenderLevelStageEvent event, LivingEntity living, Vec3 cam, float partial) {
         PoseStack pose = event.getPoseStack();
         pose.pushPose();
 
         Vec3 pos = living.getPosition(partial).add(0.0, living.getBbHeight() + 0.6, 0.0);
         pose.translate(-cam.x, -cam.y, -cam.z);
         pose.translate(pos.x, pos.y, pos.z);
-        pose.mulPose(Axis.YP.rotationDegrees(yaw));
-        pose.mulPose(Axis.XP.rotationDegrees(-pitch));
+        // 标准 billboard：与实体名牌（EntityRenderer.renderNameTag）相同的相机朝向四元数，
+        // 任何观察角度下平面均正对相机。负缩放（X/Y 双负）仅翻转面朝向，与原版名牌
+        // scale(-0.025F, -0.025F, 0.025F) 一致，不产生贴图/文字镜像，故保持 WORLD_SCALE = -0.025f。
+        pose.mulPose(Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation());
         pose.scale(WORLD_SCALE, WORLD_SCALE, 1.0f);
 
         Matrix4f mat = pose.last().pose();
@@ -102,17 +101,25 @@ public class EntityStatusHudRenderer {
         float maxHp = living.getMaxHealth();
         double ratio = maxHp <= 0.0f ? 0.0 : (double) hp / (double) maxHp;
 
+        // 按体型等比缩放条长（标准玩家宽 0.6f 为基准，clamp 0.5~2.0），高度随缩放微调以容纳条内文本
+        float bodyScale = Math.max(0.5f, Math.min(2.0f, (float) living.getBbWidth() / 0.6f));
+        float barW = BAR_W * bodyScale;
+        float barH = BAR_H * bodyScale;
+
         // 深黑灰背景
-        renderSolidQuad(mat, -BAR_W / 2.0f - 1.0f, -11.0f, BAR_W + 2.0f, BAR_H + 2.0f, BAR_BG);
+        renderSolidQuad(mat, -barW / 2.0f - 1.0f, -11.0f, barW + 2.0f, barH + 2.0f, BAR_BG);
         // 空血条
-        renderTexturedQuad(mat, BLOOD_EMPTY, -BAR_W / 2.0f, -10.0f, BAR_W, BAR_H,
+        renderTexturedQuad(mat, BLOOD_EMPTY, -barW / 2.0f, -10.0f, barW, barH,
                 0.0f, 0.0f, 96.0f, 6.0f, 96, 6, 1.0f, 1.0f, 1.0f);
         // 血条填充
-        float filledW = (float) (BAR_W * ratio);
+        float filledW = (float) (barW * ratio);
         if (filledW > 0.0f) {
-            renderTexturedTintedQuad(mat, BLOOD_FILL, -BAR_W / 2.0f, -10.0f, filledW, BAR_H,
+            renderTexturedTintedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, filledW, barH,
                     0.0f, 0.0f, 96.0f, 6.0f, 96, 6, HEALTH_TOP, HEALTH_BOTTOM);
         }
+
+        // 条内居中显示当前/最大生命值文本
+        renderHealthText(mat, hp, maxHp, barW, barH, bodyScale);
 
         // 盔甲 / 韧性
         int armor = living.getArmorValue();
@@ -124,6 +131,18 @@ public class EntityStatusHudRenderer {
         }
 
         pose.popPose();
+    }
+
+    private static void renderHealthText(Matrix4f mat, float hp, float maxHp, float barW, float barH, float bodyScale) {
+        Minecraft mc = Minecraft.getInstance();
+        Component text = Component.literal(String.format("%.0f/%.0f", hp, maxHp));
+        float textScale = TEXT_SCALE * bodyScale;
+        float textW = mc.font.width(text) * textScale;
+        float textH = mc.font.lineHeight * textScale;
+        float textX = -barW / 2.0f + (barW - textW) / 2.0f;
+        float textY = -10.0f + (barH - textH) / 2.0f;
+        mc.font.drawInBatch(text, textX, textY, 0xFFFFFF, true, mat,
+                mc.renderBuffers().bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
     }
 
     private static void renderArmorToughness(RenderLevelStageEvent event, Matrix4f mat, boolean showArmor, boolean showToughness, int armor, double toughness) {

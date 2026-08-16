@@ -244,7 +244,8 @@ implements INBTSerializable<CompoundTag> {
     }
 
     public long getCurrentQi() {
-        return this.currentQi;
+        // 凡人无灵气：强制为 0，凡人不能施放任何法术/消耗灵气
+        return this.realm == Realm.MORTAL ? 0L : this.currentQi;
     }
 
     public long getMaxQi() {
