@@ -132,12 +132,12 @@ public class EntityStatusHudRenderer {
         float barH = BAR_H * bodyScale;
 
         // 与玩家血条三层结构一致（参考 CultivationHud.renderTextureBar）：
-        // 0) 不透明底色（等效玩家 GUI 的深色底层面板）：保证贴图透明像素不透出背后世界，血条实心
+        // 0) 不透明底色（barW×barH 精确尺寸，不凸出）：保证贴图透明像素背后是深灰实底，血条内部完全不透明
         renderSolidQuad(mat, -barW / 2.0f, -10.0f, barW, barH, BAR_INNER_BG);
         // ① 底条：blood_empty 整张贴图（96x6）等比缩放到目标宽高（白色 tint）
         renderTexturedQuad(mat, BLOOD_EMPTY, -barW / 2.0f, -10.0f, barW, barH,
                 0.0f, 0.0f, 96.0f, 6.0f, 96, 6, 1.0f, 1.0f, 1.0f);
-        // ② 内部深黑灰底槽：blood_fill 贴图染 BAR_INNER_BG 铺满全条（贴图自带圆角，不凸出）
+        // ② 内部深黑灰底槽：blood_fill 贴图染 BAR_INNER_BG 铺满全条（贴图自带圆角，不凸出；条内完全不透明）
         renderTexturedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, barW, barH,
                 0.0f, 0.0f, 96.0f, 6.0f, 96, 6, BAR_INNER_BG);
         // ③ 填充：blood_fill 贴图染渐变（HEALTH_TOP/HEALTH_BOTTOM），按比例从左填充
@@ -166,16 +166,23 @@ public class EntityStatusHudRenderer {
         Minecraft mc = Minecraft.getInstance();
         Component text = Component.literal(String.format("%.0f/%.0f", hp, maxHp));
         float rawW = mc.font.width(text);
+        float rawH = mc.font.lineHeight;
+        // 文本基础字号随体型缩放，再限制为不超过条宽
         float textScale = TEXT_SCALE * bodyScale;
-        // 文本宽度不超过条宽：超宽则按比例缩小字号（确保任何体型下文本都在条内）
-        textScale = Math.min(textScale, barW / rawW);
+        if (rawW > 0.0f) {
+            textScale = Math.min(textScale, barW / rawW);
+        }
         // 字号下限保证可读性（barW 下限 24px 时实际所需比例远高于 0.25，正常不会触发）
         textScale = Math.max(textScale, 0.25f);
         float textW = rawW * textScale;
-        float textH = mc.font.lineHeight * textScale;
+        float textH = rawH * textScale;
         float textX = -barW / 2.0f + (barW - textW) / 2.0f;
         float textY = -10.0f + (barH - textH) / 2.0f;
-        mc.font.drawInBatch(text, textX, textY, 0xFFFFFF, true, mat,
+        // 文本必须与条同步缩放：drawInBatch 绘制的是原始字号，需把 textScale 乘进矩阵，
+        // 并以缩放前坐标系（textX/textScale）传坐标，文本实际尺寸 = 原始字号 * textScale
+        Matrix4f textMat = new Matrix4f(mat);
+        textMat.scale(textScale, textScale, 1.0f);
+        mc.font.drawInBatch(text, textX / textScale, textY / textScale, 0xFFFFFF, true, textMat,
                 mc.renderBuffers().bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
     }
 
