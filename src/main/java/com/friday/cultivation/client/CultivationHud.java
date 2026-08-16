@@ -201,22 +201,22 @@ public class CultivationHud {
         }
         if (data.canBreakthrough()) {
             MutableComponent bt = Component.translatable("hud.friday_cultivation.breakthrough_ready").withStyle(ChatFormatting.GOLD);
-            drawPlainStatus(graphics, mc, bt, x + 8, statusY, statusW, -11930);
+            drawPlainStatus(graphics, mc, bt, x + 4, statusY, statusW, -11930);
             statusY += 9;
         }
         if (data.isMeditating()) {
             MutableComponent med = Component.translatable("hud.friday_cultivation.meditating").withStyle(ChatFormatting.GREEN);
-            drawPlainStatus(graphics, mc, med, x + 8, statusY, statusW, -7471203, false);
+            drawPlainStatus(graphics, mc, med, x + 4, statusY, statusW, -7471203, false);
             statusY += 9;
         }
         long gameTime;
         if (data.hasActiveInverseFiveElementMark(gameTime = player.level().getGameTime())) {
-            drawInverseFiveElementStatus(graphics, mc, data, gameTime, x + 8, statusY, statusW);
+            drawInverseFiveElementStatus(graphics, mc, data, gameTime, x + 4, statusY, statusW);
             statusY += 10;
         }
         if (data.isInTribulation()) {
             MutableComponent trib = Component.translatable("hud.friday_cultivation.tribulation", Realm.formatTribulationCount(data.getTribulationStrikesRemaining(), data.getTribulationBoltsPerWave())).withStyle(ChatFormatting.RED);
-            drawPlainStatus(graphics, mc, trib, x + 8, statusY, statusW, -35483, false);
+            drawPlainStatus(graphics, mc, trib, x + 4, statusY, statusW, -35483, false);
             statusY += 9;
         }
         if (soul) {
@@ -321,21 +321,21 @@ public class CultivationHud {
 
     private static void renderSoulStatus(GuiGraphics graphics, Minecraft mc, LocalPlayer player, CultivationData data, int x, int statusY, int width) {
         MutableComponent title = Component.translatable("hud.friday_cultivation.soul.title");
-        drawPlainStatus(graphics, mc, title, x + 8, statusY, width, -4724737, true);
+        drawPlainStatus(graphics, mc, title, x + 4, statusY, width, -4724737, true);
         statusY += 9;
         boolean inDifu = player.level().dimension() == ModDimensions.DIFU;
         if (!inDifu) {
             MutableComponent hint = Component.translatable("hud.friday_cultivation.soul.go_difu_hint");
-            drawPlainStatus(graphics, mc, hint, x + 8, statusY, width, -4151578, false);
+            drawPlainStatus(graphics, mc, hint, x + 4, statusY, width, -4151578, false);
         } else if (data.isReincarnationReady()) {
             MutableComponent ready = Component.translatable("hud.friday_cultivation.soul.can_reincarnate");
-            drawPlainStatus(graphics, mc, ready, x + 8, statusY, width, -11930, false);
+            drawPlainStatus(graphics, mc, ready, x + 4, statusY, width, -11930, false);
         } else {
             int remainTicks = Math.max(0, 1200 - data.getDifuTicks());
             int totalSec = (remainTicks + 19) / 20;
             String timeStr = String.format("%d:%02d", totalSec / 60, totalSec % 60);
             MutableComponent cd = Component.translatable("hud.friday_cultivation.soul.countdown", timeStr);
-            drawPlainStatus(graphics, mc, cd, x + 8, statusY, width, -1456016, false);
+            drawPlainStatus(graphics, mc, cd, x + 4, statusY, width, -1456016, false);
         }
     }
 
