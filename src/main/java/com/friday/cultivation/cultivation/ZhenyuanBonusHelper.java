@@ -12,14 +12,27 @@ import com.friday.cultivation.cultivation.CultivationData;
 import net.minecraft.world.entity.player.Player;
 
 public final class ZhenyuanBonusHelper {
-    public static final double HP_PER_POINT = 1.0;
+    // ===== 每点真元属性增益常量（改数值只改这里）=====
+    /** 体质：每点 +10 生命 */
+    public static final double HP_PER_POINT = 10.0;
+    /** 体质：每点 +8 盔甲 */
+    public static final double ARMOR_PER_POINT = 8.0;
+    /** 体质：每点 +3 韧性 */
+    public static final double TOUGHNESS_PER_POINT = 3.0;
+    /** 筋骨：每点 +4 近战伤害 */
     public static final int PHYSIQUE_ATK_PER_POINT = 4;
+    /** 筋骨：每点 +1% 挖掘速度 */
     public static final double PHYSIQUE_MINING_SPEED_PCT_PER_POINT = 1.0;
     public static final double MAX_PHYSIQUE_MINING_SPEED_BONUS = 1.0;
+    /** 身法：每点 +1% 移动速度 */
     public static final double AGILITY_MOVE_PCT_PER_POINT = 1.0;
+    /** 身法：每点 +0.2% 跳跃高度 */
     public static final double AGILITY_JUMP_PCT_PER_POINT = 0.2;
+    /** 法伤：每点 +5% 法术伤害 */
     public static final double SPELL_DAMAGE_PCT_PER_POINT = 5.0;
+    /** 气海：每点 +200 灵气上限 */
     public static final long QI_SEA_FLAT_PER_POINT = 200L;
+    /** 气海：每点 +3/秒 灵气回复 */
     public static final long QI_SEA_QI_RECOVERY_PER_POINT = 3L;
     @Deprecated(forRemoval=false)
     public static final int QI_SEA_ABSORB_RANGE_PER_POINT = 0;
@@ -41,26 +54,26 @@ public final class ZhenyuanBonusHelper {
         if (d == null) {
             return 0.0;
         }
-        // 每点真元体质 +10 生命值
-        return (double)d.getAttrConstitution() * 10.0;
+        // 每点真元体质 +HP_PER_POINT 生命值
+        return (double)d.getAttrConstitution() * HP_PER_POINT;
     }
 
-    /** 每点真元体质 +8 盔甲值 */
+    /** 每点真元体质 +ARMOR_PER_POINT 盔甲值 */
     public static double constitutionArmorBonus(Player player) {
         CultivationData d = ZhenyuanBonusHelper.dataOf(player);
         if (d == null) {
             return 0.0;
         }
-        return (double)d.getAttrConstitution() * 8.0;
+        return (double)d.getAttrConstitution() * ARMOR_PER_POINT;
     }
 
-    /** 每点真元体质 +3 韧性 */
+    /** 每点真元体质 +TOUGHNESS_PER_POINT 韧性 */
     public static double constitutionToughnessBonus(Player player) {
         CultivationData d = ZhenyuanBonusHelper.dataOf(player);
         if (d == null) {
             return 0.0;
         }
-        return (double)d.getAttrConstitution() * 3.0;
+        return (double)d.getAttrConstitution() * TOUGHNESS_PER_POINT;
     }
 
     public static int physiqueAttackBonus(Player player) {
@@ -88,7 +101,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.MOVEMENT_SPEED)) {
             return 0.0;
         }
-        return (double)d.getAttrAgility() * 1.0 / 100.0;
+        return (double)d.getAttrAgility() * AGILITY_MOVE_PCT_PER_POINT / 100.0;
     }
 
     public static double agilityJumpHeightMult(Player player) {
@@ -96,7 +109,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.JUMP_HEIGHT)) {
             return 0.0;
         }
-        return (double)d.getAttrAgility() * 0.2 / 100.0;
+        return (double)d.getAttrAgility() * AGILITY_JUMP_PCT_PER_POINT / 100.0;
     }
 
     public static double agilityJumpVelocityMult(Player player) {
@@ -112,7 +125,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.SPELL_DAMAGE)) {
             return 1.0;
         }
-        return 1.0 + (double)d.getAttrSpellPower() * 5.0 / 100.0;
+        return 1.0 + (double)d.getAttrSpellPower() * SPELL_DAMAGE_PCT_PER_POINT / 100.0;
     }
 
     public static long qiSeaFlatBonus(CultivationData d) {
