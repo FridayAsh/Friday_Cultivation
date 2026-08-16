@@ -128,18 +128,16 @@ public class EntityStatusHudRenderer {
         float maxHp = living.getMaxHealth();
         double ratio = maxHp <= 0.0f ? 0.0 : (double) hp / (double) maxHp;
 
-        // 按体型等比缩放条长（标准玩家宽 0.6f 为基准，clamp 0.5~2.0），高度随缩放微调以容纳条内文本
+        // 体型自适应：仅宽度按体型等比缩放，高度与玩家血条一致固定（BAR_H=6，避免贴图 1px 透明边占比过大透出天空）
         float bodyScale = Math.max(0.5f, Math.min(2.0f, (float) living.getBbWidth() / 0.6f));
         float barW = BAR_W * bodyScale;
-        float barH = BAR_H * bodyScale;
+        float barH = BAR_H;
 
-        // 与玩家血条三层结构一致（参考 CultivationHud.renderTextureBar）：
-        // 0) 不透明底色（barW×barH 精确尺寸，不凸出）：保证贴图透明像素背后是深灰实底，血条内部完全不透明
-        renderSolidQuad(mat, -barW / 2.0f, -10.0f, barW, barH, BAR_INNER_BG);
+        // 与玩家血条 renderTextureBar 完全一致的两层贴图结构（玩家调用什么贴图，这里就用什么贴图）：
         // ① 底条：blood_empty 整张贴图（96x6）等比缩放到目标宽高（白色 tint）
         renderTexturedQuad(mat, BLOOD_EMPTY, -barW / 2.0f, -10.0f, barW, barH,
                 0.0f, 0.0f, 96.0f, 6.0f, 96, 6, 1.0f, 1.0f, 1.0f);
-        // ② 内部深黑灰底槽：blood_fill 贴图染 BAR_INNER_BG 铺满全条（贴图自带圆角，不凸出；条内完全不透明）
+        // ② 内部深黑灰底槽：blood_fill 贴图染 BAR_INNER_BG 铺满全条（玩家同款：fillTex 染深灰铺满）
         renderTexturedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, barW, barH,
                 0.0f, 0.0f, 96.0f, 6.0f, 96, 6, BAR_INNER_BG);
         // ③ 填充：与玩家 renderTextureBar 相同的电池护盾 clip 逻辑——
@@ -177,7 +175,7 @@ public class EntityStatusHudRenderer {
         boolean showArmor = armor > 0;
         boolean showToughness = toughness > 0.0;
         if (showArmor || showToughness) {
-            renderArmorToughness(event, mat, showArmor, showToughness, armor, toughness);
+            renderArmorToughness(event, mat, showArmor, showToughness, armor, toughness, barW);
         }
 
         pose.popPose();
@@ -207,7 +205,7 @@ public class EntityStatusHudRenderer {
                 mc.renderBuffers().bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
     }
 
-    private static void renderArmorToughness(RenderLevelStageEvent event, Matrix4f mat, boolean showArmor, boolean showToughness, int armor, double toughness) {
+    private static void renderArmorToughness(RenderLevelStageEvent event, Matrix4f mat, boolean showArmor, boolean showToughness, int armor, double toughness, float barW) {
         Minecraft mc = Minecraft.getInstance();
         Component armorText = Component.literal(String.valueOf(armor));
         Component toughText = Component.literal(String.format("%.0f", toughness));
@@ -215,9 +213,9 @@ public class EntityStatusHudRenderer {
         float armorW = showArmor ? ICON_SIZE + 1.0f + mc.font.width(armorText) * TEXT_SCALE : 0.0f;
         float toughW = showToughness ? ICON_SIZE + 1.0f + mc.font.width(toughText) * TEXT_SCALE : 0.0f;
         float gap = 4.0f;
-        float totalW = armorW + ((showArmor && showToughness) ? gap : 0.0f) + toughW;
-        float gx = -totalW / 2.0f;
-        float gy = -22.0f;
+        // 盔甲 → 韧性 水平排列在血条右侧（与玩家 renderAttributeRow 一致：生命条右侧同 y）
+        float gx = barW / 2.0f + 2.0f;
+        float gy = -10.0f + (BAR_H - ICON_SIZE) / 2.0f;
 
         if (showArmor) {
             renderIconValue(event, mat, gx, gy, VANILLA_ICONS, ARMOR_ICON_U, ARMOR_ICON_V, ARMOR_COLOR, armorText);
