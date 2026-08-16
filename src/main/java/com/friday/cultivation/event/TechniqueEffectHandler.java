@@ -338,7 +338,15 @@ public final class TechniqueEffectHandler {
             stored = currentLevel;
             sp.getPersistentData().putInt(TAG_MAX_BODY_TEMPERING_LEVEL, stored);
         }
-        int effective = data.getRealm() == Realm.BODY_TEMPERING ? currentLevel : stored;
+        // 凡人无锻体加成；锻体期间按当前层数；高于锻体的境界（练气及以上）保留锻体最高层加成
+        int effective;
+        if (data.getRealm() == Realm.MORTAL) {
+            effective = 0;
+        } else if (data.getRealm() == Realm.BODY_TEMPERING) {
+            effective = currentLevel;
+        } else {
+            effective = stored;
+        }
         return (double)effective * 10.0;
     }
 
