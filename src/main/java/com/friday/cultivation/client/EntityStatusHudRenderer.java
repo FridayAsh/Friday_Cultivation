@@ -47,6 +47,8 @@ public class EntityStatusHudRenderer {
     private static final float TEXT_SCALE = 0.5f;
     private static final float WORLD_SCALE = -0.025f;
     private static final double MAX_DISTANCE = 24.0;
+    // 与玩家血条一致：填充条左端固定圆角段在贴图中所占像素（blood_fill 左端圆角宽度）
+    private static final int CLIP_PX = 3;
 
     private EntityStatusHudRenderer() {
     }
@@ -140,11 +142,30 @@ public class EntityStatusHudRenderer {
         // ② 内部深黑灰底槽：blood_fill 贴图染 BAR_INNER_BG 铺满全条（贴图自带圆角，不凸出；条内完全不透明）
         renderTexturedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, barW, barH,
                 0.0f, 0.0f, 96.0f, 6.0f, 96, 6, BAR_INNER_BG);
-        // ③ 填充：blood_fill 贴图染渐变（HEALTH_TOP/HEALTH_BOTTOM），按比例从左填充
+        // ③ 填充：与玩家 renderTextureBar 相同的电池护盾 clip 逻辑——
+        //    左端固定圆角段（采样贴图左端 CLIP_PX 像素等比缩放）+ 右侧从贴图尾部滑入，
+        //    不把整张含左右圆角边框的贴图等比缩放到当前宽度（避免多渲染左右边框）
         float filledW = (float) (barW * ratio);
         if (filledW > 0.0f) {
-            renderTexturedTintedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, filledW, barH,
-                    0.0f, 0.0f, 96.0f, 6.0f, 96, 6, HEALTH_TOP, HEALTH_BOTTOM);
+            float clipScreen = Math.max(1.0f, barW * CLIP_PX / 96.0f);
+            if (filledW >= barW) {
+                // 满/接近满：全宽整图等比缩放（与底槽一致，圆角完整）
+                renderTexturedTintedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, barW, barH,
+                        0.0f, 0.0f, 96.0f, 6.0f, 96, 6, HEALTH_TOP, HEALTH_BOTTOM);
+            } else if (filledW <= clipScreen) {
+                // 很小：整图等比缩放到 filledW（极小段直接整图缩放）
+                renderTexturedTintedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, filledW, barH,
+                        0.0f, 0.0f, 96.0f, 6.0f, 96, 6, HEALTH_TOP, HEALTH_BOTTOM);
+            } else {
+                // 左端：采样贴图左端 CLIP_PX 像素，等比缩放到 clipScreen（圆角固定不变形）
+                renderTexturedTintedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, clipScreen, barH,
+                        0.0f, 0.0f, CLIP_PX, 6.0f, 96, 6, HEALTH_TOP, HEALTH_BOTTOM);
+                // 右侧：从贴图尾部取 rightScreen/barW 比例像素，等比缩放到 rightScreen（无右端圆角）
+                float rightScreen = filledW - clipScreen;
+                float rightSrc = Math.max(1.0f, rightScreen * 96.0f / barW);
+                renderTexturedTintedQuad(mat, BLOOD_FILL, -barW / 2.0f + clipScreen, -10.0f, rightScreen, barH,
+                        96.0f - rightSrc, 0.0f, rightSrc, 6.0f, 96, 6, HEALTH_TOP, HEALTH_BOTTOM);
+            }
         }
 
         // 条内居中显示当前/最大生命值文本
