@@ -15,7 +15,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import net.minecraftforge.api.distmarker.Dist;
@@ -30,7 +33,7 @@ public class EntityStatusHudRenderer {
     private static final ResourceLocation VANILLA_ICONS = new ResourceLocation("textures/gui/icons.png");
     private static final ResourceLocation OVERFLOWING_ICONS = new ResourceLocation("friday_cultivation", "textures/gui/overflowing_icons.png");
 
-    private static final int BAR_BG = 0xFF1A1A1A;
+    private static final int BAR_INNER_BG = 0xFF1A1A1A;
     private static final int ARMOR_ICON_U = 34, ARMOR_ICON_V = 9;
     private static final int TOUGH_ICON_U = 18, TOUGH_ICON_V = 0;
     private static final int ARMOR_COLOR = 0xAAAAAA;
@@ -61,6 +64,9 @@ public class EntityStatusHudRenderer {
         Vec3 cam = event.getCamera().getPosition();
         float partial = event.getPartialTick();
 
+        // 保持 blend 开启（血条内文本字形依赖 alpha 混合，disableBlend 会让字形变实心方块）；
+        // 所有 quad 顶点 alpha 均为 1.0（不产生半透明感），叠加不透明底色兜底，贴图透明像素不会
+        // 透出背后世界，血条呈实心。
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableDepthTest();
@@ -69,6 +75,10 @@ public class EntityStatusHudRenderer {
         AABB box = player.getBoundingBox().inflate(MAX_DISTANCE, MAX_DISTANCE, MAX_DISTANCE);
         for (Entity e : mc.level.getEntities(player, box, EntityStatusHudRenderer::canShowStatus)) {
             LivingEntity living = (LivingEntity) e;
+            // 视线遮挡隐藏：玩家看不到（射线先被方块挡住）的生物不显示血条
+            if (!isVisibleToPlayer(player, living, partial)) {
+                continue;
+            }
             renderEntityStatus(event, living, cam, partial);
         }
 
@@ -80,6 +90,21 @@ public class EntityStatusHudRenderer {
 
     private static boolean canShowStatus(Entity e) {
         return e instanceof LivingEntity && e.isAlive();
+    }
+
+    /**
+     * 视线遮挡判断：从玩家眼睛到生物身体中心做方块射线，若射线先命中方块（命中点比目标点更近），
+     * 说明该生物被方块遮挡，玩家看不到，则不渲染其血条。只考虑方块遮挡，不因其他实体挡在前面而隐藏。
+     */
+    private static boolean isVisibleToPlayer(Player player, LivingEntity living, float partial) {
+        Vec3 eye = player.getEyePosition(partial);
+        Vec3 target = living.getPosition(partial).add(0.0, living.getBbHeight() * 0.5, 0.0);
+        ClipContext ctx = new ClipContext(eye, target, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player);
+        BlockHitResult hit = player.level().clip(ctx);
+        if (hit.getType() == HitResult.Type.MISS) {
+            return true;
+        }
+        return hit.getLocation().distanceToSqr(eye) >= target.distanceToSqr(eye) - 1.0E-4;
     }
 
     private static void renderEntityStatus(RenderLevelStageEvent event, LivingEntity living, Vec3 cam, float partial) {
@@ -106,12 +131,16 @@ public class EntityStatusHudRenderer {
         float barW = BAR_W * bodyScale;
         float barH = BAR_H * bodyScale;
 
-        // 深黑灰背景
-        renderSolidQuad(mat, -barW / 2.0f - 1.0f, -11.0f, barW + 2.0f, barH + 2.0f, BAR_BG);
-        // 空血条
+        // 与玩家血条三层结构一致（参考 CultivationHud.renderTextureBar）：
+        // 0) 不透明底色（等效玩家 GUI 的深色底层面板）：保证贴图透明像素不透出背后世界，血条实心
+        renderSolidQuad(mat, -barW / 2.0f, -10.0f, barW, barH, BAR_INNER_BG);
+        // ① 底条：blood_empty 整张贴图（96x6）等比缩放到目标宽高（白色 tint）
         renderTexturedQuad(mat, BLOOD_EMPTY, -barW / 2.0f, -10.0f, barW, barH,
                 0.0f, 0.0f, 96.0f, 6.0f, 96, 6, 1.0f, 1.0f, 1.0f);
-        // 血条填充
+        // ② 内部深黑灰底槽：blood_fill 贴图染 BAR_INNER_BG 铺满全条（贴图自带圆角，不凸出）
+        renderTexturedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, barW, barH,
+                0.0f, 0.0f, 96.0f, 6.0f, 96, 6, BAR_INNER_BG);
+        // ③ 填充：blood_fill 贴图染渐变（HEALTH_TOP/HEALTH_BOTTOM），按比例从左填充
         float filledW = (float) (barW * ratio);
         if (filledW > 0.0f) {
             renderTexturedTintedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, filledW, barH,
@@ -136,8 +165,13 @@ public class EntityStatusHudRenderer {
     private static void renderHealthText(Matrix4f mat, float hp, float maxHp, float barW, float barH, float bodyScale) {
         Minecraft mc = Minecraft.getInstance();
         Component text = Component.literal(String.format("%.0f/%.0f", hp, maxHp));
+        float rawW = mc.font.width(text);
         float textScale = TEXT_SCALE * bodyScale;
-        float textW = mc.font.width(text) * textScale;
+        // 文本宽度不超过条宽：超宽则按比例缩小字号（确保任何体型下文本都在条内）
+        textScale = Math.min(textScale, barW / rawW);
+        // 字号下限保证可读性（barW 下限 24px 时实际所需比例远高于 0.25，正常不会触发）
+        textScale = Math.max(textScale, 0.25f);
+        float textW = rawW * textScale;
         float textH = mc.font.lineHeight * textScale;
         float textX = -barW / 2.0f + (barW - textW) / 2.0f;
         float textY = -10.0f + (barH - textH) / 2.0f;
@@ -209,6 +243,15 @@ public class EntityStatusHudRenderer {
         buffer.vertex(mat, x + w, y + h, 0.0f).uv(u1, v1).color(cr, cg, cb, 1.0f).endVertex();
         buffer.vertex(mat, x + w, y, 0.0f).uv(u1, v0).color(cr, cg, cb, 1.0f).endVertex();
         t.end();
+    }
+
+    private static void renderTexturedQuad(Matrix4f mat, ResourceLocation texture, float x, float y, float w, float h,
+                                           float u, float v, float texW, float texH, int texWidth, int texHeight,
+                                           int color) {
+        float r = ((color >> 16) & 0xFF) / 255.0f;
+        float g = ((color >> 8) & 0xFF) / 255.0f;
+        float b = (color & 0xFF) / 255.0f;
+        renderTexturedQuad(mat, texture, x, y, w, h, u, v, texW, texH, texWidth, texHeight, r, g, b);
     }
 
     private static void renderTexturedTintedQuad(Matrix4f mat, ResourceLocation texture, float x, float y, float w, float h,

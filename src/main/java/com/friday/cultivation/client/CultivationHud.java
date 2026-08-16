@@ -147,6 +147,7 @@ public class CultivationHud {
 
         // 3. 条带区域：生命条 + 右侧盔甲/韧性（非创造）→ 修为/灵气/悟道（条件显示）
         int barY = y + 16;
+        int statusAlignWidth = HEALTH_WIDTH; // 状态行默认与生命条区域对齐
 
         if (!player.isCreative()) {
             // 生命条（条内显示 当前/最大 HP）
@@ -157,6 +158,7 @@ public class CultivationHud {
             int attrX = textBaseX + HEALTH_WIDTH + ATTR_TO_HEALTH_GAP;
             renderAttributeRow(graphics, player, attrX, barY - 1);
 
+            statusAlignWidth = HEALTH_WIDTH;
             barY += 8;
         }
 
@@ -172,6 +174,7 @@ public class CultivationHud {
                 long maxCult = data.getMaxCultivation();
                 Component cultText = Component.translatable("hud.friday_cultivation.cultivation", curCult, maxCult);
                 renderValueBar(graphics, mc, textBaseX, barY, CULT_WIDTH, BAR_HEIGHT, curCult, maxCult, CULT_TOP, CULT_BOTTOM, CULT_TOP, cultText);
+                statusAlignWidth = CULT_WIDTH;
                 barY += 8;
             }
 
@@ -181,6 +184,7 @@ public class CultivationHud {
                 long maxQi = data.getMaxQi();
                 Component qiText = Component.translatable("hud.friday_cultivation.qi", curQi, maxQi);
                 renderValueBar(graphics, mc, textBaseX, barY, QI_WIDTH, BAR_HEIGHT, curQi, maxQi, QI_TOP, QI_BOTTOM, QI_TOP, qiText);
+                statusAlignWidth = QI_WIDTH;
                 barY += 8;
             }
 
@@ -190,41 +194,37 @@ public class CultivationHud {
                 long curWudao = data.getWuDaoProgress();
                 Component wudaoText = Component.translatable("hud.friday_cultivation.wudao", curWudao, maxWudao);
                 renderValueBar(graphics, mc, textBaseX, barY, WUDAO_WIDTH, BAR_HEIGHT, curWudao, maxWudao, WUDAO_TOP, WUDAO_BOTTOM, WUDAO_TOP, wudaoText);
+                statusAlignWidth = WUDAO_WIDTH;
                 barY += 8;
             }
         }
 
-        // 4. 状态行
+        // 4. 状态行：水平基准与最后一条可见属性条区域对齐，垂直紧贴其下方
         int statusY = barY + 2;
-        int statusW = HUD_WIDTH - 16;
-
-        // 仅在状态行真的会与头像下方饱食/氧气横排重叠时才下推；否则紧贴最后一条可见属性条
-        int avatarAttrBottom = y + 32 + ATTR_ICON_SIZE;
-        if (!player.isCreative() && statusY + STATUS_LINE_HEIGHT > avatarAttrBottom) {
-            statusY = avatarAttrBottom + 2;
-        }
+        int statusX = textBaseX + STATUS_TEXT_LEFT;
+        int statusW = statusAlignWidth;
         if (data.canBreakthrough()) {
             MutableComponent bt = Component.translatable("hud.friday_cultivation.breakthrough_ready").withStyle(ChatFormatting.GOLD);
-            drawPlainStatus(graphics, mc, bt, x + STATUS_TEXT_LEFT, statusY, statusW, -11930);
+            drawPlainStatus(graphics, mc, bt, statusX, statusY, statusW, -11930);
             statusY += 9;
         }
         if (data.isMeditating()) {
             MutableComponent med = Component.translatable("hud.friday_cultivation.meditating").withStyle(ChatFormatting.GREEN);
-            drawPlainStatus(graphics, mc, med, x + STATUS_TEXT_LEFT, statusY, statusW, -7471203, false);
+            drawPlainStatus(graphics, mc, med, statusX, statusY, statusW, -7471203, false);
             statusY += 9;
         }
         long gameTime;
         if (data.hasActiveInverseFiveElementMark(gameTime = player.level().getGameTime())) {
-            drawInverseFiveElementStatus(graphics, mc, data, gameTime, x + STATUS_TEXT_LEFT, statusY, statusW);
+            drawInverseFiveElementStatus(graphics, mc, data, gameTime, statusX, statusY, statusW);
             statusY += 10;
         }
         if (data.isInTribulation()) {
             MutableComponent trib = Component.translatable("hud.friday_cultivation.tribulation", Realm.formatTribulationCount(data.getTribulationStrikesRemaining(), data.getTribulationBoltsPerWave())).withStyle(ChatFormatting.RED);
-            drawPlainStatus(graphics, mc, trib, x + STATUS_TEXT_LEFT, statusY, statusW, -35483, false);
+            drawPlainStatus(graphics, mc, trib, statusX, statusY, statusW, -35483, false);
             statusY += 9;
         }
         if (soul) {
-            renderSoulStatus(graphics, mc, player, data, x, statusY, statusW);
+            renderSoulStatus(graphics, mc, player, data, statusX, statusY, statusW);
         }
 
         RenderSystem.disableBlend();
@@ -345,10 +345,15 @@ public class CultivationHud {
 
     private static void drawInverseFiveElementStatus(GuiGraphics graphics, Minecraft mc, CultivationData data, long gameTime, int x, int y, int width) {
         QiElement next = PhysiqueBonusHelper.nextInverseElement(data.getInverseFiveElementMark());
-        graphics.blit(spiritRootIcon(next), x, y, 8, 8, 0.0f, 0.0f, 16, 16, 16, 16);
         int stacks = data.getActiveInverseFiveElementStacks(gameTime);
         MutableComponent text = Component.translatable("hud.friday_cultivation.inverse_five_elements_next", next.displayName(), stacks);
-        drawLeftScaled(graphics, mc, text, x + 10, y + 1, width - 10, 0.58f, -8064799, true);
+        // 图标+文本作为整体在状态行区域内居中
+        float scale = 0.58f;
+        int iconSize = 8;
+        float groupW = iconSize + 1 + mc.font.width((FormattedText) text) * scale;
+        int offset = Math.max(0, (int) ((width - groupW) / 2.0f));
+        graphics.blit(spiritRootIcon(next), x + offset, y, iconSize, iconSize, 0.0f, 0.0f, 16, 16, 16, 16);
+        drawLeftScaled(graphics, mc, text, x + offset + iconSize + 1, y + 1, width - offset - iconSize - 1, scale, -8064799, true);
     }
 
     private static ResourceLocation spiritRootIcon(QiElement element) {
