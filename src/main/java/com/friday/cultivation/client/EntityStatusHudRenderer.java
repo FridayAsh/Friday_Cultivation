@@ -55,8 +55,20 @@ public class EntityStatusHudRenderer {
     private static final int CLIP_PX = 3;
     // 恒定屏幕缩放：固定为 8 格距离视角下的 65% 基准大小（约 1.56 倍），任何距离都不变
     private static final float BAR_SCREEN_SCALE = (float) (BASE_BAR_W * 0.4 * 0.65 / 8.0);
+    // 受伤后血条显示时长（tick）：受伤短暂显示方案，3 秒后自动隐藏
+    private static final long HURT_SHOW_TICKS = 60L;
+    /** 实体ID → 上次受伤时的游戏 tick（客户端本地追踪） */
+    private static final java.util.Map<Integer, Long> LAST_HURT = new java.util.HashMap<>();
 
     private EntityStatusHudRenderer() {
+    }
+
+    /** 记录生物受伤时刻（仅客户端显示用，排除玩家自己） */
+    @SubscribeEvent
+    public static void onLivingHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        if (event.getEntity().level().isClientSide && !(event.getEntity() instanceof Player)) {
+            LAST_HURT.put(event.getEntity().getId(), event.getEntity().level().getGameTime());
+        }
     }
 
     @SubscribeEvent
@@ -71,12 +83,21 @@ public class EntityStatusHudRenderer {
         }
         GuiGraphics graphics = event.getGuiGraphics();
         float partial = mc.getFrameTime();
+        long nowTick = mc.level.getGameTime();
 
-        // 第一阶段：收集所有可见生物血条（屏幕坐标 + 尺寸 + 真实距离）
+        // 清理过期的受伤记录（防内存泄漏）
+        LAST_HURT.entrySet().removeIf(e -> nowTick - e.getValue() > HURT_SHOW_TICKS);
+
+        // 第一阶段：收集可见且近期受伤的生物血条（受伤短暂显示：3 秒后自动隐藏）
         java.util.List<BarEntry> entries = new java.util.ArrayList<>();
         AABB box = player.getBoundingBox().inflate(MAX_DISTANCE, MAX_DISTANCE, MAX_DISTANCE);
         for (Entity e : mc.level.getEntities(player, box, EntityStatusHudRenderer::canShowStatus)) {
             LivingEntity living = (LivingEntity) e;
+            // 受伤短暂显示：仅渲染最近 3 秒内受过伤的生物
+            Long hurtTick = LAST_HURT.get(e.getId());
+            if (hurtTick == null || nowTick - hurtTick >= HURT_SHOW_TICKS) {
+                continue;
+            }
             if (!isVisibleToPlayer(player, living, partial)) {
                 continue;
             }
