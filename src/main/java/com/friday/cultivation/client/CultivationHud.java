@@ -360,9 +360,10 @@ public class CultivationHud {
 
     private static void drawCenteredScaled(GuiGraphics graphics, Minecraft mc, Component text, int x, int y, int width, float scale, int color, boolean shadow) {
         int textWidth = mc.font.width((FormattedText)text);
-        // 下限 0.45f：长文本可继续缩小以适配宽度，始终在区域内居中（避免 drawX 为负左移）
-        float actualScale = textWidth <= 0 ? scale : Math.min(scale, Math.max(0.45f, (float)width / (float)textWidth));
-        int drawX = x + Math.max(0, (width - (int)((float)textWidth * actualScale)) / 2);
+        // 长文本自动缩放到不溢出，确保在区域内真正居中
+        float actualScale = textWidth <= 0 ? scale : Math.min(scale, (float)width / (float)textWidth);
+        int scaledW = (int)((float)textWidth * actualScale);
+        int drawX = x + (width - scaledW) / 2;
         drawScaled(graphics, mc, text, drawX, y, actualScale, color, shadow);
     }
 
@@ -394,9 +395,14 @@ public class CultivationHud {
         int iconSize = ATTR_ICON_SIZE;
         float textScale = ATTR_TEXT_SCALE;
 
-        // 生命条右侧 2 项：盔甲 → 韧性
+        // 生命条右侧 2 项：盔甲 → 韧性（均为 0 时不显示）
         int armor = player.getArmorValue();
         double toughness = player.getAttribute(Attributes.ARMOR_TOUGHNESS).getValue();
+        boolean showArmor = armor > 0;
+        boolean showToughness = toughness > 0.0;
+        if (!showArmor && !showToughness) {
+            return;
+        }
 
         Component armorText = Component.literal(String.valueOf(armor));
         Component toughText = Component.literal(String.format("%.0f", toughness));
@@ -405,11 +411,15 @@ public class CultivationHud {
         int toughTextW = mc.font.width((FormattedText)toughText);
 
         float armorW = iconSize + 1 + armorTextW * textScale;
-        float toughW = iconSize + 1 + toughTextW * textScale;
 
-        drawAttributeIcon(graphics, VANILLA_ICONS, x, y, ARMOR_ICON_U, ARMOR_ICON_V, iconSize, ARMOR_COLOR, armorText, textScale);
-        int toughX = x + Math.round(armorW + ATTR_GROUP_GAP);
-        drawAttributeIcon(graphics, OVERFLOWING_ICONS, toughX, y, TOUGH_ICON_U, TOUGH_ICON_V, iconSize, TOUGH_COLOR, toughText, textScale);
+        int gx = x;
+        if (showArmor) {
+            drawAttributeIcon(graphics, VANILLA_ICONS, gx, y, ARMOR_ICON_U, ARMOR_ICON_V, iconSize, ARMOR_COLOR, armorText, textScale);
+            gx += Math.round(armorW + ATTR_GROUP_GAP);
+        }
+        if (showToughness) {
+            drawAttributeIcon(graphics, OVERFLOWING_ICONS, gx, y, TOUGH_ICON_U, TOUGH_ICON_V, iconSize, TOUGH_COLOR, toughText, textScale);
+        }
     }
 
     private static void renderAvatarAttributes(GuiGraphics graphics, LocalPlayer player, int x, int y) {
