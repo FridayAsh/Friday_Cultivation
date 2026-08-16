@@ -72,7 +72,7 @@ public class EntityStatusHudRenderer {
         GuiGraphics graphics = event.getGuiGraphics();
         float partial = mc.getFrameTime();
 
-        // 第一阶段：收集所有可见生物血条（屏幕坐标 + 尺寸 + 距离）
+        // 第一阶段：收集所有可见生物血条（屏幕坐标 + 尺寸 + 真实距离）
         java.util.List<BarEntry> entries = new java.util.ArrayList<>();
         AABB box = player.getBoundingBox().inflate(MAX_DISTANCE, MAX_DISTANCE, MAX_DISTANCE);
         for (Entity e : mc.level.getEntities(player, box, EntityStatusHudRenderer::canShowStatus)) {
@@ -91,66 +91,36 @@ public class EntityStatusHudRenderer {
             if (barW < 12.0f || barH < 2.0f) {
                 continue;
             }
-            entries.add(new BarEntry(living, proj.x, proj.y, barW, barH));
+            float realDist = (float) player.distanceToSqr(living);
+            entries.add(new BarEntry(living, proj.x, proj.y, barW, barH, realDist));
         }
 
-        // 第二阶段：按距离从近到远排序（近的优先保位）
-        entries.sort((a, b) -> Float.compare(a.projDist, b.projDist));
+        // 第二阶段：按真实距离从远到近排序——远的先绘制，近的最后绘制（覆盖在上面），
+        // 因此重叠时永远优先显示离玩家近的生物血条
+        entries.sort((a, b) -> Float.compare(b.realDist, a.realDist));
 
-        // 第三阶段：垂直避让布局——重叠时下移直到不重叠，避免堆叠杂乱
-        java.util.List<float[]> placed = new java.util.ArrayList<>(); // {x, y, w, h}
-        for (BarEntry entry : entries) {
-            float baseY = entry.screenY - 12.0f;
-            float y = baseY;
-            int guard = 0;
-            while (guard < 24) {
-                boolean hit = false;
-                for (float[] r : placed) {
-                    if (overlaps(entry.screenX - entry.barW / 2.0f, y, entry.barW, entry.barH, r[0], r[1], r[2], r[3])) {
-                        hit = true;
-                        break;
-                    }
-                }
-                if (!hit) {
-                    break;
-                }
-                // 下移一个条高 + 间距，继续找空位
-                y += entry.barH + 2.0f;
-                guard++;
-            }
-            entry.offsetY = y - baseY;
-            placed.add(new float[]{entry.screenX - entry.barW / 2.0f, y, entry.barW, entry.barH});
-        }
-
-        // 第四阶段：绘制
+        // 第三阶段：按序绘制（远→近，近的覆盖远的）
         for (BarEntry entry : entries) {
             renderEntityStatus(graphics, mc, entry, partial);
         }
     }
 
-    /** 矩形重叠检测（含少量间距容差） */
-    private static boolean overlaps(float ax, float ay, float aw, float ah, float bx, float by, float bw, float bh) {
-        float gap = 2.0f;
-        return ax < bx + bw + gap && ax + aw + gap > bx && ay < by + bh + gap && ay + ah + gap > by;
-    }
-
-    /** 收集到的血条条目（屏幕坐标、尺寸、距离、避让偏移） */
+    /** 收集到的血条条目（屏幕坐标、尺寸、真实距离平方） */
     private static final class BarEntry {
         final LivingEntity living;
         final int screenX;
         final int screenY;
         final float barW;
         final float barH;
-        final float projDist;
-        float offsetY;
+        final float realDist;
 
-        BarEntry(LivingEntity living, int screenX, int screenY, float barW, float barH) {
+        BarEntry(LivingEntity living, int screenX, int screenY, float barW, float barH, float realDist) {
             this.living = living;
             this.screenX = screenX;
             this.screenY = screenY;
             this.barW = barW;
             this.barH = barH;
-            this.projDist = (float) Math.sqrt((double) screenX * screenX + (double) screenY * screenY);
+            this.realDist = realDist;
         }
     }
 
@@ -206,7 +176,7 @@ public class EntityStatusHudRenderer {
     private static void renderEntityStatus(GuiGraphics graphics, Minecraft mc, BarEntry entry, float partial) {
         LivingEntity living = entry.living;
         int sx = entry.screenX;
-        int sy = entry.screenY + (int) Math.round(entry.offsetY);
+        int sy = entry.screenY;
 
         float hp = living.getHealth();
         float maxHp = living.getMaxHealth();
