@@ -100,29 +100,32 @@ public class EntityStatusHudRenderer {
     }
 
     /**
-     * 世界坐标 → 屏幕坐标（标准透视投影）。
+     * 世界坐标 → 屏幕坐标（相机正交基投影，使用 MC Camera.getLookVector/getUpVector/getLeftVector）。
      * 返回 null 表示在相机后方（不可见）。
      */
     private static Vec2 projectToScreen(Minecraft mc, Vec3 worldPos, float partial) {
         net.minecraft.client.Camera camera = mc.gameRenderer.getMainCamera();
         Vec3 camPos = camera.getPosition();
-        Vector3f rel = new Vector3f(
-                (float) (worldPos.x - camPos.x),
-                (float) (worldPos.y - camPos.y),
-                (float) (worldPos.z - camPos.z));
-        org.joml.Quaternionf camQuat = camera.rotation().conjugate();
-        rel.rotate(camQuat);
-        // 相机空间：-Z 为前方
-        if (rel.z >= -0.1f) {
+        org.joml.Vector3f look = camera.getLookVector();
+        org.joml.Vector3f up = camera.getUpVector();
+        org.joml.Vector3f left = camera.getLeftVector();
+
+        Vec3 rel = worldPos.subtract(camPos);
+        double fwdDist = rel.x * look.x + rel.y * look.y + rel.z * look.z;
+        if (fwdDist <= 0.1) {
             return null;
         }
+        // right = -left
+        double rightDist = -(rel.x * left.x + rel.y * left.y + rel.z * left.z);
+        double upDist = rel.x * up.x + rel.y * up.y + rel.z * up.z;
+
         double fov = mc.options.fov().get();
         int guiW = mc.getWindow().getGuiScaledWidth();
         int guiH = mc.getWindow().getGuiScaledHeight();
-        float scale = (float) ((guiH / 2.0) / Math.tan(Math.toRadians(fov / 2.0)));
-        int sx = guiW / 2 + Math.round(rel.x / -rel.z * scale);
-        int sy = guiH / 2 - Math.round(rel.y / -rel.z * scale);
-        float dist = (float) Math.sqrt(rel.x * rel.x + rel.y * rel.y + rel.z * rel.z);
+        double scale = (guiH / 2.0) / Math.tan(Math.toRadians(fov / 2.0));
+        int sx = guiW / 2 + (int) Math.round(rightDist / fwdDist * scale);
+        int sy = guiH / 2 - (int) Math.round(upDist / fwdDist * scale);
+        float dist = (float) fwdDist;
         return new Vec2(sx, sy, dist);
     }
 
