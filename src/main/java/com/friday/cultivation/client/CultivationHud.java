@@ -47,8 +47,6 @@ public class CultivationHud {
     private static final int BAR_INNER_BG = 0xFF1A1A1A;
     /** 贴图左端固定圆角像素数（clip 段，参考电池护盾 CLIP_WIDTH=3） */
     private static final int CLIP_PX = 3;
-    /** 左端圆角段对应屏幕像素（= 全宽等比缩放后的 3px 贴图宽度） */
-    private static final int CLIP_SCREEN = 3;
 
     // 各条宽度（递减）
     private static final int HEALTH_WIDTH = 100;
@@ -270,6 +268,8 @@ public class CultivationHud {
             int halfH = Math.max(1, height / 2);
             int topH = halfH;
             int botH = height - halfH;
+            // 左端圆角段屏幕宽：按贴图 CLIP_PX 像素 × 全宽缩放比例（底槽圆角同比例，随条宽变化）
+            int clipScreen = Math.max(1, (int)((double)width * (double)CLIP_PX / (double)texW));
             if (targetW >= width) {
                 // 满/接近满：全宽整图等比缩放（与底槽一致，圆角完整）
                 setBarColor(graphics, topColor);
@@ -277,7 +277,7 @@ public class CultivationHud {
                 setBarColor(graphics, bottomColor);
                 graphics.blit(fillTex, x, y + topH, width, botH, 0.0f, (float)halfH, texW, texH - halfH, texW, texH);
                 graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-            } else if (targetW <= CLIP_SCREEN) {
+            } else if (targetW <= clipScreen) {
                 // 很小：整图等比缩放到 targetW（左端圆角随比例，但极小段直接整图缩放）
                 setBarColor(graphics, topColor);
                 graphics.blit(fillTex, x, y, targetW, topH, 0.0f, 0.0f, texW, halfH, texW, texH);
@@ -286,18 +286,18 @@ public class CultivationHud {
                 graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
             } else {
                 // 电池护盾 clip：左端固定圆角段（与底槽缩放一致）+ 右侧从贴图尾部滑入
-                int rightScreen = targetW - CLIP_SCREEN;
-                // 左端：采样贴图左端 CLIP_PX 像素，等比缩放到 CLIP_SCREEN
+                int rightScreen = targetW - clipScreen;
+                // 左端：采样贴图左端 CLIP_PX 像素，等比缩放到 clipScreen
                 setBarColor(graphics, topColor);
-                graphics.blit(fillTex, x, y, CLIP_SCREEN, topH, 0.0f, 0.0f, CLIP_PX, halfH, texW, texH);
+                graphics.blit(fillTex, x, y, clipScreen, topH, 0.0f, 0.0f, CLIP_PX, halfH, texW, texH);
                 setBarColor(graphics, bottomColor);
-                graphics.blit(fillTex, x, y + topH, CLIP_SCREEN, botH, 0.0f, (float)halfH, CLIP_PX, texH - halfH, texW, texH);
+                graphics.blit(fillTex, x, y + topH, clipScreen, botH, 0.0f, (float)halfH, CLIP_PX, texH - halfH, texW, texH);
                 // 右侧：从贴图尾部取 rightScreen/width 比例像素，等比缩放到 rightScreen
                 int rightSrc = Math.max(1, (int)Math.round((double)rightScreen * (double)texW / (double)width));
                 setBarColor(graphics, topColor);
-                graphics.blit(fillTex, x + CLIP_SCREEN, y, rightScreen, topH, (float)(texW - rightSrc), 0.0f, rightSrc, halfH, texW, texH);
+                graphics.blit(fillTex, x + clipScreen, y, rightScreen, topH, (float)(texW - rightSrc), 0.0f, rightSrc, halfH, texW, texH);
                 setBarColor(graphics, bottomColor);
-                graphics.blit(fillTex, x + CLIP_SCREEN, y + topH, rightScreen, botH, (float)(texW - rightSrc), (float)halfH, rightSrc, texH - halfH, texW, texH);
+                graphics.blit(fillTex, x + clipScreen, y + topH, rightScreen, botH, (float)(texW - rightSrc), (float)halfH, rightSrc, texH - halfH, texW, texH);
                 graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
             }
         }
