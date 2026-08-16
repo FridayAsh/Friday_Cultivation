@@ -158,8 +158,9 @@ public final class TechniqueEffectHandler {
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_LOOSE_IMMORTAL_HP, "xiaoxiang_loose_immortal_hp", looseImmortalHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
         double bodyTemperingHp = TechniqueEffectHandler.bodyTemperingHpBonus(sp, data);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BODY_TEMPERING_HP, "xiaoxiang_body_tempering_hp", bodyTemperingHp, AttributeModifier.Operation.ADDITION);
-        // 突破累计生命加成（每次大/小境界突破累加）
-        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BREAKTHROUGH_HP, "xiaoxiang_breakthrough_hp", (double)data.getBreakthroughHpBonus(), AttributeModifier.Operation.ADDITION);
+        // 突破累计生命加成（每次大/小境界突破累加；data 可能为 null，如死亡/复活瞬间 capability 未附加）
+        double breakthroughHp = data == null ? 0.0 : (double)data.getBreakthroughHpBonus();
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BREAKTHROUGH_HP, "xiaoxiang_breakthrough_hp", breakthroughHp, AttributeModifier.Operation.ADDITION);
         // 全局生命倍率 ×4（含所有加成，最终数值放大）
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_REALM_HP_MULT, "xiaoxiang_realm_hp_mult", 3.0, AttributeModifier.Operation.MULTIPLY_TOTAL);
         double zhenyuanSpeed = movementBonusEnabled ? ZhenyuanBonusHelper.agilityMoveSpeedMult((Player)sp) : 0.0;
