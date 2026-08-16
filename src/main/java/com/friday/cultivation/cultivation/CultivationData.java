@@ -288,7 +288,8 @@ implements INBTSerializable<CompoundTag> {
             this.setCultivationProgress(this.cultivationProgress + (long)amount);
         }
         // 半圣/圣人/半帝/大帝：吸收灵气同时累积悟道（浮动获得：±30% 随机 + 5% 顿悟档位）
-        if (this.getWuDaoMax() > 0L) {
+        // 第九帝界（大帝巅峰）后无下一境界，悟道已无用：不再触发悟道增加
+        if (this.getWuDaoMax() > 0L && !(this.realm == Realm.GREAT_EMPEROR && this.isLastSubStage())) {
             this.gainWuDao((long)amount);
         }
         long before = this.currentQi;
