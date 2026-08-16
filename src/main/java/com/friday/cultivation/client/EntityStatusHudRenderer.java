@@ -110,7 +110,8 @@ public class EntityStatusHudRenderer {
                 (float) (worldPos.x - camPos.x),
                 (float) (worldPos.y - camPos.y),
                 (float) (worldPos.z - camPos.z));
-        rel.rotate(camera.rotation());
+        org.joml.Quaternionf camQuat = camera.rotation().conjugate();
+        rel.rotate(camQuat);
         // 相机空间：-Z 为前方
         if (rel.z >= -0.1f) {
             return null;
