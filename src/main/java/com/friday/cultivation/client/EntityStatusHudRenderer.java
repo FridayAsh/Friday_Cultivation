@@ -1,14 +1,7 @@
 package com.friday.cultivation.client;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -20,12 +13,23 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+/**
+ * 生物头顶血条渲染器（GUI 空间版）。
+ *
+ * 在 GUI 空间（RenderGuiOverlayEvent.Pre，与玩家血条同一 overlay 阶段）渲染，
+ * 完全绕开光影包接管的世界渲染管线——光影包对 GUI 渲染有专门处理路径，
+ * 因此血条不会像世界空间 Tesselator 立即模式那样被光影重写 blend/alpha 而变透明。
+ *
+ * 血条贴图与玩家 CultivationHud.renderTextureBar 完全一致（blood_empty 白底条
+ * + blood_fill 染深灰底槽 + clip 渐变填充），用 GuiGraphics.blit 绘制。
+ */
 @Mod.EventBusSubscriber(modid = "friday_cultivation", value = Dist.CLIENT)
 public class EntityStatusHudRenderer {
     private static final ResourceLocation BLOOD_EMPTY = new ResourceLocation("friday_cultivation", "textures/gui/blood_empty.png");
@@ -41,11 +45,11 @@ public class EntityStatusHudRenderer {
     private static final int HEALTH_TOP = -1944235;
     private static final int HEALTH_BOTTOM = -5758944;
 
-    private static final float BAR_W = 48.0f;
+    // 血条基准屏幕尺寸（按 1 格距离换算）
+    private static final float BASE_BAR_W = 48.0f;
     private static final float BAR_H = 6.0f;
     private static final float ICON_SIZE = 8.0f;
     private static final float TEXT_SCALE = 0.5f;
-    private static final float WORLD_SCALE = -0.025f;
     private static final double MAX_DISTANCE = 24.0;
     // 与玩家血条一致：填充条左端固定圆角段在贴图中所占像素（blood_fill 左端圆角宽度）
     private static final int CLIP_PX = 3;
@@ -54,44 +58,26 @@ public class EntityStatusHudRenderer {
     }
 
     @SubscribeEvent
-    public static void onRenderLevelStage(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+    public static void onRenderOverlay(RenderGuiOverlayEvent.Pre event) {
+        if (event.getOverlay() != VanillaGuiOverlay.PLAYER_HEALTH.type()) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null || mc.options.hideGui) {
+        Player player = mc.player;
+        if (player == null || mc.level == null || mc.options.hideGui) {
             return;
         }
-        Player player = mc.player;
-        Vec3 cam = event.getCamera().getPosition();
-        float partial = event.getPartialTick();
-
-        // 保持 blend 开启（血条内文本字形依赖 alpha 混合，disableBlend 会让字形变实心方块）；
-        // 所有 quad 顶点 alpha 均为 1.0（不产生半透明感），叠加不透明底色兜底，贴图透明像素不会
-        // 透出背后世界，血条呈实心。
-        // 关键：重置 ColorModulator 为纯白不透明——AFTER_PARTICLES 阶段紧接粒子渲染，
-        // 粒子系统会把 ColorModulator 的 alpha 设为半透明值，若不重置血条会继承该状态而变透明
-        // （玩家血条用 GuiGraphics.blit 每次 setColor(1,1,1,1) 重置，所以没有此问题）。
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-        RenderSystem.disableDepthTest();
-        RenderSystem.depthMask(false);
+        GuiGraphics graphics = event.getGuiGraphics();
+        float partial = mc.getFrameTime();
 
         AABB box = player.getBoundingBox().inflate(MAX_DISTANCE, MAX_DISTANCE, MAX_DISTANCE);
         for (Entity e : mc.level.getEntities(player, box, EntityStatusHudRenderer::canShowStatus)) {
             LivingEntity living = (LivingEntity) e;
-            // 视线遮挡隐藏：玩家看不到（射线先被方块挡住）的生物不显示血条
             if (!isVisibleToPlayer(player, living, partial)) {
                 continue;
             }
-            renderEntityStatus(event, living, cam, partial);
+            renderEntityStatus(graphics, player, living, partial);
         }
-
-        mc.renderBuffers().bufferSource().endBatch();
-        RenderSystem.depthMask(true);
-        RenderSystem.enableDepthTest();
-        RenderSystem.disableBlend();
     }
 
     private static boolean canShowStatus(Entity e) {
@@ -100,7 +86,7 @@ public class EntityStatusHudRenderer {
 
     /**
      * 视线遮挡判断：从玩家眼睛到生物身体中心做方块射线，若射线先命中方块（命中点比目标点更近），
-     * 说明该生物被方块遮挡，玩家看不到，则不渲染其血条。只考虑方块遮挡，不因其他实体挡在前面而隐藏。
+     * 说明该生物被方块遮挡，玩家看不到，则不渲染其血条。
      */
     private static boolean isVisibleToPlayer(Player player, LivingEntity living, float partial) {
         Vec3 eye = player.getEyePosition(partial);
@@ -113,217 +99,170 @@ public class EntityStatusHudRenderer {
         return hit.getLocation().distanceToSqr(eye) >= target.distanceToSqr(eye) - 1.0E-4;
     }
 
-    private static void renderEntityStatus(RenderLevelStageEvent event, LivingEntity living, Vec3 cam, float partial) {
-        PoseStack pose = event.getPoseStack();
-        pose.pushPose();
+    /**
+     * 世界坐标 → 屏幕坐标（标准透视投影）。
+     * 返回 null 表示在相机后方（不可见）。
+     */
+    private static Vec2 projectToScreen(Minecraft mc, Vec3 worldPos, float partial) {
+        net.minecraft.client.Camera camera = mc.gameRenderer.getMainCamera();
+        Vec3 camPos = camera.getPosition();
+        Vector3f rel = new Vector3f(
+                (float) (worldPos.x - camPos.x),
+                (float) (worldPos.y - camPos.y),
+                (float) (worldPos.z - camPos.z));
+        rel.rotate(camera.rotation());
+        // 相机空间：-Z 为前方
+        if (rel.z >= -0.1f) {
+            return null;
+        }
+        double fov = mc.options.fov().get();
+        int guiW = mc.getWindow().getGuiScaledWidth();
+        int guiH = mc.getWindow().getGuiScaledHeight();
+        float scale = (float) ((guiH / 2.0) / Math.tan(Math.toRadians(fov / 2.0)));
+        int sx = guiW / 2 + Math.round(rel.x / -rel.z * scale);
+        int sy = guiH / 2 - Math.round(rel.y / -rel.z * scale);
+        float dist = (float) Math.sqrt(rel.x * rel.x + rel.y * rel.y + rel.z * rel.z);
+        return new Vec2(sx, sy, dist);
+    }
 
-        Vec3 pos = living.getPosition(partial).add(0.0, living.getBbHeight() + 0.6, 0.0);
-        pose.translate(-cam.x, -cam.y, -cam.z);
-        pose.translate(pos.x, pos.y, pos.z);
-        // 标准 billboard：与实体名牌（EntityRenderer.renderNameTag）相同的相机朝向四元数，
-        // 任何观察角度下平面均正对相机。负缩放（X/Y 双负）仅翻转面朝向，与原版名牌
-        // scale(-0.025F, -0.025F, 0.025F) 一致，不产生贴图/文字镜像，故保持 WORLD_SCALE = -0.025f。
-        pose.mulPose(Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation());
-        pose.scale(WORLD_SCALE, WORLD_SCALE, 1.0f);
-
-        Matrix4f mat = pose.last().pose();
+    private static void renderEntityStatus(GuiGraphics graphics, Player player, LivingEntity living, float partial) {
+        Minecraft mc = Minecraft.getInstance();
+        Vec3 head = living.getPosition(partial).add(0.0, living.getBbHeight() + 0.6, 0.0);
+        Vec2 proj = projectToScreen(mc, head, partial);
+        if (proj == null) {
+            return;
+        }
+        int sx = proj.x;
+        int sy = proj.y;
 
         float hp = living.getHealth();
         float maxHp = living.getMaxHealth();
         double ratio = maxHp <= 0.0f ? 0.0 : (double) hp / (double) maxHp;
 
-        // 体型自适应：仅宽度按体型等比缩放，高度与玩家血条一致固定（BAR_H=6，避免贴图 1px 透明边占比过大透出天空）
+        // 体型自适应宽度 + 距离缩放（1 格距离基准 48px，越远越小）
         float bodyScale = Math.max(0.5f, Math.min(2.0f, (float) living.getBbWidth() / 0.6f));
-        float barW = BAR_W * bodyScale;
-        float barH = BAR_H;
-
-        // 与玩家血条 renderTextureBar 完全一致的两层贴图结构（玩家调用什么贴图，这里就用什么贴图）：
-        // ① 底条：blood_empty 整张贴图（96x6）等比缩放到目标宽高（白色 tint）
-        renderTexturedQuad(mat, BLOOD_EMPTY, -barW / 2.0f, -10.0f, barW, barH,
-                0.0f, 0.0f, 96.0f, 6.0f, 96, 6, 1.0f, 1.0f, 1.0f);
-        // ② 内部深黑灰底槽：blood_fill 贴图染 BAR_INNER_BG 铺满全条（玩家同款：fillTex 染深灰铺满）
-        renderTexturedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, barW, barH,
-                0.0f, 0.0f, 96.0f, 6.0f, 96, 6, BAR_INNER_BG);
-        // ③ 填充：与玩家 renderTextureBar 相同的电池护盾 clip 逻辑——
-        //    左端固定圆角段（采样贴图左端 CLIP_PX 像素等比缩放）+ 右侧从贴图尾部滑入，
-        //    不把整张含左右圆角边框的贴图等比缩放到当前宽度（避免多渲染左右边框）
-        float filledW = (float) (barW * ratio);
-        if (filledW > 0.0f) {
-            float clipScreen = Math.max(1.0f, barW * CLIP_PX / 96.0f);
-            if (filledW >= barW) {
-                // 满/接近满：全宽整图等比缩放（与底槽一致，圆角完整）
-                renderTexturedTintedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, barW, barH,
-                        0.0f, 0.0f, 96.0f, 6.0f, 96, 6, HEALTH_TOP, HEALTH_BOTTOM);
-            } else if (filledW <= clipScreen) {
-                // 很小：整图等比缩放到 filledW（极小段直接整图缩放）
-                renderTexturedTintedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, filledW, barH,
-                        0.0f, 0.0f, 96.0f, 6.0f, 96, 6, HEALTH_TOP, HEALTH_BOTTOM);
-            } else {
-                // 左端：采样贴图左端 CLIP_PX 像素，等比缩放到 clipScreen（圆角固定不变形）
-                renderTexturedTintedQuad(mat, BLOOD_FILL, -barW / 2.0f, -10.0f, clipScreen, barH,
-                        0.0f, 0.0f, CLIP_PX, 6.0f, 96, 6, HEALTH_TOP, HEALTH_BOTTOM);
-                // 右侧：从贴图尾部取 rightScreen/barW 比例像素，等比缩放到 rightScreen（无右端圆角）
-                float rightScreen = filledW - clipScreen;
-                float rightSrc = Math.max(1.0f, rightScreen * 96.0f / barW);
-                renderTexturedTintedQuad(mat, BLOOD_FILL, -barW / 2.0f + clipScreen, -10.0f, rightScreen, barH,
-                        96.0f - rightSrc, 0.0f, rightSrc, 6.0f, 96, 6, HEALTH_TOP, HEALTH_BOTTOM);
-            }
+        float distScale = (float) (BASE_BAR_W * 0.4 / Math.max(1.0, proj.dist));
+        float barW = BASE_BAR_W * bodyScale * distScale;
+        float barH = BAR_H * distScale;
+        if (barW < 12.0f || barH < 2.0f) {
+            return;
         }
 
-        // 条内居中显示当前/最大生命值文本
-        renderHealthText(mat, hp, maxHp, barW, barH, bodyScale);
+        float bx = (float) sx - barW / 2.0f;
+        float by = (float) sy - 12.0f;
 
-        // 盔甲 / 韧性
+        // 与玩家血条 renderTextureBar 完全一致的三层贴图结构（GuiGraphics.blit）：
+        // ① 底条：blood_empty 整张贴图等比缩放（白色 tint）
+        graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+        graphics.blit(BLOOD_EMPTY, (int) bx, (int) by, Math.round(barW), Math.round(barH),
+                0.0f, 0.0f, 96, 6, 96, 6);
+        // ② 内部深黑灰底槽：blood_fill 染 BAR_INNER_BG 铺满全条
+        setBarColor(graphics, BAR_INNER_BG);
+        graphics.blit(BLOOD_FILL, (int) bx, (int) by, Math.round(barW), Math.round(barH),
+                0.0f, 0.0f, 96, 6, 96, 6);
+        graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+        // ③ 填充：电池护盾 clip（左端固定圆角 + 右侧从贴图尾部滑入）
+        int targetW = (int) Math.round(barW * ratio);
+        if (targetW > 0) {
+            int x0 = (int) bx;
+            int y0 = (int) by;
+            int w = Math.round(barW);
+            int h = Math.round(barH);
+            int halfH = Math.max(1, h / 2);
+            int clipScreen = Math.max(1, Math.round(barW * CLIP_PX / 96.0f));
+            if (targetW >= w) {
+                setBarColor(graphics, HEALTH_TOP);
+                graphics.blit(BLOOD_FILL, x0, y0, w, halfH, 0.0f, 0.0f, 96, 3, 96, 6);
+                setBarColor(graphics, HEALTH_BOTTOM);
+                graphics.blit(BLOOD_FILL, x0, y0 + halfH, w, h - halfH, 0.0f, 3.0f, 96, 3, 96, 6);
+            } else if (targetW <= clipScreen) {
+                setBarColor(graphics, HEALTH_TOP);
+                graphics.blit(BLOOD_FILL, x0, y0, targetW, halfH, 0.0f, 0.0f, 96, 3, 96, 6);
+                setBarColor(graphics, HEALTH_BOTTOM);
+                graphics.blit(BLOOD_FILL, x0, y0 + halfH, targetW, h - halfH, 0.0f, 3.0f, 96, 3, 96, 6);
+            } else {
+                int rightScreen = targetW - clipScreen;
+                setBarColor(graphics, HEALTH_TOP);
+                graphics.blit(BLOOD_FILL, x0, y0, clipScreen, halfH, 0.0f, 0.0f, CLIP_PX, 3, 96, 6);
+                setBarColor(graphics, HEALTH_BOTTOM);
+                graphics.blit(BLOOD_FILL, x0, y0 + halfH, clipScreen, h - halfH, 0.0f, 3.0f, CLIP_PX, 3, 96, 6);
+                int rightSrc = Math.max(1, (int) Math.round((double) rightScreen * 96.0 / (double) w));
+                setBarColor(graphics, HEALTH_TOP);
+                graphics.blit(BLOOD_FILL, x0 + clipScreen, y0, rightScreen, halfH, 96.0f - rightSrc, 0.0f, rightSrc, 3, 96, 6);
+                setBarColor(graphics, HEALTH_BOTTOM);
+                graphics.blit(BLOOD_FILL, x0 + clipScreen, y0 + halfH, rightScreen, h - halfH, 96.0f - rightSrc, 3.0f, rightSrc, 3, 96, 6);
+            }
+            graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+        }
+
+        // 条内居中显示当前/最大生命值文本（随条缩放）
+        Component text = Component.literal(String.format("%.0f/%.0f", hp, maxHp));
+        float textScale = 0.5f * distScale;
+        if (textScale >= 0.22f) {
+            float rawW = mc.font.width(text);
+            float scale = Math.min(textScale, barW / rawW);
+            float textW = rawW * scale;
+            float textX = bx + (barW - textW) / 2.0f;
+            float textY = by + (barH - mc.font.lineHeight * scale) / 2.0f;
+            graphics.pose().pushPose();
+            graphics.pose().translate(textX, textY, 0.0f);
+            graphics.pose().scale(scale, scale, 1.0f);
+            graphics.drawString(mc.font, text, 0, 0, 0xFFFFFF, true);
+            graphics.pose().popPose();
+        }
+
+        // 盔甲 / 韧性（水平排列在血条右侧，随条缩放）
         int armor = living.getArmorValue();
         double toughness = living.getAttribute(Attributes.ARMOR_TOUGHNESS).getValue();
         boolean showArmor = armor > 0;
         boolean showToughness = toughness > 0.0;
-        if (showArmor || showToughness) {
-            renderArmorToughness(event, mat, showArmor, showToughness, armor, toughness, barW);
-        }
-
-        pose.popPose();
-    }
-
-    private static void renderHealthText(Matrix4f mat, float hp, float maxHp, float barW, float barH, float bodyScale) {
-        Minecraft mc = Minecraft.getInstance();
-        Component text = Component.literal(String.format("%.0f/%.0f", hp, maxHp));
-        float rawW = mc.font.width(text);
-        float rawH = mc.font.lineHeight;
-        // 文本基础字号随体型缩放，再限制为不超过条宽
-        float textScale = TEXT_SCALE * bodyScale;
-        if (rawW > 0.0f) {
-            textScale = Math.min(textScale, barW / rawW);
-        }
-        // 字号下限保证可读性（barW 下限 24px 时实际所需比例远高于 0.25，正常不会触发）
-        textScale = Math.max(textScale, 0.25f);
-        float textW = rawW * textScale;
-        float textH = rawH * textScale;
-        float textX = -barW / 2.0f + (barW - textW) / 2.0f;
-        float textY = -10.0f + (barH - textH) / 2.0f;
-        // 文本必须与条同步缩放：drawInBatch 绘制的是原始字号，需把 textScale 乘进矩阵，
-        // 并以缩放前坐标系（textX/textScale）传坐标，文本实际尺寸 = 原始字号 * textScale
-        Matrix4f textMat = new Matrix4f(mat);
-        textMat.scale(textScale, textScale, 1.0f);
-        mc.font.drawInBatch(text, textX / textScale, textY / textScale, 0xFFFFFF, true, textMat,
-                mc.renderBuffers().bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
-    }
-
-    private static void renderArmorToughness(RenderLevelStageEvent event, Matrix4f mat, boolean showArmor, boolean showToughness, int armor, double toughness, float barW) {
-        Minecraft mc = Minecraft.getInstance();
-        Component armorText = Component.literal(String.valueOf(armor));
-        Component toughText = Component.literal(String.format("%.0f", toughness));
-
-        float armorW = showArmor ? ICON_SIZE + 1.0f + mc.font.width(armorText) * TEXT_SCALE : 0.0f;
-        float toughW = showToughness ? ICON_SIZE + 1.0f + mc.font.width(toughText) * TEXT_SCALE : 0.0f;
-        float gap = 4.0f;
-        // 盔甲 → 韧性 水平排列在血条右侧（与玩家 renderAttributeRow 一致：生命条右侧同 y）
-        float gx = barW / 2.0f + 2.0f;
-        float gy = -10.0f + (BAR_H - ICON_SIZE) / 2.0f;
-
-        if (showArmor) {
-            renderIconValue(event, mat, gx, gy, VANILLA_ICONS, ARMOR_ICON_U, ARMOR_ICON_V, ARMOR_COLOR, armorText);
-            gx += armorW + gap;
-        }
-        if (showToughness) {
-            renderIconValue(event, mat, gx, gy, OVERFLOWING_ICONS, TOUGH_ICON_U, TOUGH_ICON_V, TOUGH_COLOR, toughText);
+        if ((showArmor || showToughness) && distScale >= 0.22f) {
+            float gx = bx + barW + 2.0f * distScale;
+            float gy = by + (barH - ICON_SIZE * distScale) / 2.0f;
+            float icon = ICON_SIZE * distScale;
+            float gap = 4.0f * distScale;
+            if (showArmor) {
+                graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+                graphics.blit(VANILLA_ICONS, (int) gx, (int) gy, Math.round(icon), Math.round(icon),
+                        ARMOR_ICON_U, ARMOR_ICON_V, 9, 9, 256, 256);
+                drawScaledText(graphics, mc, Component.literal(String.valueOf(armor)),
+                        gx + icon + 1.0f * distScale, gy, 0.5f * distScale, ARMOR_COLOR);
+                float armorW = icon + 1.0f * distScale + mc.font.width(Component.literal(String.valueOf(armor))) * 0.5f * distScale;
+                gx += armorW + gap;
+            }
+            if (showToughness) {
+                graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+                graphics.blit(OVERFLOWING_ICONS, (int) gx, (int) gy, Math.round(icon), Math.round(icon),
+                        TOUGH_ICON_U, TOUGH_ICON_V, 9, 9, 256, 256);
+                drawScaledText(graphics, mc, Component.literal(String.format("%.0f", toughness)),
+                        gx + icon + 1.0f * distScale, gy, 0.5f * distScale, TOUGH_COLOR);
+            }
         }
     }
 
-    private static void renderIconValue(RenderLevelStageEvent event, Matrix4f mat, float x, float y, ResourceLocation texture, int u, int v, int color, Component text) {
-        renderTexturedQuad(mat, texture, x, y, ICON_SIZE, ICON_SIZE,
-                (float) u, (float) v, 9.0f, 9.0f, 256, 256,
-                ((color >> 16) & 0xFF) / 255.0f,
-                ((color >> 8) & 0xFF) / 255.0f,
-                (color & 0xFF) / 255.0f);
-        // 文本按 TEXT_SCALE 矩阵缩放绘制（与玩家 drawScaled 一致），实际宽度 = font.width * TEXT_SCALE，
-        // 与 renderArmorToughness 的宽度计算匹配，避免间隔重叠
-        float rawW = Minecraft.getInstance().font.width(text);
-        Matrix4f textMat = new Matrix4f(mat);
-        textMat.scale(TEXT_SCALE, TEXT_SCALE, 1.0f);
-        float tx = (x + ICON_SIZE + 1.0f) / TEXT_SCALE;
-        float ty = (y + 1.0f) / TEXT_SCALE;
-        Minecraft.getInstance().font.drawInBatch(text, tx, ty, color, true, textMat,
-                Minecraft.getInstance().renderBuffers().bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
-        // 保持 rawW 供调用方宽度计算一致（宽度 = ICON_SIZE + 1 + rawW * TEXT_SCALE）
+    /** 缩放绘制文本（坐标=缩放前） */
+    private static void drawScaledText(GuiGraphics graphics, Minecraft mc, Component text, float x, float y, float scale, int color) {
+        if (scale <= 0.0f) {
+            return;
+        }
+        graphics.pose().pushPose();
+        graphics.pose().translate(x, y, 0.0f);
+        graphics.pose().scale(scale, scale, 1.0f);
+        graphics.drawString(mc.font, text, 0, 0, color, true);
+        graphics.pose().popPose();
     }
 
-    private static void renderSolidQuad(Matrix4f mat, float x, float y, float w, float h, int color) {
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+    /** 与玩家 CultivationHud.setBarColor 相同：染贴图颜色（含 alpha） */
+    private static void setBarColor(GuiGraphics graphics, int color) {
         float a = ((color >> 24) & 0xFF) / 255.0f;
         float r = ((color >> 16) & 0xFF) / 255.0f;
         float g = ((color >> 8) & 0xFF) / 255.0f;
         float b = (color & 0xFF) / 255.0f;
-        Tesselator t = Tesselator.getInstance();
-        BufferBuilder buffer = t.getBuilder();
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        buffer.vertex(mat, x, y, 0.0f).color(r, g, b, a).endVertex();
-        buffer.vertex(mat, x, y + h, 0.0f).color(r, g, b, a).endVertex();
-        buffer.vertex(mat, x + w, y + h, 0.0f).color(r, g, b, a).endVertex();
-        buffer.vertex(mat, x + w, y, 0.0f).color(r, g, b, a).endVertex();
-        t.end();
+        graphics.setColor(r, g, b, a);
     }
 
-    private static void renderTexturedQuad(Matrix4f mat, ResourceLocation texture, float x, float y, float w, float h,
-                                           float u, float v, float texW, float texH, int texWidth, int texHeight,
-                                           float cr, float cg, float cb) {
-        RenderSystem.setShaderTexture(0, texture);
-        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-        float u0 = u / texWidth;
-        float v0 = v / texHeight;
-        float u1 = (u + texW) / texWidth;
-        float v1 = (v + texH) / texHeight;
-        Tesselator t = Tesselator.getInstance();
-        BufferBuilder buffer = t.getBuilder();
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        buffer.vertex(mat, x, y, 0.0f).uv(u0, v0).color(cr, cg, cb, 1.0f).endVertex();
-        buffer.vertex(mat, x, y + h, 0.0f).uv(u0, v1).color(cr, cg, cb, 1.0f).endVertex();
-        buffer.vertex(mat, x + w, y + h, 0.0f).uv(u1, v1).color(cr, cg, cb, 1.0f).endVertex();
-        buffer.vertex(mat, x + w, y, 0.0f).uv(u1, v0).color(cr, cg, cb, 1.0f).endVertex();
-        t.end();
-    }
-
-    private static void renderTexturedQuad(Matrix4f mat, ResourceLocation texture, float x, float y, float w, float h,
-                                           float u, float v, float texW, float texH, int texWidth, int texHeight,
-                                           int color) {
-        float r = ((color >> 16) & 0xFF) / 255.0f;
-        float g = ((color >> 8) & 0xFF) / 255.0f;
-        float b = (color & 0xFF) / 255.0f;
-        renderTexturedQuad(mat, texture, x, y, w, h, u, v, texW, texH, texWidth, texHeight, r, g, b);
-    }
-
-    private static void renderTexturedTintedQuad(Matrix4f mat, ResourceLocation texture, float x, float y, float w, float h,
-                                                float u, float v, float texW, float texH, int texWidth, int texHeight,
-                                                int topColor, int bottomColor) {
-        RenderSystem.setShaderTexture(0, texture);
-        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-        float u0 = u / texWidth;
-        float u1 = (u + texW) / texWidth;
-        float v0 = v / texHeight;
-        float vMid = (v + texH / 2.0f) / texHeight;
-        float v1 = (v + texH) / texHeight;
-
-        float tr = ((topColor >> 16) & 0xFF) / 255.0f;
-        float tg = ((topColor >> 8) & 0xFF) / 255.0f;
-        float tb = (topColor & 0xFF) / 255.0f;
-        float br = ((bottomColor >> 16) & 0xFF) / 255.0f;
-        float bg = ((bottomColor >> 8) & 0xFF) / 255.0f;
-        float bb = (bottomColor & 0xFF) / 255.0f;
-
-        Tesselator t = Tesselator.getInstance();
-        BufferBuilder buffer = t.getBuilder();
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        float midY = y + h / 2.0f;
-        // 上半（顶色）
-        buffer.vertex(mat, x, y, 0.0f).uv(u0, v0).color(tr, tg, tb, 1.0f).endVertex();
-        buffer.vertex(mat, x, midY, 0.0f).uv(u0, vMid).color(tr, tg, tb, 1.0f).endVertex();
-        buffer.vertex(mat, x + w, midY, 0.0f).uv(u1, vMid).color(tr, tg, tb, 1.0f).endVertex();
-        buffer.vertex(mat, x + w, y, 0.0f).uv(u1, v0).color(tr, tg, tb, 1.0f).endVertex();
-        // 下半（底色）
-        buffer.vertex(mat, x, midY, 0.0f).uv(u0, vMid).color(br, bg, bb, 1.0f).endVertex();
-        buffer.vertex(mat, x, y + h, 0.0f).uv(u0, v1).color(br, bg, bb, 1.0f).endVertex();
-        buffer.vertex(mat, x + w, y + h, 0.0f).uv(u1, v1).color(br, bg, bb, 1.0f).endVertex();
-        buffer.vertex(mat, x + w, midY, 0.0f).uv(u1, vMid).color(br, bg, bb, 1.0f).endVertex();
-        t.end();
+    /** 屏幕坐标 + 距离 */
+    private record Vec2(int x, int y, float dist) {
     }
 }
