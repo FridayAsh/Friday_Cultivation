@@ -1156,13 +1156,17 @@ extends Screen {
             this.renderLooseImmortalBreakthroughTab(gfx, x, rightX, y, player, data);
             return;
         }
+        // 第九帝界（大帝巅峰）后没有下一个境界：隐藏修为条与悟道条
+        boolean peakGreatEmperor = realm == Realm.GREAT_EMPEROR && sub.isPeakFor(Realm.GREAT_EMPEROR);
         long curCult = data.getCultivationProgress();
         long maxCult = data.getMaxCultivation();
-        this.drawThinBar(gfx, x + 4, y, width - 8, maxCult == 0L ? 0.0f : (float)curCult / (float)maxCult, Component.translatable((String)"screen.friday_cultivation.cult_short").getString(), curCult + " / " + maxCult, -928374, -3631046);
-        y += 13;
+        if (!peakGreatEmperor) {
+            this.drawThinBar(gfx, x + 4, y, width - 8, maxCult == 0L ? 0.0f : (float)curCult / (float)maxCult, Component.translatable((String)"screen.friday_cultivation.cult_short").getString(), curCult + " / " + maxCult, -928374, -3631046);
+            y += 13;
+        }
 
         long maxWudao = data.getWuDaoMax();
-        if (maxWudao > 0L) {
+        if (maxWudao > 0L && !peakGreatEmperor) {
             long curWudao = data.getWuDaoProgress();
             this.drawLeftStatusBar(gfx, ICON_WUDAO, x + 4, y, width - 8, (float)curWudao / (float)maxWudao, Component.translatable((String)"screen.friday_cultivation.wudao_short"), curWudao + " / " + maxWudao, -8355712, -10592674);
             y += 13;
@@ -2536,12 +2540,12 @@ extends Screen {
         switch (attrIdx) {
             case 0: {
                 perPointDesc = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.per_point.constitution");
-                currentEffect = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.current.constitution", (Object[])new Object[]{points[0]});
+                currentEffect = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.current.constitution", (Object[])new Object[]{points[0] * 10, points[0] * 8, points[0] * 3});
                 break;
             }
             case 1: {
                 perPointDesc = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.per_point.physique");
-                currentEffect = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.current.physique", (Object[])new Object[]{points[1], CultivationScreen.formatZhenyuanPercent((double)points[1] * 1.0)});
+                currentEffect = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.current.physique", (Object[])new Object[]{points[1] * 4, CultivationScreen.formatZhenyuanPercent((double)points[1] * 1.0)});
                 break;
             }
             case 2: {
@@ -2556,7 +2560,7 @@ extends Screen {
             }
             case 4: {
                 perPointDesc = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.per_point.qi_sea");
-                currentEffect = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.current.qi_sea", (Object[])new Object[]{(long)points[4] * 100L, (long)points[4] * 1L});
+                currentEffect = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.current.qi_sea", (Object[])new Object[]{(long)points[4] * 200L, (long)points[4] * 3L});
                 break;
             }
             default: {

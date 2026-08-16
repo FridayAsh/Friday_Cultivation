@@ -107,6 +107,10 @@ implements INBTSerializable<CompoundTag> {
     private int attrAgility = 0;
     private int attrSpellPower = 0;
     private int attrQiSea = 0;
+    /** 突破累计生命加成（每次大/小境界突破累加，含确定性随机，大帝封顶 2000/次） */
+    private long breakthroughHpBonus = 0L;
+    /** 突破累计灵气加成（每次突破累加，约为生命加成的 5 倍） */
+    private long breakthroughQiBonus = 0L;
     private boolean zhenyuanMajorAutoRebalanceApplied = false;
     private boolean bodyDefenseEnabled = true;
     private final Set<String> disabledBonusCategories = new LinkedHashSet<String>();
@@ -262,6 +266,10 @@ implements INBTSerializable<CompoundTag> {
             }
         }
         max = this.applyQiRefiningEnhancements(max);
+        // 突破累计灵气加成（每次大/小境界突破累加）
+        if (this.breakthroughQiBonus > 0L) {
+            max = CultivationData.saturatedAddLong(max, this.breakthroughQiBonus);
+        }
         return max;
     }
 
@@ -510,6 +518,39 @@ implements INBTSerializable<CompoundTag> {
 
     public void setAttrQiSea(int v) {
         this.attrQiSea = Math.max(0, v);
+    }
+
+    public long getBreakthroughHpBonus() {
+        return this.breakthroughHpBonus;
+    }
+
+    public long getBreakthroughQiBonus() {
+        return this.breakthroughQiBonus;
+    }
+
+    /**
+     * 突破加成算法（锻体后的所有境界，无论大/小境界突破都累加）：
+     * - 按境界档次（练气=1 起，大帝=13 档封顶）递增，低境界两位数起步、
+     *   大帝每次加四位数（最多 2000）
+     * - 大境界突破加成多一点（×1.0），小境界突破加成少一点（×0.35）
+     * - 灵气加成约为生命加成的 5 倍（大帝每次几千灵气）
+     * - 确定性伪随机抖动 ±20%（参考修为值设计），同境界同层永远同一结果
+     */
+    public void applyBreakthroughBonus(boolean majorBreakthrough) {
+        if (this.realm == null || this.realm == Realm.MORTAL || this.realm == Realm.BODY_TEMPERING || this.realm == Realm.LOOSE_IMMORTAL) {
+            return;
+        }
+        int tier = Math.max(0, this.realm.ordinal() - Realm.QI_REFINING.ordinal());
+        // 生命基础：练气约 40（两位数），大帝约 2000（封顶）
+        long baseHp = Math.min(2000L, 40L + (long)tier * 150L);
+        double mult = majorBreakthrough ? 1.0 : 0.35;
+        // 确定性伪随机抖动 ±20%
+        java.util.Random rnd = new java.util.Random((long)this.realm.ordinal() * 1000003L + (long)this.subStage.level() * 7919L + 104729L);
+        double jitter = 0.8 + rnd.nextDouble() * 0.4;
+        long hpGain = Math.max(1L, Math.round((double)baseHp * mult * jitter));
+        long qiGain = hpGain * 5L;
+        this.breakthroughHpBonus += hpGain;
+        this.breakthroughQiBonus += qiGain;
     }
 
     public void addAllZhenyuanAttributes(int delta) {
@@ -2074,6 +2115,8 @@ implements INBTSerializable<CompoundTag> {
                 this.ensureSpellsForRealm();
                 this.addUnallocatedZhenyuan(5);
                 this.addAllZhenyuanAttributes(5);
+                // 大境界突破加成（生命+灵气，按新境界档次递增）
+                this.applyBreakthroughBonus(true);
                 return;
             }
             this.currentQi = this.getMaxQi();
@@ -2085,6 +2128,8 @@ implements INBTSerializable<CompoundTag> {
             int reward = 1 + this.spiritRoot.bonus().extraZhenyuanPerSubLevel() + PhysiqueBonusHelper.extraZhenyuanPerMinor(this.physique);
             this.addUnallocatedZhenyuan(reward);
             this.addAllZhenyuanAttributes(1);
+            // 小境界突破加成（生命+灵气，比大境界少）
+            this.applyBreakthroughBonus(false);
         }
     }
 
@@ -2424,6 +2469,8 @@ implements INBTSerializable<CompoundTag> {
         tag.putInt("attrAgility", this.attrAgility);
         tag.putInt("attrSpellPower", this.attrSpellPower);
         tag.putInt("attrQiSea", this.attrQiSea);
+        tag.putLong("breakthroughHpBonus", this.breakthroughHpBonus);
+        tag.putLong("breakthroughQiBonus", this.breakthroughQiBonus);
         tag.putBoolean("zhenyuanMajorAutoRebalanceApplied", this.zhenyuanMajorAutoRebalanceApplied);
         tag.putBoolean("bodyDefenseEnabled", this.bodyDefenseEnabled);
         ListTag disabledBonusList = new ListTag();
@@ -2589,6 +2636,8 @@ implements INBTSerializable<CompoundTag> {
         this.attrAgility = tag.contains("attrAgility", 3) ? tag.getInt("attrAgility") : 0;
         this.attrSpellPower = tag.contains("attrSpellPower", 3) ? tag.getInt("attrSpellPower") : 0;
         this.attrQiSea = tag.contains("attrQiSea", 3) ? tag.getInt("attrQiSea") : 0;
+        this.breakthroughHpBonus = tag.contains("breakthroughHpBonus", 4) ? tag.getLong("breakthroughHpBonus") : 0L;
+        this.breakthroughQiBonus = tag.contains("breakthroughQiBonus", 4) ? tag.getLong("breakthroughQiBonus") : 0L;
         this.zhenyuanMajorAutoRebalanceApplied = tag.contains("zhenyuanMajorAutoRebalanceApplied", 1) && tag.getBoolean("zhenyuanMajorAutoRebalanceApplied");
         this.bodyDefenseEnabled = !tag.contains("bodyDefenseEnabled", 1) || tag.getBoolean("bodyDefenseEnabled");
         this.disabledBonusCategories.clear();

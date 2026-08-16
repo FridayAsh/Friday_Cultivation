@@ -13,14 +13,14 @@ import net.minecraft.world.entity.player.Player;
 
 public final class ZhenyuanBonusHelper {
     public static final double HP_PER_POINT = 1.0;
-    public static final int PHYSIQUE_ATK_PER_POINT = 1;
+    public static final int PHYSIQUE_ATK_PER_POINT = 4;
     public static final double PHYSIQUE_MINING_SPEED_PCT_PER_POINT = 1.0;
     public static final double MAX_PHYSIQUE_MINING_SPEED_BONUS = 1.0;
     public static final double AGILITY_MOVE_PCT_PER_POINT = 1.0;
     public static final double AGILITY_JUMP_PCT_PER_POINT = 0.2;
     public static final double SPELL_DAMAGE_PCT_PER_POINT = 5.0;
-    public static final long QI_SEA_FLAT_PER_POINT = 100L;
-    public static final long QI_SEA_QI_RECOVERY_PER_POINT = 1L;
+    public static final long QI_SEA_FLAT_PER_POINT = 200L;
+    public static final long QI_SEA_QI_RECOVERY_PER_POINT = 3L;
     @Deprecated(forRemoval=false)
     public static final int QI_SEA_ABSORB_RANGE_PER_POINT = 0;
     @Deprecated(forRemoval=false)

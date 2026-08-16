@@ -2136,12 +2136,12 @@ extends AbstractContainerScreen<WanderingCultivatorMenu> {
         switch (attrIdx) {
             case 0: {
                 perPointDesc = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.per_point.constitution");
-                currentEffect = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.current.constitution", (Object[])new Object[]{points[0]});
+                currentEffect = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.current.constitution", (Object[])new Object[]{points[0] * 10, points[0] * 8, points[0] * 3});
                 break;
             }
             case 1: {
                 perPointDesc = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.per_point.physique");
-                currentEffect = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.current.physique", (Object[])new Object[]{points[1], WanderingCultivatorScreen.formatZhenyuanPercent((double)points[1] * 1.0)});
+                currentEffect = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.current.physique", (Object[])new Object[]{points[1] * 4, WanderingCultivatorScreen.formatZhenyuanPercent((double)points[1] * 1.0)});
                 break;
             }
             case 2: {
@@ -2156,7 +2156,7 @@ extends AbstractContainerScreen<WanderingCultivatorMenu> {
             }
             case 4: {
                 perPointDesc = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.per_point.qi_sea");
-                currentEffect = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.current.qi_sea", (Object[])new Object[]{(long)points[4] * 100L, (long)points[4] * 1L});
+                currentEffect = Component.translatable((String)"zhenyuan.friday_cultivation.tooltip.current.qi_sea", (Object[])new Object[]{(long)points[4] * 200L, (long)points[4] * 3L});
                 break;
             }
             default: {

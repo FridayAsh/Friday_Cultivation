@@ -108,7 +108,9 @@ public class CultivationHud {
             return;
         }
         boolean soul = data.isSoulState();
-        boolean showCultivationBars = data.hasEquippedTechnique() || data.getRealm() != Realm.MORTAL;
+        // 第九帝界（大帝巅峰）后没有下一个境界：隐藏修为条与悟道条
+        boolean peakGreatEmperor = data.getRealm() == Realm.GREAT_EMPEROR && data.getSubStage().isPeakFor(Realm.GREAT_EMPEROR);
+        boolean showCultivationBars = (data.hasEquippedTechnique() || data.getRealm() != Realm.MORTAL) && !peakGreatEmperor;
         int x = CultivationHud.hudX(screenWidth);
         int y = HUD_Y;
 
@@ -135,7 +137,7 @@ public class CultivationHud {
         int realmAvailW = Math.max(20, x + HUD_WIDTH - realmX - 2);
         drawLeftScaled(graphics, mc, realmLine, realmX, topY, realmAvailW, 0.8f, GOLD_TEXT, true);
 
-        // 3. 条带区域：生命条 + 右侧饱食/氧气（非创造）→ 修为/灵气/悟道（条件显示）
+        // 3. 条带区域：生命条 + 右侧盔甲/韧性（非创造）→ 修为/灵气/悟道（条件显示）
         int barY = y + 16;
 
         if (!player.isCreative()) {
@@ -143,14 +145,14 @@ public class CultivationHud {
             Component healthText = Component.literal(String.format("%.0f/%.0f", player.getHealth(), player.getMaxHealth()));
             renderHealthBar(graphics, textBaseX, barY, HEALTH_WIDTH, BAR_HEIGHT, player.getHealth(), player.getMaxHealth(), healthText, -1);
 
-            // 右侧属性行：饱食 → 氧气，位于生命条右侧同 y
+            // 右侧属性行：盔甲 → 韧性，位于生命条右侧同 y
             int attrX = textBaseX + HEALTH_WIDTH + ATTR_TO_HEALTH_GAP;
             renderAttributeRow(graphics, player, attrX, barY - 1);
 
             barY += 8;
         }
 
-        // 头像下方横排：盔甲 → 韧性，创造模式隐藏
+        // 头像下方横排：饱食 → 氧气（秒），创造模式隐藏
         if (!player.isCreative()) {
             renderAvatarAttributes(graphics, player, x, y);
         }
@@ -184,7 +186,7 @@ public class CultivationHud {
         int statusY = barY + 2;
         int statusW = HUD_WIDTH - 16;
 
-        // 避免状态行与头像下方盔甲/韧性重叠
+        // 避免状态行与头像下方饱食/氧气重叠
         int avatarAttrBottom = y + 32 + ATTR_ICON_SIZE;
         if (!player.isCreative() && statusY < avatarAttrBottom + 2) {
             statusY = avatarAttrBottom + 2;
@@ -369,22 +371,22 @@ public class CultivationHud {
         int iconSize = ATTR_ICON_SIZE;
         float textScale = ATTR_TEXT_SCALE;
 
-        // 生命条右侧 2 项：饱食 → 氧气（秒）
-        int food = player.getFoodData().getFoodLevel();
-        int airSeconds = (int)Math.ceil(player.getAirSupply() / 20.0);
+        // 生命条右侧 2 项：盔甲 → 韧性
+        int armor = player.getArmorValue();
+        double toughness = player.getAttribute(Attributes.ARMOR_TOUGHNESS).getValue();
 
-        Component foodText = Component.literal(String.valueOf(food));
-        Component airText = Component.literal(String.valueOf(airSeconds));
+        Component armorText = Component.literal(String.valueOf(armor));
+        Component toughText = Component.literal(String.format("%.0f", toughness));
 
-        int foodTextW = mc.font.width((FormattedText)foodText);
-        int airTextW = mc.font.width((FormattedText)airText);
+        int armorTextW = mc.font.width((FormattedText)armorText);
+        int toughTextW = mc.font.width((FormattedText)toughText);
 
-        float foodW = iconSize + 1 + foodTextW * textScale;
-        float airW = iconSize + 1 + airTextW * textScale;
+        float armorW = iconSize + 1 + armorTextW * textScale;
+        float toughW = iconSize + 1 + toughTextW * textScale;
 
-        drawAttributeIcon(graphics, VANILLA_ICONS, x, y, FOOD_ICON_U, FOOD_ICON_V, iconSize, FOOD_COLOR, foodText, textScale);
-        int airX = x + Math.round(foodW + ATTR_GROUP_GAP);
-        drawAttributeIcon(graphics, VANILLA_ICONS, airX, y, AIR_ICON_U, AIR_ICON_V, iconSize, AIR_COLOR, airText, textScale);
+        drawAttributeIcon(graphics, VANILLA_ICONS, x, y, ARMOR_ICON_U, ARMOR_ICON_V, iconSize, ARMOR_COLOR, armorText, textScale);
+        int toughX = x + Math.round(armorW + ATTR_GROUP_GAP);
+        drawAttributeIcon(graphics, OVERFLOWING_ICONS, toughX, y, TOUGH_ICON_U, TOUGH_ICON_V, iconSize, TOUGH_COLOR, toughText, textScale);
     }
 
     private static void renderAvatarAttributes(GuiGraphics graphics, LocalPlayer player, int x, int y) {
@@ -393,26 +395,26 @@ public class CultivationHud {
         float textScale = ATTR_TEXT_SCALE;
         int rowY = y + 32;
 
-        // 盔甲值
-        int armor = player.getArmorValue();
-        Component armorText = Component.literal(String.valueOf(armor));
-        int armorTextW = mc.font.width((FormattedText)armorText);
-        float armorW = iconSize + 1 + armorTextW * textScale;
+        // 饱食度
+        int food = player.getFoodData().getFoodLevel();
+        Component foodText = Component.literal(String.valueOf(food));
+        int foodTextW = mc.font.width((FormattedText)foodText);
+        float foodW = iconSize + 1 + foodTextW * textScale;
 
-        // 韧性值
-        double toughness = player.getAttribute(Attributes.ARMOR_TOUGHNESS).getValue();
-        Component toughText = Component.literal(String.format("%.0f", toughness));
-        int toughTextW = mc.font.width((FormattedText)toughText);
-        float toughW = iconSize + 1 + toughTextW * textScale;
+        // 氧气（秒）
+        int airSeconds = (int)Math.ceil(player.getAirSupply() / 20.0);
+        Component airText = Component.literal(String.valueOf(airSeconds));
+        int airTextW = mc.font.width((FormattedText)airText);
+        float airW = iconSize + 1 + airTextW * textScale;
 
         // 在头像列宽度（x..x+32）内居中横排，组间固定 1px 间隙
-        int totalW = (int)(armorW + 1 + toughW);
+        int totalW = (int)(foodW + 1 + airW);
         int startOffset = Math.max(0, (32 - totalW) / 2);
         int startX = x + startOffset;
 
-        drawAttributeIcon(graphics, VANILLA_ICONS, startX, rowY, ARMOR_ICON_U, ARMOR_ICON_V, iconSize, ARMOR_COLOR, armorText, textScale);
-        int toughX = startX + (int)armorW + 1;
-        drawAttributeIcon(graphics, OVERFLOWING_ICONS, toughX, rowY, TOUGH_ICON_U, TOUGH_ICON_V, iconSize, TOUGH_COLOR, toughText, textScale);
+        drawAttributeIcon(graphics, VANILLA_ICONS, startX, rowY, FOOD_ICON_U, FOOD_ICON_V, iconSize, FOOD_COLOR, foodText, textScale);
+        int airX = startX + (int)foodW + 1;
+        drawAttributeIcon(graphics, VANILLA_ICONS, airX, rowY, AIR_ICON_U, AIR_ICON_V, iconSize, AIR_COLOR, airText, textScale);
     }
 
     private static void drawAttributeIcon(GuiGraphics graphics, ResourceLocation texture, int x, int y, int u, int v, int iconSize, int color, Component text, float textScale) {
