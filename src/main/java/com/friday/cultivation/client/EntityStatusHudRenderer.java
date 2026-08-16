@@ -143,9 +143,9 @@ public class EntityStatusHudRenderer {
         float maxHp = living.getMaxHealth();
         double ratio = maxHp <= 0.0f ? 0.0 : (double) hp / (double) maxHp;
 
-        // 体型自适应宽度 + 距离缩放（1 格距离基准 48px，越远越小）；整体缩小至 65%
+        // 体型自适应宽度，固定屏幕尺寸（不随距离缩放，恒定为 65% 基准大小）
         float bodyScale = Math.max(0.5f, Math.min(2.0f, (float) living.getBbWidth() / 0.6f));
-        float distScale = (float) (BASE_BAR_W * 0.4 * 0.65 / Math.max(1.0, proj.dist));
+        float distScale = (float) (BASE_BAR_W * 0.4 * 0.65);
         float barW = BASE_BAR_W * bodyScale * distScale;
         float barH = BAR_H * distScale;
         if (barW < 12.0f || barH < 2.0f) {
