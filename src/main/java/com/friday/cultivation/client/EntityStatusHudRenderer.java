@@ -69,8 +69,12 @@ public class EntityStatusHudRenderer {
         // 保持 blend 开启（血条内文本字形依赖 alpha 混合，disableBlend 会让字形变实心方块）；
         // 所有 quad 顶点 alpha 均为 1.0（不产生半透明感），叠加不透明底色兜底，贴图透明像素不会
         // 透出背后世界，血条呈实心。
+        // 关键：重置 ColorModulator 为纯白不透明——AFTER_PARTICLES 阶段紧接粒子渲染，
+        // 粒子系统会把 ColorModulator 的 alpha 设为半透明值，若不重置血条会继承该状态而变透明
+        // （玩家血条用 GuiGraphics.blit 每次 setColor(1,1,1,1) 重置，所以没有此问题）。
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
 
@@ -232,8 +236,16 @@ public class EntityStatusHudRenderer {
                 ((color >> 16) & 0xFF) / 255.0f,
                 ((color >> 8) & 0xFF) / 255.0f,
                 (color & 0xFF) / 255.0f);
-        Minecraft.getInstance().font.drawInBatch(text, x + ICON_SIZE + 1.0f, y + 1.0f, color, true, mat,
+        // 文本按 TEXT_SCALE 矩阵缩放绘制（与玩家 drawScaled 一致），实际宽度 = font.width * TEXT_SCALE，
+        // 与 renderArmorToughness 的宽度计算匹配，避免间隔重叠
+        float rawW = Minecraft.getInstance().font.width(text);
+        Matrix4f textMat = new Matrix4f(mat);
+        textMat.scale(TEXT_SCALE, TEXT_SCALE, 1.0f);
+        float tx = (x + ICON_SIZE + 1.0f) / TEXT_SCALE;
+        float ty = (y + 1.0f) / TEXT_SCALE;
+        Minecraft.getInstance().font.drawInBatch(text, tx, ty, color, true, textMat,
                 Minecraft.getInstance().renderBuffers().bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
+        // 保持 rawW 供调用方宽度计算一致（宽度 = ICON_SIZE + 1 + rawW * TEXT_SCALE）
     }
 
     private static void renderSolidQuad(Matrix4f mat, float x, float y, float w, float h, int color) {
