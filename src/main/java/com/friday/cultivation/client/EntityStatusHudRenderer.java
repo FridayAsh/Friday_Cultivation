@@ -84,7 +84,7 @@ public class EntityStatusHudRenderer {
     private static RenderType renderType(ResourceLocation texture) {
         return RENDER_TYPES.computeIfAbsent(texture, tex -> RenderType.create(
                 "friday_cultivation_entity_status",
-                com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_COLOR_TEX,
+                com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_TEX_COLOR,
                 com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
                 256, false, false,
                 RenderType.CompositeState.builder()
@@ -288,10 +288,10 @@ public class EntityStatusHudRenderer {
         float v0 = v / texHeight;
         float u1 = (u + texW) / texWidth;
         float v1 = (v + texH) / texHeight;
-        consumer.vertex(mat, x, y, 0.0f).color(cr, cg, cb, 1.0f).uv(u0, v0).endVertex();
-        consumer.vertex(mat, x, y + h, 0.0f).color(cr, cg, cb, 1.0f).uv(u0, v1).endVertex();
-        consumer.vertex(mat, x + w, y + h, 0.0f).color(cr, cg, cb, 1.0f).uv(u1, v1).endVertex();
-        consumer.vertex(mat, x + w, y, 0.0f).color(cr, cg, cb, 1.0f).uv(u1, v0).endVertex();
+        consumer.vertex(mat, x, y, 0.0f).uv(u0, v0).color(cr, cg, cb, 1.0f).endVertex();
+        consumer.vertex(mat, x, y + h, 0.0f).uv(u0, v1).color(cr, cg, cb, 1.0f).endVertex();
+        consumer.vertex(mat, x + w, y + h, 0.0f).uv(u1, v1).color(cr, cg, cb, 1.0f).endVertex();
+        consumer.vertex(mat, x + w, y, 0.0f).uv(u1, v0).color(cr, cg, cb, 1.0f).endVertex();
     }
 
     private static void renderTexturedQuad(MultiBufferSource.BufferSource buffers, ResourceLocation texture, Matrix4f mat,
@@ -325,14 +325,14 @@ public class EntityStatusHudRenderer {
 
         float midY = y + h / 2.0f;
         // 上半（顶色）
-        consumer.vertex(mat, x, y, 0.0f).color(tr, tg, tb, 1.0f).uv(u0, v0).endVertex();
-        consumer.vertex(mat, x, midY, 0.0f).color(tr, tg, tb, 1.0f).uv(u0, vMid).endVertex();
-        consumer.vertex(mat, x + w, midY, 0.0f).color(tr, tg, tb, 1.0f).uv(u1, vMid).endVertex();
-        consumer.vertex(mat, x + w, y, 0.0f).color(tr, tg, tb, 1.0f).uv(u1, v0).endVertex();
+        consumer.vertex(mat, x, y, 0.0f).uv(u0, v0).color(tr, tg, tb, 1.0f).endVertex();
+        consumer.vertex(mat, x, midY, 0.0f).uv(u0, vMid).color(tr, tg, tb, 1.0f).endVertex();
+        consumer.vertex(mat, x + w, midY, 0.0f).uv(u1, vMid).color(tr, tg, tb, 1.0f).endVertex();
+        consumer.vertex(mat, x + w, y, 0.0f).uv(u1, v0).color(tr, tg, tb, 1.0f).endVertex();
         // 下半（底色）
-        consumer.vertex(mat, x, midY, 0.0f).color(br, bg, bb, 1.0f).uv(u0, vMid).endVertex();
-        consumer.vertex(mat, x, y + h, 0.0f).color(br, bg, bb, 1.0f).uv(u0, v1).endVertex();
-        consumer.vertex(mat, x + w, y + h, 0.0f).color(br, bg, bb, 1.0f).uv(u1, v1).endVertex();
-        consumer.vertex(mat, x + w, midY, 0.0f).color(br, bg, bb, 1.0f).uv(u1, vMid).endVertex();
+        consumer.vertex(mat, x, midY, 0.0f).uv(u0, vMid).color(br, bg, bb, 1.0f).endVertex();
+        consumer.vertex(mat, x, y + h, 0.0f).uv(u0, v1).color(br, bg, bb, 1.0f).endVertex();
+        consumer.vertex(mat, x + w, y + h, 0.0f).uv(u1, v1).color(br, bg, bb, 1.0f).endVertex();
+        consumer.vertex(mat, x + w, midY, 0.0f).uv(u1, vMid).color(br, bg, bb, 1.0f).endVertex();
     }
 }
