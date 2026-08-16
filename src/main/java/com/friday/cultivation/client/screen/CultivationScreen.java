@@ -635,7 +635,8 @@ extends Screen {
         this.breakthroughBtn.setX(splitX + 24);
         this.breakthroughBtn.setY(topY + 200 - 26);
         this.breakthroughBtn.setWidth(breakthroughW);
-        this.breakthroughBtn.visible = this.currentTab == Tab.BREAKTHROUGH && data.getRealm() != Realm.LOOSE_IMMORTAL;
+        boolean peakGreatEmperor = data.getRealm() == Realm.GREAT_EMPEROR && data.getSubStage().isPeakFor(Realm.GREAT_EMPEROR);
+        this.breakthroughBtn.visible = this.currentTab == Tab.BREAKTHROUGH && data.getRealm() != Realm.LOOSE_IMMORTAL && !peakGreatEmperor;
         this.breakthroughBtn.active = data.canBreakthrough() && !data.isInTribulation() && this.isSelectedBreakthroughReady(data, player);
     }
 
@@ -1153,6 +1154,15 @@ extends Screen {
         int cx = x + width / 2;
         Realm realm = data.getRealm();
         SubStage sub = data.getSubStage();
+
+        // 第九帝界（大帝巅峰）：只保留突破历史按钮与至高文本
+        boolean peakGreatEmperor = realm == Realm.GREAT_EMPEROR && sub.isPeakFor(Realm.GREAT_EMPEROR);
+        if (peakGreatEmperor) {
+            y = this.renderBreakthroughHistoryButton(gfx, x, rightX, y, data, mouseX, mouseY);
+            this.drawBreakthroughCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.peak_great_emperor"), cx, y + 8, width - 8, -4703686, false);
+            return;
+        }
+
         MutableComponent realmValue = data.isLooseImmortal() ? Component.translatable((String)("realm.friday_cultivation.loose_immortal.level." + data.getLooseImmortalTribulations())) : (realm == Realm.MORTAL ? realm.displayName().copy() : Component.translatable((String)"screen.friday_cultivation.attr.id.realm_combined", (Object[])new Object[]{realm.displayName(), sub.displayName()}));
         this.drawSmallCentered(gfx, (Component)realmValue, cx, y, -4703686);
         y += 12;
@@ -1160,19 +1170,15 @@ extends Screen {
             this.renderLooseImmortalBreakthroughTab(gfx, x, rightX, y, player, data);
             return;
         }
-        // 第九帝界（大帝巅峰）后没有下一个境界：隐藏修为条与悟道条
-        boolean peakGreatEmperor = realm == Realm.GREAT_EMPEROR && sub.isPeakFor(Realm.GREAT_EMPEROR);
         long curCult = data.getCultivationProgress();
         long maxCult = data.getMaxCultivation();
-        if (!peakGreatEmperor) {
-            this.drawThinBar(gfx, x + 4, y, width - 8, maxCult == 0L ? 0.0f : (float)curCult / (float)maxCult, Component.translatable((String)"screen.friday_cultivation.cult_short").getString(), curCult + " / " + maxCult, -928374, -3631046);
-            y += 13;
-        }
+        this.drawThinBar(gfx, x + 4, y, width - 8, maxCult == 0L ? 0.0f : (float)curCult / (float)maxCult, Component.translatable((String)"screen.friday_cultivation.cult_short").getString(), curCult + " / " + maxCult, -928374, -3631046);
+        y += 13;
 
         long maxWudao = data.getWuDaoMax();
-        if (maxWudao > 0L && !peakGreatEmperor) {
+        if (maxWudao > 0L) {
             long curWudao = data.getWuDaoProgress();
-            this.drawLeftStatusBar(gfx, ICON_WUDAO, x + 4, y, width - 8, (float)curWudao / (float)maxWudao, Component.translatable((String)"screen.friday_cultivation.wudao_short"), curWudao + " / " + maxWudao, -8355712, -10592674);
+            this.drawThinBar(gfx, x + 4, y, width - 8, (float)curWudao / (float)maxWudao, Component.translatable((String)"screen.friday_cultivation.wudao_short").getString(), curWudao + " / " + maxWudao, -8355712, -10592674);
             y += 13;
         }
         int boneAge = LifespanHelper.displayBoneAge(data);

@@ -68,7 +68,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.MELEE_DAMAGE)) {
             return 0;
         }
-        return d.getAttrPhysique() * 1;
+        return d.getAttrPhysique() * PHYSIQUE_ATK_PER_POINT;
     }
 
     public static double physiqueMiningSpeedPct(Player player) {
@@ -76,7 +76,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.MINING_SPEED)) {
             return 0.0;
         }
-        return (double)d.getAttrPhysique() * 1.0;
+        return (double)d.getAttrPhysique() * PHYSIQUE_MINING_SPEED_PCT_PER_POINT;
     }
 
     public static double physiqueMiningSpeedBonus(Player player) {
@@ -119,7 +119,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.MAX_QI)) {
             return 0L;
         }
-        return (long)d.getAttrQiSea() * 100L;
+        return (long)d.getAttrQiSea() * QI_SEA_FLAT_PER_POINT;
     }
 
     public static long qiSeaFlatBonus(Player player) {
@@ -130,7 +130,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.QI_RECOVERY)) {
             return 0L;
         }
-        return (long)d.getAttrQiSea() * 1L;
+        return (long)d.getAttrQiSea() * QI_SEA_QI_RECOVERY_PER_POINT;
     }
 
     public static long qiSeaRecoveryPerSecond(Player player) {

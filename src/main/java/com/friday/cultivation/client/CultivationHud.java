@@ -251,8 +251,11 @@ public class CultivationHud {
      *   端角保持贴图原始尺寸不变形（避免整图压进几像素导致左下角突出）
      */
     private static void renderTextureBar(GuiGraphics graphics, Minecraft mc, int x, int y, int width, int height, double ratio, ResourceLocation emptyTex, ResourceLocation fillTex, int texW, int texH, int topColor, int bottomColor, Component text, int textColor) {
-        // 底条：整张贴图（texW x texH）等比缩放到目标宽高
+        // 深灰半透明背景，让任何贴图条都有统一底色
         graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+        graphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, 0x99000000);
+
+        // 底条：整张贴图（texW x texH）等比缩放到目标宽高
         graphics.blit(emptyTex, x, y, width, height, 0.0f, 0.0f, texW, texH, texW, texH);
 
         int targetW = (int)((double)width * ratio);
