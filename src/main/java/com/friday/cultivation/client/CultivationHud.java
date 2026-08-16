@@ -43,6 +43,8 @@ public class CultivationHud {
     private static final int LEFT_PAD = 2;
     private static final int AVATAR_SIZE = 24; // 8 * 3
     private static final int GOLD_TEXT = -1456016;
+    /** 属性条内部深黑灰底槽色（复用填充贴图染此色铺满，自带圆角） */
+    private static final int BAR_INNER_BG = 0xFF1A1A1A;
 
     // 各条宽度（递减）
     private static final int HEALTH_WIDTH = 100;
@@ -251,12 +253,13 @@ public class CultivationHud {
      *   端角保持贴图原始尺寸不变形（避免整图压进几像素导致左下角突出）
      */
     private static void renderTextureBar(GuiGraphics graphics, Minecraft mc, int x, int y, int width, int height, double ratio, ResourceLocation emptyTex, ResourceLocation fillTex, int texW, int texH, int topColor, int bottomColor, Component text, int textColor) {
-        // 不透明深黑灰底（alpha=0 全不透明），贴边仅属性条内部，类似内部填充条底槽
-        graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-        graphics.fill(x, y, x + width, y + height, 0xFF000000);
-
         // 底条：整张贴图（texW x texH）等比缩放到目标宽高
+        graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
         graphics.blit(emptyTex, x, y, width, height, 0.0f, 0.0f, texW, texH, texW, texH);
+        // 内部深黑灰底槽：复用填充贴图染深黑灰铺满整个条（贴图自带圆角，不会像矩形凸出）
+        setBarColor(graphics, BAR_INNER_BG);
+        graphics.blit(fillTex, x, y, width, height, 0.0f, 0.0f, texW, texH, texW, texH);
+        graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
 
         int targetW = (int)((double)width * ratio);
         if (targetW > 0) {
