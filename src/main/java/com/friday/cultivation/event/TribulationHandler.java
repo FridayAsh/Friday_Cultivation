@@ -306,6 +306,8 @@ public final class TribulationHandler {
         boolean minorBreakthrough;
         data.advanceOnSuccess();
         data.clearTribulation();
+        // 突破后生命值、灵气值直接设为上限（灵气在 advanceOnSuccess 内已设满）
+        player.setHealth(player.getMaxHealth());
         boolean bl = minorBreakthrough = before == data.getRealm() && beforeStage != data.getSubStage();
         if (minorBreakthrough) {
             PhysiqueBonusHelper.grantChaosBodyMinorBreakthroughSpell(player, data);

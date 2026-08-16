@@ -1,10 +1,15 @@
 package com.friday.cultivation.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -13,6 +18,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -25,7 +31,7 @@ public class EntityStatusHudRenderer {
     private static final ResourceLocation VANILLA_ICONS = new ResourceLocation("textures/gui/icons.png");
     private static final ResourceLocation OVERFLOWING_ICONS = new ResourceLocation("friday_cultivation", "textures/gui/overflowing_icons.png");
 
-    private static final int BAR_INNER_BG = 0xFF1A1A1A;
+    private static final int BAR_BG = 0xFF1A1A1A;
     private static final int ARMOR_ICON_U = 34, ARMOR_ICON_V = 9;
     private static final int TOUGH_ICON_U = 18, TOUGH_ICON_V = 0;
     private static final int ARMOR_COLOR = 0xAAAAAA;
@@ -33,9 +39,9 @@ public class EntityStatusHudRenderer {
     private static final int HEALTH_TOP = -1944235;
     private static final int HEALTH_BOTTOM = -5758944;
 
-    private static final int BAR_WIDTH = 48;
-    private static final int BAR_HEIGHT = 6;
-    private static final int ICON_SIZE = 8;
+    private static final float BAR_W = 48.0f;
+    private static final float BAR_H = 6.0f;
+    private static final float ICON_SIZE = 8.0f;
     private static final float TEXT_SCALE = 0.5f;
     private static final float WORLD_SCALE = -0.025f;
     private static final double MAX_DISTANCE = 24.0;
@@ -55,8 +61,9 @@ public class EntityStatusHudRenderer {
         Player player = mc.player;
         Vec3 cam = event.getCamera().getPosition();
         float partial = event.getPartialTick();
+        float yaw = event.getCamera().getYRot();
+        float pitch = event.getCamera().getXRot();
 
-        GuiGraphics gfx = new GuiGraphics(mc, mc.renderBuffers().bufferSource());
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableDepthTest();
@@ -65,13 +72,10 @@ public class EntityStatusHudRenderer {
         AABB box = player.getBoundingBox().inflate(MAX_DISTANCE, MAX_DISTANCE, MAX_DISTANCE);
         for (Entity e : mc.level.getEntities(player, box, EntityStatusHudRenderer::canShowStatus)) {
             LivingEntity living = (LivingEntity) e;
-            if (!player.hasLineOfSight(living)) {
-                continue;
-            }
-            renderEntityStatus(gfx, event, living, cam, partial);
+            renderEntityStatus(event, living, cam, partial, yaw, pitch);
         }
 
-        gfx.flush();
+        mc.renderBuffers().bufferSource().endBatch();
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
         RenderSystem.disableBlend();
@@ -81,91 +85,145 @@ public class EntityStatusHudRenderer {
         return e instanceof LivingEntity && e.isAlive();
     }
 
-    private static void renderEntityStatus(GuiGraphics gfx, RenderLevelStageEvent event, LivingEntity living, Vec3 cam, float partial) {
-        PoseStack pose = gfx.pose();
+    private static void renderEntityStatus(RenderLevelStageEvent event, LivingEntity living, Vec3 cam, float partial, float yaw, float pitch) {
+        PoseStack pose = event.getPoseStack();
         pose.pushPose();
 
-        Vec3 pos = living.getPosition(partial).add(0.0, living.getBbHeight() + 0.5, 0.0);
+        Vec3 pos = living.getPosition(partial).add(0.0, living.getBbHeight() + 0.6, 0.0);
         pose.translate(-cam.x, -cam.y, -cam.z);
         pose.translate(pos.x, pos.y, pos.z);
-        pose.mulPose(Axis.XP.rotationDegrees(-event.getCamera().getXRot()));
-        pose.mulPose(Axis.YP.rotationDegrees(event.getCamera().getYRot()));
+        pose.mulPose(Axis.YP.rotationDegrees(yaw));
+        pose.mulPose(Axis.XP.rotationDegrees(-pitch));
         pose.scale(WORLD_SCALE, WORLD_SCALE, 1.0f);
 
-        // 生命条
+        Matrix4f mat = pose.last().pose();
+
         float hp = living.getHealth();
         float maxHp = living.getMaxHealth();
         double ratio = maxHp <= 0.0f ? 0.0 : (double) hp / (double) maxHp;
-        renderBar(gfx, -BAR_WIDTH / 2, -10, BAR_WIDTH, BAR_HEIGHT, ratio, HEALTH_TOP, HEALTH_BOTTOM);
 
-        // 盔甲 / 韧性（显示在生命条上方）
+        // 深黑灰背景
+        renderSolidQuad(mat, -BAR_W / 2.0f - 1.0f, -11.0f, BAR_W + 2.0f, BAR_H + 2.0f, BAR_BG);
+        // 空血条
+        renderTexturedQuad(mat, BLOOD_EMPTY, -BAR_W / 2.0f, -10.0f, BAR_W, BAR_H,
+                0.0f, 0.0f, 96.0f, 6.0f, 96, 6, 1.0f, 1.0f, 1.0f);
+        // 血条填充
+        float filledW = (float) (BAR_W * ratio);
+        if (filledW > 0.0f) {
+            renderTexturedTintedQuad(mat, BLOOD_FILL, -BAR_W / 2.0f, -10.0f, filledW, BAR_H,
+                    0.0f, 0.0f, 96.0f, 6.0f, 96, 6, HEALTH_TOP, HEALTH_BOTTOM);
+        }
+
+        // 盔甲 / 韧性
         int armor = living.getArmorValue();
         double toughness = living.getAttribute(Attributes.ARMOR_TOUGHNESS).getValue();
         boolean showArmor = armor > 0;
         boolean showToughness = toughness > 0.0;
         if (showArmor || showToughness) {
-            renderArmorToughness(gfx, living, -BAR_WIDTH / 2, -22, showArmor, showToughness, armor, toughness);
+            renderArmorToughness(event, mat, showArmor, showToughness, armor, toughness);
         }
 
         pose.popPose();
     }
 
-    private static void renderBar(GuiGraphics gfx, int x, int y, int width, int height, double ratio, int topColor, int bottomColor) {
-        gfx.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-        gfx.fill(x - 1, y - 1, x + width + 1, y + height + 1, BAR_INNER_BG);
-        gfx.blit(BLOOD_EMPTY, x, y, width, height, 0.0f, 0.0f, 96, 6, 96, 6);
-
-        int targetW = (int) ((double) width * ratio);
-        if (targetW > 0) {
-            int halfH = Math.max(1, height / 2);
-            int topH = halfH;
-            int botH = height - halfH;
-            setBarColor(gfx, topColor);
-            gfx.blit(BLOOD_FILL, x, y, targetW, topH, 0.0f, 0.0f, 96, halfH, 96, 6);
-            setBarColor(gfx, bottomColor);
-            gfx.blit(BLOOD_FILL, x, y + topH, targetW, botH, 0.0f, (float) halfH, 96, 6 - halfH, 96, 6);
-            gfx.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-        }
-    }
-
-    private static void setBarColor(GuiGraphics gfx, int color) {
-        float r = ((color >> 16) & 0xFF) / 255.0f;
-        float g = ((color >> 8) & 0xFF) / 255.0f;
-        float b = (color & 0xFF) / 255.0f;
-        gfx.setColor(r, g, b, 1.0f);
-    }
-
-    private static void renderArmorToughness(GuiGraphics gfx, LivingEntity living, int barX, int y, boolean showArmor, boolean showToughness, int armor, double toughness) {
+    private static void renderArmorToughness(RenderLevelStageEvent event, Matrix4f mat, boolean showArmor, boolean showToughness, int armor, double toughness) {
         Minecraft mc = Minecraft.getInstance();
-        int gap = 4;
-
         Component armorText = Component.literal(String.valueOf(armor));
         Component toughText = Component.literal(String.format("%.0f", toughness));
 
-        int armorW = showArmor ? ICON_SIZE + 1 + (int) (mc.font.width(armorText) * TEXT_SCALE) : 0;
-        int toughW = showToughness ? ICON_SIZE + 1 + (int) (mc.font.width(toughText) * TEXT_SCALE) : 0;
-        int totalW = armorW + ((showArmor && showToughness) ? gap : 0) + toughW;
+        float armorW = showArmor ? ICON_SIZE + 1.0f + mc.font.width(armorText) * TEXT_SCALE : 0.0f;
+        float toughW = showToughness ? ICON_SIZE + 1.0f + mc.font.width(toughText) * TEXT_SCALE : 0.0f;
+        float gap = 4.0f;
+        float totalW = armorW + ((showArmor && showToughness) ? gap : 0.0f) + toughW;
+        float gx = -totalW / 2.0f;
+        float gy = -22.0f;
 
-        int gx = -totalW / 2;
         if (showArmor) {
-            drawIconValue(gfx, gx, y, VANILLA_ICONS, ARMOR_ICON_U, ARMOR_ICON_V, ARMOR_COLOR, armorText);
+            renderIconValue(event, mat, gx, gy, VANILLA_ICONS, ARMOR_ICON_U, ARMOR_ICON_V, ARMOR_COLOR, armorText);
             gx += armorW + gap;
         }
         if (showToughness) {
-            drawIconValue(gfx, gx, y, OVERFLOWING_ICONS, TOUGH_ICON_U, TOUGH_ICON_V, TOUGH_COLOR, toughText);
+            renderIconValue(event, mat, gx, gy, OVERFLOWING_ICONS, TOUGH_ICON_U, TOUGH_ICON_V, TOUGH_COLOR, toughText);
         }
     }
 
-    private static void drawIconValue(GuiGraphics gfx, int x, int y, ResourceLocation texture, int u, int v, int color, Component text) {
-        gfx.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-        gfx.blit(texture, x, y, ICON_SIZE, ICON_SIZE, (float) u, (float) v, 9, 9, 256, 256);
-        drawScaledString(gfx, text, x + ICON_SIZE + 1, y + 1, TEXT_SCALE, color);
+    private static void renderIconValue(RenderLevelStageEvent event, Matrix4f mat, float x, float y, ResourceLocation texture, int u, int v, int color, Component text) {
+        renderTexturedQuad(mat, texture, x, y, ICON_SIZE, ICON_SIZE,
+                (float) u, (float) v, 9.0f, 9.0f, 256, 256,
+                ((color >> 16) & 0xFF) / 255.0f,
+                ((color >> 8) & 0xFF) / 255.0f,
+                (color & 0xFF) / 255.0f);
+        Minecraft.getInstance().font.drawInBatch(text, x + ICON_SIZE + 1.0f, y + 1.0f, color, true, mat,
+                Minecraft.getInstance().renderBuffers().bufferSource(), Font.DisplayMode.NORMAL, 0, 15728880);
     }
 
-    private static void drawScaledString(GuiGraphics gfx, Component text, int x, int y, float scale, int color) {
-        gfx.pose().pushPose();
-        gfx.pose().scale(scale, scale, 1.0f);
-        gfx.drawString(Minecraft.getInstance().font, text, Math.round((float) x / scale), Math.round((float) y / scale), color, true);
-        gfx.pose().popPose();
+    private static void renderSolidQuad(Matrix4f mat, float x, float y, float w, float h, int color) {
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        float a = ((color >> 24) & 0xFF) / 255.0f;
+        float r = ((color >> 16) & 0xFF) / 255.0f;
+        float g = ((color >> 8) & 0xFF) / 255.0f;
+        float b = (color & 0xFF) / 255.0f;
+        Tesselator t = Tesselator.getInstance();
+        BufferBuilder buffer = t.getBuilder();
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        buffer.vertex(mat, x, y, 0.0f).color(r, g, b, a).endVertex();
+        buffer.vertex(mat, x, y + h, 0.0f).color(r, g, b, a).endVertex();
+        buffer.vertex(mat, x + w, y + h, 0.0f).color(r, g, b, a).endVertex();
+        buffer.vertex(mat, x + w, y, 0.0f).color(r, g, b, a).endVertex();
+        t.end();
+    }
+
+    private static void renderTexturedQuad(Matrix4f mat, ResourceLocation texture, float x, float y, float w, float h,
+                                           float u, float v, float texW, float texH, int texWidth, int texHeight,
+                                           float cr, float cg, float cb) {
+        RenderSystem.setShaderTexture(0, texture);
+        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+        float u0 = u / texWidth;
+        float v0 = v / texHeight;
+        float u1 = (u + texW) / texWidth;
+        float v1 = (v + texH) / texHeight;
+        Tesselator t = Tesselator.getInstance();
+        BufferBuilder buffer = t.getBuilder();
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        buffer.vertex(mat, x, y, 0.0f).uv(u0, v0).color(cr, cg, cb, 1.0f).endVertex();
+        buffer.vertex(mat, x, y + h, 0.0f).uv(u0, v1).color(cr, cg, cb, 1.0f).endVertex();
+        buffer.vertex(mat, x + w, y + h, 0.0f).uv(u1, v1).color(cr, cg, cb, 1.0f).endVertex();
+        buffer.vertex(mat, x + w, y, 0.0f).uv(u1, v0).color(cr, cg, cb, 1.0f).endVertex();
+        t.end();
+    }
+
+    private static void renderTexturedTintedQuad(Matrix4f mat, ResourceLocation texture, float x, float y, float w, float h,
+                                                float u, float v, float texW, float texH, int texWidth, int texHeight,
+                                                int topColor, int bottomColor) {
+        RenderSystem.setShaderTexture(0, texture);
+        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+        float u0 = u / texWidth;
+        float u1 = (u + texW) / texWidth;
+        float v0 = v / texHeight;
+        float vMid = (v + texH / 2.0f) / texHeight;
+        float v1 = (v + texH) / texHeight;
+
+        float tr = ((topColor >> 16) & 0xFF) / 255.0f;
+        float tg = ((topColor >> 8) & 0xFF) / 255.0f;
+        float tb = (topColor & 0xFF) / 255.0f;
+        float br = ((bottomColor >> 16) & 0xFF) / 255.0f;
+        float bg = ((bottomColor >> 8) & 0xFF) / 255.0f;
+        float bb = (bottomColor & 0xFF) / 255.0f;
+
+        Tesselator t = Tesselator.getInstance();
+        BufferBuilder buffer = t.getBuilder();
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        float midY = y + h / 2.0f;
+        // 上半（顶色）
+        buffer.vertex(mat, x, y, 0.0f).uv(u0, v0).color(tr, tg, tb, 1.0f).endVertex();
+        buffer.vertex(mat, x, midY, 0.0f).uv(u0, vMid).color(tr, tg, tb, 1.0f).endVertex();
+        buffer.vertex(mat, x + w, midY, 0.0f).uv(u1, vMid).color(tr, tg, tb, 1.0f).endVertex();
+        buffer.vertex(mat, x + w, y, 0.0f).uv(u1, v0).color(tr, tg, tb, 1.0f).endVertex();
+        // 下半（底色）
+        buffer.vertex(mat, x, midY, 0.0f).uv(u0, vMid).color(br, bg, bb, 1.0f).endVertex();
+        buffer.vertex(mat, x, y + h, 0.0f).uv(u0, v1).color(br, bg, bb, 1.0f).endVertex();
+        buffer.vertex(mat, x + w, y + h, 0.0f).uv(u1, v1).color(br, bg, bb, 1.0f).endVertex();
+        buffer.vertex(mat, x + w, midY, 0.0f).uv(u1, vMid).color(br, bg, bb, 1.0f).endVertex();
+        t.end();
     }
 }

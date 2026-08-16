@@ -2087,7 +2087,7 @@ implements INBTSerializable<CompoundTag> {
         if (this.realm == Realm.MORTAL) {
             this.realm = Realm.BODY_TEMPERING;
             this.subStage = this.realm.firstSubStage();
-            this.currentQi = 0L;
+            this.currentQi = this.getMaxQi();
             this.ensureSpellsForRealm();
             return;
         }
@@ -2111,7 +2111,7 @@ implements INBTSerializable<CompoundTag> {
                     this.pendingGoldenCoreDao = GoldenCoreDao.NONE;
                 }
                 this.subStage = n.firstSubStage();
-                this.currentQi = this.getMaxQi() / 2L;
+                this.currentQi = this.getMaxQi();
                 this.ensureSpellsForRealm();
                 this.addUnallocatedZhenyuan(5);
                 this.addAllZhenyuanAttributes(5);
@@ -2123,7 +2123,7 @@ implements INBTSerializable<CompoundTag> {
             return;
         }
         this.subStage = this.subStage.nextFor(this.realm);
-        this.currentQi = this.getMaxQi() / 2L;
+        this.currentQi = this.getMaxQi();
         if (this.realm != Realm.BODY_TEMPERING) {
             int reward = 1 + this.spiritRoot.bonus().extraZhenyuanPerSubLevel() + PhysiqueBonusHelper.extraZhenyuanPerMinor(this.physique);
             this.addUnallocatedZhenyuan(reward);

@@ -171,12 +171,14 @@ public class CultivationHud {
                 barY += 8;
             }
 
-            // 灵气条（始终显示）
-            long curQi = data.getCurrentQi();
-            long maxQi = data.getMaxQi();
-            Component qiText = Component.translatable("hud.friday_cultivation.qi", curQi, maxQi);
-            renderValueBar(graphics, mc, textBaseX, barY, QI_WIDTH, BAR_HEIGHT, curQi, maxQi, QI_TOP, QI_BOTTOM, QI_TOP, qiText);
-            barY += 8;
+            // 灵气条（凡人阶段无灵气属性，仅非凡人显示）
+            if (data.getRealm() != Realm.MORTAL) {
+                long curQi = data.getCurrentQi();
+                long maxQi = data.getMaxQi();
+                Component qiText = Component.translatable("hud.friday_cultivation.qi", curQi, maxQi);
+                renderValueBar(graphics, mc, textBaseX, barY, QI_WIDTH, BAR_HEIGHT, curQi, maxQi, QI_TOP, QI_BOTTOM, QI_TOP, qiText);
+                barY += 8;
+            }
 
             // 悟道条（仅 getWuDaoMax() > 0；第九帝界后隐藏）
             long maxWudao = data.getWuDaoMax();

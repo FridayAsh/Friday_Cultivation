@@ -144,7 +144,8 @@ public final class TechniqueEffectHandler {
         double spiritHp = SpiritRootBonusHelper.hpBonus((Player)sp);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_SPIRIT_HP, "xiaoxiang_spirit_hp", spiritHp, AttributeModifier.Operation.ADDITION);
         double zhenyuanHp = ZhenyuanBonusHelper.constitutionHpBonus((Player)sp);
-        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_ZHENYUAN_HP, "xiaoxiang_zhenyuan_hp", zhenyuanHp, AttributeModifier.Operation.ADDITION);
+        // 真元 HP 加成排除在全局 ×4 之外：值 ÷4，×4 后恰好还原原值
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_ZHENYUAN_HP, "xiaoxiang_zhenyuan_hp", zhenyuanHp / 4.0, AttributeModifier.Operation.ADDITION);
         // 真元体质加成：每点 +8 盔甲、+3 韧性
         double zhenyuanArmor = ZhenyuanBonusHelper.constitutionArmorBonus((Player)sp);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.ARMOR, UUID_ZHENYUAN_ARMOR, "xiaoxiang_zhenyuan_armor", zhenyuanArmor, AttributeModifier.Operation.ADDITION);
@@ -157,7 +158,8 @@ public final class TechniqueEffectHandler {
         double looseImmortalHp = LooseImmortalBonusHelper.maxHpMultiplyTotal((Player)sp);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_LOOSE_IMMORTAL_HP, "xiaoxiang_loose_immortal_hp", looseImmortalHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
         double bodyTemperingHp = TechniqueEffectHandler.bodyTemperingHpBonus(sp, data);
-        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BODY_TEMPERING_HP, "xiaoxiang_body_tempering_hp", bodyTemperingHp, AttributeModifier.Operation.ADDITION);
+        // 锻体 HP 加成排除在全局 ×4 之外：值 ÷4，×4 后恰好还原原值
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BODY_TEMPERING_HP, "xiaoxiang_body_tempering_hp", bodyTemperingHp / 4.0, AttributeModifier.Operation.ADDITION);
         // 突破累计生命加成（每次大/小境界突破累加；data 可能为 null，如死亡/复活瞬间 capability 未附加）
         double breakthroughHp = data == null ? 0.0 : (double)data.getBreakthroughHpBonus();
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BREAKTHROUGH_HP, "xiaoxiang_breakthrough_hp", breakthroughHp, AttributeModifier.Operation.ADDITION);
@@ -314,7 +316,8 @@ public final class TechniqueEffectHandler {
         double spiritHp = SpiritRootBonusHelper.hpBonus((Player)sp);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_SPIRIT_HP, "xiaoxiang_spirit_hp", spiritHp, AttributeModifier.Operation.ADDITION);
         double zhenyuanHp = ZhenyuanBonusHelper.constitutionHpBonus((Player)sp);
-        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_ZHENYUAN_HP, "xiaoxiang_zhenyuan_hp", zhenyuanHp, AttributeModifier.Operation.ADDITION);
+        // 真元 HP 加成排除在全局 ×4 之外：值 ÷4，×4 后恰好还原原值
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_ZHENYUAN_HP, "xiaoxiang_zhenyuan_hp", zhenyuanHp / 4.0, AttributeModifier.Operation.ADDITION);
         // 真元体质加成：每点 +8 盔甲、+3 韧性
         double zhenyuanArmor = ZhenyuanBonusHelper.constitutionArmorBonus((Player)sp);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.ARMOR, UUID_ZHENYUAN_ARMOR, "xiaoxiang_zhenyuan_armor", zhenyuanArmor, AttributeModifier.Operation.ADDITION);
@@ -327,7 +330,8 @@ public final class TechniqueEffectHandler {
         double looseImmortalHp = LooseImmortalBonusHelper.maxHpMultiplyTotal((Player)sp);
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_LOOSE_IMMORTAL_HP, "xiaoxiang_loose_immortal_hp", looseImmortalHp, AttributeModifier.Operation.MULTIPLY_TOTAL);
         double bodyTemperingHp = TechniqueEffectHandler.bodyTemperingHpBonus(sp, data);
-        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BODY_TEMPERING_HP, "xiaoxiang_body_tempering_hp", bodyTemperingHp, AttributeModifier.Operation.ADDITION);
+        // 锻体 HP 加成排除在全局 ×4 之外：值 ÷4，×4 后恰好还原原值
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BODY_TEMPERING_HP, "xiaoxiang_body_tempering_hp", bodyTemperingHp / 4.0, AttributeModifier.Operation.ADDITION);
         // 突破累计生命加成（每次大/小境界突破累加）
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BREAKTHROUGH_HP, "xiaoxiang_breakthrough_hp", (double)data.getBreakthroughHpBonus(), AttributeModifier.Operation.ADDITION);
         // 全局生命倍率 ×4（含所有加成，最终数值放大）
@@ -372,20 +376,24 @@ public final class TechniqueEffectHandler {
         } else {
             effective = stored;
         }
-        // 锻体阶梯生命：1-3层 +10，4-6层 +20，7-9层 +30，10层 +100
+        // 锻体累计生命：每层加成累加（1-3层每层+10、4-6层每层+20、7-9层每层+30、10层+100）
+        // 第n层总加成 = Σ(各层增量)：1=10 2=20 3=30 4=50 5=70 6=90 7=120 8=150 9=180 10=280
         if (effective <= 0) {
             return 0.0;
         }
-        if (effective >= 10) {
-            return 100.0;
+        long sum = 0L;
+        for (int lvl = 1; lvl <= effective; ++lvl) {
+            if (lvl >= 10) {
+                sum += 100L;
+            } else if (lvl >= 7) {
+                sum += 30L;
+            } else if (lvl >= 4) {
+                sum += 20L;
+            } else {
+                sum += 10L;
+            }
         }
-        if (effective >= 7) {
-            return 30.0;
-        }
-        if (effective >= 4) {
-            return 20.0;
-        }
-        return 10.0;
+        return (double)sum;
     }
 
     private static void applyAttributeModifier(Player p, Attribute attr, UUID uuid, String name, double value, AttributeModifier.Operation op) {
