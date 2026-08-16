@@ -53,6 +53,8 @@ public class EntityStatusHudRenderer {
     private static final double MAX_DISTANCE = 24.0;
     // 与玩家血条一致：填充条左端固定圆角段在贴图中所占像素（blood_fill 左端圆角宽度）
     private static final int CLIP_PX = 3;
+    // 恒定屏幕缩放：固定为 8 格距离视角下的 65% 基准大小（约 1.56 倍），任何距离都不变
+    private static final float BAR_SCREEN_SCALE = (float) (BASE_BAR_W * 0.4 * 0.65 / 8.0);
 
     private EntityStatusHudRenderer() {
     }
@@ -70,13 +72,85 @@ public class EntityStatusHudRenderer {
         GuiGraphics graphics = event.getGuiGraphics();
         float partial = mc.getFrameTime();
 
+        // 第一阶段：收集所有可见生物血条（屏幕坐标 + 尺寸 + 距离）
+        java.util.List<BarEntry> entries = new java.util.ArrayList<>();
         AABB box = player.getBoundingBox().inflate(MAX_DISTANCE, MAX_DISTANCE, MAX_DISTANCE);
         for (Entity e : mc.level.getEntities(player, box, EntityStatusHudRenderer::canShowStatus)) {
             LivingEntity living = (LivingEntity) e;
             if (!isVisibleToPlayer(player, living, partial)) {
                 continue;
             }
-            renderEntityStatus(graphics, player, living, partial);
+            Vec3 head = living.getPosition(partial).add(0.0, living.getBbHeight() + 0.6, 0.0);
+            Vec2 proj = projectToScreen(mc, head, partial);
+            if (proj == null) {
+                continue;
+            }
+            float bodyScale = Math.max(0.5f, Math.min(2.0f, (float) living.getBbWidth() / 0.6f));
+            float barW = BASE_BAR_W * bodyScale * BAR_SCREEN_SCALE;
+            float barH = BAR_H * BAR_SCREEN_SCALE;
+            if (barW < 12.0f || barH < 2.0f) {
+                continue;
+            }
+            entries.add(new BarEntry(living, proj.x, proj.y, barW, barH));
+        }
+
+        // 第二阶段：按距离从近到远排序（近的优先保位）
+        entries.sort((a, b) -> Float.compare(a.projDist, b.projDist));
+
+        // 第三阶段：垂直避让布局——重叠时下移直到不重叠，避免堆叠杂乱
+        java.util.List<float[]> placed = new java.util.ArrayList<>(); // {x, y, w, h}
+        for (BarEntry entry : entries) {
+            float baseY = entry.screenY - 12.0f;
+            float y = baseY;
+            int guard = 0;
+            while (guard < 24) {
+                boolean hit = false;
+                for (float[] r : placed) {
+                    if (overlaps(entry.screenX - entry.barW / 2.0f, y, entry.barW, entry.barH, r[0], r[1], r[2], r[3])) {
+                        hit = true;
+                        break;
+                    }
+                }
+                if (!hit) {
+                    break;
+                }
+                // 下移一个条高 + 间距，继续找空位
+                y += entry.barH + 2.0f;
+                guard++;
+            }
+            entry.offsetY = y - baseY;
+            placed.add(new float[]{entry.screenX - entry.barW / 2.0f, y, entry.barW, entry.barH});
+        }
+
+        // 第四阶段：绘制
+        for (BarEntry entry : entries) {
+            renderEntityStatus(graphics, mc, entry, partial);
+        }
+    }
+
+    /** 矩形重叠检测（含少量间距容差） */
+    private static boolean overlaps(float ax, float ay, float aw, float ah, float bx, float by, float bw, float bh) {
+        float gap = 2.0f;
+        return ax < bx + bw + gap && ax + aw + gap > bx && ay < by + bh + gap && ay + ah + gap > by;
+    }
+
+    /** 收集到的血条条目（屏幕坐标、尺寸、距离、避让偏移） */
+    private static final class BarEntry {
+        final LivingEntity living;
+        final int screenX;
+        final int screenY;
+        final float barW;
+        final float barH;
+        final float projDist;
+        float offsetY;
+
+        BarEntry(LivingEntity living, int screenX, int screenY, float barW, float barH) {
+            this.living = living;
+            this.screenX = screenX;
+            this.screenY = screenY;
+            this.barW = barW;
+            this.barH = barH;
+            this.projDist = (float) Math.sqrt((double) screenX * screenX + (double) screenY * screenY);
         }
     }
 
@@ -129,25 +203,19 @@ public class EntityStatusHudRenderer {
         return new Vec2(sx, sy, dist);
     }
 
-    private static void renderEntityStatus(GuiGraphics graphics, Player player, LivingEntity living, float partial) {
-        Minecraft mc = Minecraft.getInstance();
-        Vec3 head = living.getPosition(partial).add(0.0, living.getBbHeight() + 0.6, 0.0);
-        Vec2 proj = projectToScreen(mc, head, partial);
-        if (proj == null) {
-            return;
-        }
-        int sx = proj.x;
-        int sy = proj.y;
+    private static void renderEntityStatus(GuiGraphics graphics, Minecraft mc, BarEntry entry, float partial) {
+        LivingEntity living = entry.living;
+        int sx = entry.screenX;
+        int sy = entry.screenY + (int) Math.round(entry.offsetY);
 
         float hp = living.getHealth();
         float maxHp = living.getMaxHealth();
         double ratio = maxHp <= 0.0f ? 0.0 : (double) hp / (double) maxHp;
 
-        // 体型自适应宽度，恒定屏幕大小：固定为 8 格距离视角下的 65% 基准大小（约 75px 基准宽），不随距离变化
-        float bodyScale = Math.max(0.5f, Math.min(2.0f, (float) living.getBbWidth() / 0.6f));
-        float distScale = (float) (BASE_BAR_W * 0.4 * 0.65 / 8.0);
-        float barW = BASE_BAR_W * bodyScale * distScale;
-        float barH = BAR_H * distScale;
+        // 恒定屏幕大小（不随距离变化）：8 格距离视角下的 65% 基准大小，仅随体型微调宽度
+        float distScale = BAR_SCREEN_SCALE;
+        float barW = entry.barW;
+        float barH = entry.barH;
         if (barW < 12.0f || barH < 2.0f) {
             return;
         }
