@@ -46,6 +46,12 @@ import com.friday.cultivation.cultivation.realm.Realm;
 import com.friday.cultivation.cultivation.realm.SubStage;
 import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.event.LooseImmortalHandler;
+import com.friday.cultivation.event.tribulation.TribulationConstants;
+import com.friday.cultivation.event.tribulation.TribulationDefense;
+import com.friday.cultivation.event.tribulation.TribulationEvents;
+import com.friday.cultivation.event.tribulation.TribulationScalingHelper;
+import com.friday.cultivation.event.tribulation.TribulationSpec;
+import com.friday.cultivation.event.tribulation.TribulationType;
 import com.friday.cultivation.event.NascentSoulOutOfBodyHandler;
 import com.friday.cultivation.event.SectProtectionDomeHandler;
 import com.friday.cultivation.event.SpiritLockHandler;
@@ -88,11 +94,12 @@ import net.minecraftforge.network.PacketDistributor;
 
 @Mod.EventBusSubscriber(modid="friday_cultivation")
 public final class TribulationHandler {
-    private static final String TRIBULATION_LIGHTNING_TAG = "friday_cultivation.tribulation_lightning";
-    private static final int TARGET_SUB_WAVE_DURATION_TICKS = 30;
-    private static final int MIN_SUB_BOLT_INTERVAL_TICKS = 4;
-    private static final int MAX_SUB_BOLT_INTERVAL_TICKS = 20;
-    private static final double TRIBULATION_BOLT_RANDOM_RADIUS = 1.0;
+    // 常量已移至 TribulationConstants
+
+    static {
+        // 注册渡劫防御链（宗门护盾 / 雷灵根减免）
+        TribulationDefense.init();
+    }
 
     private TribulationHandler() {
     }
@@ -105,14 +112,13 @@ public final class TribulationHandler {
     }
 
     private static boolean isTribulationLightning(Entity entity) {
-        LightningBolt bolt;
-        return entity instanceof LightningBolt && (bolt = (LightningBolt)entity).getPersistentData().getBoolean(TRIBULATION_LIGHTNING_TAG);
+        return TribulationType.LightningTribulation.isTribulationLightning(entity);
     }
 
     @SubscribeEvent(priority=EventPriority.HIGH)
     public static void onEntityStruckByTribulationLightning(EntityStruckByLightningEvent event) {
         LightningBolt bolt = event.getLightning();
-        if (!bolt.getPersistentData().getBoolean(TRIBULATION_LIGHTNING_TAG)) {
+        if (!bolt.getPersistentData().getBoolean(TribulationType.LightningTribulation.TAG)) {
             return;
         }
         event.setCanceled(true);
@@ -127,7 +133,11 @@ public final class TribulationHandler {
     }
 
     public static void beginTribulation(ServerPlayer player, CultivationData data, int strikes, int boltsPerWave, int strikeDamageOverride) {
-        TribulationHandler.beginTribulationInternal(player, data, strikes, boltsPerWave, strikeDamageOverride, false);
+        // 综合评判：灵根/体质/功法品质越好 → 渡劫道数越多（天骄遭天妒）
+        double mult = TribulationScalingHelper.scalingMultiplier(player, data);
+        int scaled = Math.max(1, (int) Math.round(strikes * boltsPerWave * mult));
+        int scaledWaves = Math.max(1, (int) Math.ceil((double) scaled / Math.max(1, boltsPerWave)));
+        TribulationHandler.beginTribulationInternal(player, data, scaledWaves, boltsPerWave, strikeDamageOverride, false);
     }
 
     public static void beginLooseImmortalTribulation(ServerPlayer player, CultivationData data, int strikes, int boltsPerWave, int strikeDamageOverride) {
@@ -145,9 +155,11 @@ public final class TribulationHandler {
         CapabilityEvents.syncToClient(player);
         TribulationHandler.sendTribulationCloud(player, TribulationHandler.estimateCloudDurationTicks(strikes, boltsPerWave));
         ServerLevel level = player.serverLevel();
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS, 0.8f, 0.42f);
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, 1.3f, 0.55f);
-        level.sendParticles((ParticleOptions)ParticleTypes.CLOUD, player.getX(), player.getY() + 8.0, player.getZ(), 34, 4.8, 0.28, 3.4, 0.012);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS, TribulationConstants.CLOUD_SOUND_VOLUME, TribulationConstants.CLOUD_SOUND_PITCH);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, TribulationConstants.THUNDER_SOUND_VOLUME, TribulationConstants.THUNDER_SOUND_PITCH);
+        level.sendParticles((ParticleOptions)ParticleTypes.CLOUD, player.getX(), player.getY() + TribulationConstants.CLOUD_Y_OFFSET, player.getZ(), TribulationConstants.CLOUD_PARTICLE_COUNT, TribulationConstants.CLOUD_PARTICLE_RADIUS, TribulationConstants.CLOUD_PARTICLE_HEIGHT, TribulationConstants.CLOUD_PARTICLE_SPREAD, TribulationConstants.CLOUD_PARTICLE_SPEED);
+        // 事件钩子：渡劫开始
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.Started(player, TribulationHandler.currentSpec(data)));
     }
 
     @SubscribeEvent
@@ -192,81 +204,82 @@ public final class TribulationHandler {
             return;
         }
         int strikeDmg = TribulationHandler.currentStrikeDamage(data);
+        // 事件钩子：雷击前（可修改伤害）
+        TribulationEvents.BoltStrike strikeEvent = new TribulationEvents.BoltStrike(player, TribulationHandler.currentSpec(data), strikeDmg);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(strikeEvent);
+        strikeDmg = Math.max(0, (int) strikeEvent.getDamage());
         TribulationHandler.spawnTribulationBolt(level, player, strikeDmg);
         if (!data.isInTribulation() || !player.isAlive()) {
             return;
         }
-        data.consumePendingTribulationBolt(TribulationHandler.subBoltIntervalTicks(data.getTribulationBoltsPerWave()));
+        data.consumePendingTribulationBolt(TribulationHandler.specBoltInterval(data));
         if (data.hasPendingTribulationBolts()) {
             return;
         }
         data.decrementTribulationStrikes();
         CapabilityEvents.syncToClient(player);
+        // 事件钩子：每波结束
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.WaveEnd(player, data.getTribulationStrikesRemaining()));
         if (!data.isInTribulation()) {
             TribulationHandler.onTribulationSuccess(player, data);
         }
     }
 
     private static int currentStrikeDamage(CultivationData data) {
-        int strikeDmg = data.getCurrentTribulationStrikeDamage();
-        if (data.getSpiritRoot() == SpiritRoot.MUTANT_LIGHTNING) {
-            strikeDmg = Math.max(1, strikeDmg / 2);
+        return Math.max(0, data.getCurrentTribulationStrikeDamage());
+    }
+
+    /** 当前渡劫劫谱（由 Realm 提供或按伤害/道数构造简易 spec；散仙劫用简易 spec） */
+    private static TribulationSpec currentSpec(CultivationData data) {
+        if (data == null) {
+            return TribulationSpec.of(1, 1, 0);
         }
-        return strikeDmg;
+        int damage = Math.max(0, data.getCurrentTribulationStrikeDamage());
+        int waves = Math.max(1, data.getTribulationStrikesRemaining() <= 0 ? 1 : data.getTribulationStrikesRemaining() + 1);
+        int bolts = data.getTribulationBoltsPerWave();
+        return new TribulationSpec(waves, bolts, damage, 0.0, 0, data.getTribulationType());
+    }
+
+    /** 每波雷击间隔（tick）：优先劫谱，回退旧算法 */
+    private static int specBoltInterval(CultivationData data) {
+        TribulationSpec spec = TribulationHandler.currentSpec(data);
+        return spec.effectiveBoltInterval();
     }
 
     private static void spawnTribulationBolt(ServerLevel level, ServerPlayer player, int strikeDmg) {
-        LightningBolt bolt = (LightningBolt)EntityType.LIGHTNING_BOLT.create((Level)level);
-        if (bolt != null) {
-            Vec3 pos = TribulationHandler.tribulationBoltPosition(level, player);
-            bolt.moveTo(pos.x, pos.y, pos.z);
-            bolt.setVisualOnly(true);
-            bolt.getPersistentData().putBoolean(TRIBULATION_LIGHTNING_TAG, true);
-            bolt.setDamage((float)strikeDmg);
-            level.addFreshEntity((Entity)bolt);
-            TribulationHandler.applyTribulationBoltDamage(level, player, bolt, strikeDmg);
-        }
+        TribulationHandler.currentSpec(dataOf(player)).type().spawnEffect(level, player, TribulationHandler.currentSpec(dataOf(player)), strikeDmg);
+        TribulationHandler.applyTribulationBoltDamage(level, player, strikeDmg);
     }
 
-    private static Vec3 tribulationBoltPosition(ServerLevel level, ServerPlayer player) {
-        RandomSource random = level.random;
-        double angle = random.nextDouble() * Math.PI * 2.0;
-        double radius = Math.sqrt(random.nextDouble()) * 1.0;
-        return new Vec3(player.getX() + Math.cos(angle) * radius, player.getY(), player.getZ() + Math.sin(angle) * radius);
+    private static CultivationData dataOf(ServerPlayer player) {
+        return CultivationCapability.get((Player)player).orElse(null);
     }
 
-    private static void applyTribulationBoltDamage(ServerLevel level, ServerPlayer player, LightningBolt bolt, int strikeDmg) {
+    private static void applyTribulationBoltDamage(ServerLevel level, ServerPlayer player, int strikeDmg) {
         if (!player.isAlive() || strikeDmg <= 0) {
             return;
         }
-        TribulationHandler.applyTribulationFire((LivingEntity)player);
-        Holder.Reference lightningType = level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.LIGHTNING_BOLT);
-        DamageSource source = new DamageSource((Holder)lightningType, (Entity)bolt);
-        float damage = SectProtectionDomeHandler.absorbTribulationDamage(player, strikeDmg);
-        if (damage <= 0.0f) {
+        CultivationData data = TribulationHandler.dataOf(player);
+        // 防御链：宗门护盾 / 雷灵根减免等依次生效
+        float finalDmg = TribulationDefense.applyAll(strikeDmg, player, data);
+        if (finalDmg <= 0.0f) {
             player.setRemainingFireTicks(0);
             return;
         }
-        player.invulnerableTime = 0;
-        player.hurt(source, damage);
-    }
-
-    private static void applyTribulationFire(LivingEntity living) {
-        living.setRemainingFireTicks(living.getRemainingFireTicks() + 1);
-        if (living.getRemainingFireTicks() == 0) {
-            living.setSecondsOnFire(8);
-        }
+        TribulationHandler.currentSpec(data).type().applyDamage(level, player, TribulationHandler.currentSpec(data), Math.round(finalDmg));
     }
 
     private static void onTribulationSuccess(ServerPlayer player, CultivationData data) {
         if (data.isLooseImmortalTribulationActive()) {
             LooseImmortalHandler.completeTribulationSuccess(player, data);
             TribulationHandler.clearTribulationCloud(player);
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.Succeeded(player, data.getRealm(), data.getSubStage()));
             return;
         }
         Realm before = data.getRealm();
         SubStage beforeStage = data.getSubStage();
         TribulationHandler.completeBreakthrough(player, data, before, beforeStage, true);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.Succeeded(player, data.getRealm(), data.getSubStage()));
     }
 
     public static void completeBreakthroughWithoutTribulation(ServerPlayer player, CultivationData data) {
@@ -297,6 +310,7 @@ public final class TribulationHandler {
                 data.demoteOnFailure();
                 player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.tribulation.failure", (Object[])new Object[]{before.displayName(), beforeStage.displayName(), data.getRealm().displayName(), data.getSubStage().displayName()}), false);
             }
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.Failed(player, before, beforeStage));
         }
         CapabilityEvents.syncToClient(player);
         return wasInTribulation;
@@ -337,10 +351,10 @@ public final class TribulationHandler {
         }
         RandomSource random = level.random;
         double cx = player.getX();
-        double cy = player.getY() + 8.0;
+        double cy = player.getY() + TribulationConstants.CLOUD_Y_OFFSET;
         double cz = player.getZ();
-        double radius = 5.6;
-        int cloudCount = data.getTribulationCooldown() > 0 ? 8 : 5;
+        double radius = TribulationConstants.CLOUD_RADIUS;
+        int cloudCount = data.getTribulationCooldown() > 0 ? TribulationConstants.CLOUD_CLOUD_COUNT_COOLDOWN : TribulationConstants.CLOUD_CLOUD_COUNT_NORMAL;
         for (int i = 0; i < cloudCount; ++i) {
             double angle = random.nextDouble() * Math.PI * 2.0;
             double dist = Math.sqrt(random.nextDouble()) * radius;
@@ -353,7 +367,8 @@ public final class TribulationHandler {
 
     private static int estimateCloudDurationTicks(int strikes, int boltsPerWave) {
         int intervalCount = Math.max(0, strikes - 1);
-        return 60 + intervalCount * 20 + Math.max(0, strikes) * TribulationHandler.subWaveDurationTicks(boltsPerWave) + 80;
+        return TribulationConstants.CLOUD_DURATION_BASE_TICKS + intervalCount * TribulationConstants.CLOUD_DURATION_WAVE_GAP_TICKS
+                + Math.max(0, strikes) * TribulationHandler.subWaveDurationTicks(boltsPerWave) + TribulationConstants.CLOUD_DURATION_TAIL_TICKS;
     }
 
     private static int subWaveDurationTicks(int boltsPerWave) {
@@ -365,8 +380,8 @@ public final class TribulationHandler {
         if (bolts <= 1) {
             return 0;
         }
-        int interval = Math.round(30.0f / (float)(bolts - 1));
-        return Math.max(4, Math.min(20, interval));
+        int interval = Math.round((float) TribulationConstants.SUB_WAVE_DURATION_BASE_TICKS / (float) (bolts - 1));
+        return Math.max(TribulationConstants.MIN_SUB_BOLT_INTERVAL_TICKS, Math.min(TribulationConstants.MAX_SUB_BOLT_INTERVAL_TICKS, interval));
     }
 
     private static void sendTribulationCloud(ServerPlayer player, int durationTicks) {

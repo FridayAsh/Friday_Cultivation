@@ -11,6 +11,9 @@
  */
 package com.friday.cultivation.cultivation;
 
+import com.friday.cultivation.event.tribulation.TribulationSpec;
+import com.friday.cultivation.event.tribulation.TribulationType;
+
 import com.friday.cultivation.cultivation.CultivationBonusCategory;
 import com.friday.cultivation.cultivation.FoundationDao;
 import com.friday.cultivation.cultivation.GoldenCoreDao;
@@ -137,7 +140,9 @@ implements INBTSerializable<CompoundTag> {
     private int creationFruitEaten = 0;
     private GoldenCoreDao pendingGoldenCoreDao = GoldenCoreDao.NONE;
     private int tribulationStrikeDamageOverride = 0;
-    private boolean soulState = false;
+
+    /** 当前渡劫劫种（默认雷劫） */
+    private TribulationType tribulationType = TribulationType.LIGHTNING;    private boolean soulState = false;
     private int soulTicks = 0;
     private boolean reincarnationPending = false;
     private boolean reincarnationReady = false;
@@ -747,6 +752,27 @@ implements INBTSerializable<CompoundTag> {
         this.tribulationBoltsPerWave = Math.max(1, boltsPerWave);
         this.looseImmortalTribulationActive = false;
         this.clearPendingTribulationWave();
+    }
+
+    /** 按劫谱开始渡劫（数据驱动） */
+    public void startTribulation(TribulationSpec spec) {
+        this.tribulationStrikesRemaining = spec == null ? 0 : Math.max(0, spec.waves());
+        this.tribulationCooldown = 60;
+        this.tribulationStrikeDamageOverride = spec == null ? 0 : Math.max(0, spec.strikeDamage());
+        this.tribulationBoltsPerWave = spec == null ? 1 : Math.max(1, spec.boltsPerWave());
+        this.tribulationType = spec == null ? TribulationType.LIGHTNING : spec.type();
+        this.looseImmortalTribulationActive = false;
+        this.clearPendingTribulationWave();
+    }
+
+    /** 当前渡劫劫种 */
+    public TribulationType getTribulationType() {
+        return this.tribulationType == null ? TribulationType.LIGHTNING : this.tribulationType;
+    }
+
+    /** 每波实际雷击间隔（tick，由劫谱或自动计算） */
+    public int tribulationBoltInterval() {
+        return 0; // 兼容旧调用：由 TribulationHandler 按 spec 计算
     }
 
     public void startLooseImmortalTribulation(int strikes, int strikeDamageOverride, int boltsPerWave) {

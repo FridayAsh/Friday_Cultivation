@@ -606,27 +606,30 @@ public enum Realm {
         };
     }
 
+    /** 单次雷击伤害（方案数值表：约=标准生命值×10%，由低到高递增） */
     public int tribulationStrikeDamage() {
         return switch (this) {
             case MORTAL -> 0;
             case BODY_TEMPERING -> 0;
-            case QI_REFINING -> 30;
-            case FOUNDATION_BUILDING -> 40;
-            case GOLDEN_CORE -> 50;
+            case QI_REFINING -> 20;
+            case FOUNDATION_BUILDING -> 30;
+            case GOLDEN_CORE -> 45;
             case NASCENT_SOUL -> 60;
-            case SOUL_FORMATION -> 70;
-            case VOID_REFINING -> 80;
-            case BODY_INTEGRATION -> 90;
+            case SOUL_FORMATION -> 80;
+            case VOID_REFINING -> 105;
+            case BODY_INTEGRATION -> 135;
             case MAHAYANA -> 0;
-            case TRIBULATION_TRANSCENDENCE -> 150;
-            case TRUE_IMMORTAL -> 180;
-            case MYSTIC_IMMORTAL -> 185;
-            case IMMORTAL_LORD -> 190;
-            case IMMORTAL_VENERABLE -> 195;
-            case IMMORTAL_KING -> 200;
-            case HALF_SAGE, SAGE, HALF_EMPEROR -> 190;
-            case GREAT_EMPEROR -> 200;
-            case LOOSE_IMMORTAL -> 0;
+            case TRIBULATION_TRANSCENDENCE -> 215;
+            case TRUE_IMMORTAL -> 300;
+            case MYSTIC_IMMORTAL -> 360;
+            case IMMORTAL_LORD -> 430;
+            case IMMORTAL_VENERABLE -> 510;
+            case IMMORTAL_KING -> 600;
+            case HALF_SAGE -> 645;
+            case SAGE -> 0;
+            case HALF_EMPEROR -> 745;
+            case GREAT_EMPEROR -> 785;
+            case LOOSE_IMMORTAL -> 255;
         };
     }
 
