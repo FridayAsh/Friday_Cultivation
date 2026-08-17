@@ -562,8 +562,6 @@
   "item.friday_cultivation.chi_yan_sword_sage": "Chi-Flame Sage Sword",
   "item.friday_cultivation.han_bing_sword_sage": "Han-Frost Sage Sword",
   "screen.friday_cultivation.wudao_short": "Dao Insight",
-  
-
   "item.friday_cultivation.realm_token_half_sage": "Realm Token: Half Sage",
   "item.friday_cultivation.realm_token_sage": "Realm Token: Sage",
   "item.friday_cultivation.realm_token_half_emperor": "Realm Token: Half Emperor",
@@ -2380,5 +2378,6 @@
   "sub_stage.friday_cultivation.half_emperor_jie": "Spirit Tribulation",
   "sub_stage.friday_cultivation.half_emperor_yin": "Condense Seal",
   "sub_stage.friday_cultivation.half_emperor_wei": "Gather Might",
-  "item.friday_cultivation.realm_selector_token": "Realm Selector Token"
+  "item.friday_cultivation.realm_selector_token": "Realm Selector Token",
+  "screen.friday_cultivation.breakthrough.hint_normal": "※ No tribulation required for this breakthrough"
 }

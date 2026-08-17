@@ -364,9 +364,9 @@ public final class TechniqueEffectHandler {
         if (data == null) {
             return 0.0;
         }
-        double inherited = data.getBodyTemperingHpInherited();
-        if (inherited > 0.0) {
-            return inherited;
+        // 低于锻体的境界（凡人）不享受锻体加成；锻体及更高境界享受
+        if (data.getRealm() == Realm.MORTAL) {
+            return 0.0;
         }
         int currentLevel = data.getRealm() == Realm.BODY_TEMPERING ? data.getSubStage().level() : 0;
         int stored = sp.getPersistentData().getInt(TAG_MAX_BODY_TEMPERING_LEVEL);
@@ -374,21 +374,12 @@ public final class TechniqueEffectHandler {
             stored = currentLevel;
             sp.getPersistentData().putInt(TAG_MAX_BODY_TEMPERING_LEVEL, stored);
         }
-        int effective;
-        if (data.getRealm() == Realm.MORTAL) {
-            effective = 0;
-        } else if (data.getRealm() == Realm.BODY_TEMPERING) {
-            effective = currentLevel;
-        } else {
-            effective = stored;
-        }
+        int effective = data.getRealm() == Realm.BODY_TEMPERING ? currentLevel : stored;
         if (effective <= 0) {
             return 0.0;
         }
-        // 迁移：按标准生命值150 × 锻体百分比计算一次并写入继承值（永久继承）
-        double migrated = 150.0 * CultivationData.bodyTemperingPercent(effective);
-        data.setBodyTemperingHpInherited(migrated);
-        return migrated;
+        // 按标准生命值 150 × 锻体百分比计算
+        return 150.0 * CultivationData.bodyTemperingPercent(effective);
     }
 
     private static void applyAttributeModifier(Player p, Attribute attr, UUID uuid, String name, double value, AttributeModifier.Operation op) {
