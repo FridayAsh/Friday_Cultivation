@@ -668,7 +668,7 @@
   "screen.friday_cultivation.filter.tier.label": "等阶",
   "screen.friday_cultivation.tribulation_active": "⚡ 渡劫进行中，剩余 %s 道雷",
   "screen.friday_cultivation.breakthrough": "突破境界",
-  "screen.friday_cultivation.breakthrough.hint_mortal": "※ 凡人初次踏入仙途无雷劫，按下即直入炼气初期",
+  "screen.friday_cultivation.breakthrough.hint_mortal": "无雷劫，直入锻体一层",
   "screen.friday_cultivation.breakthrough.hint_tribulation": "※ 将触发 %s 道雷劫，每道 %s 伤害；渡过则晋升，渡不过死亡且境界倒退",
   "screen.friday_cultivation.breakthrough.met": "✔",
   "screen.friday_cultivation.breakthrough.route_waiting": "修为圆满后，可在此查看本次突破路线与雷劫。",

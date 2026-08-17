@@ -655,7 +655,7 @@
   "screen.friday_cultivation.filter.tier.label": "Tier",
   "screen.friday_cultivation.tribulation_active": "⚡ Tribulation in progress: %s strikes left",
   "screen.friday_cultivation.breakthrough": "Attempt Breakthrough",
-  "screen.friday_cultivation.breakthrough.hint_mortal": "* First step: no tribulation; direct to Qi Refining (Early).",
+  "screen.friday_cultivation.breakthrough.hint_mortal": "No tribulation; enter Body Tempering Lv.1",
   "screen.friday_cultivation.breakthrough.hint_tribulation": "* %s bolts, %s damage each. Survive: ascend. Die: drop one stage.",
   "screen.friday_cultivation.breakthrough.met": "?",
   "screen.friday_cultivation.breakthrough.route_waiting": "When your cultivation is full, this tab shows the breakthrough route and tribulation.",
