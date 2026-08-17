@@ -78,6 +78,14 @@ public enum FoundationDao {
         return "foundation_dao.friday_cultivation." + this.id;
     }
 
+    /** 筑基之道渡劫波数：人/血道不渡劫（0），地/天道渡劫（4 波） */
+    public int tribulationWaves() {
+        return switch (this) {
+            case EARTH, HEAVEN -> 4;
+            default -> 0;
+        };
+    }
+
     public static FoundationDao byId(String id) {
         if (id == null || id.isEmpty()) {
             return NONE;

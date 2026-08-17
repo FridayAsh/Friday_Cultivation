@@ -1228,7 +1228,9 @@ extends Screen {
             y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_waiting"), cx, y, width - 8, -9807288) + 4;
         }
         Component hint = this.breakthroughHint(data, boneAge, hasBloodTalisman);
-        this.drawBreakthroughParagraphCentered(gfx, hint, cx, y + 4, width - 8, -9807288);
+        // 渡劫/突破提示放在突破按钮上方
+        int hintBtnY = this.breakthroughBtn.getY() - 16;
+        this.drawBreakthroughParagraphCentered(gfx, hint, cx, hintBtnY, width - 8, -9807288);
     }
 
     private void renderLooseImmortalBreakthroughTab(GuiGraphics gfx, int x, int rightX, int y, LocalPlayer player, CultivationData data) {
@@ -1731,10 +1733,17 @@ extends Screen {
         if (realm == Realm.QI_REFINING && sub.isPeakFor(realm)) {
             int waves = this.foundationTribulationWaves(this.selectedFoundationDao);
             int damage = waves > 0 ? Realm.QI_REFINING.tribulationStrikeDamage() : 0;
-            return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_foundation", (Object[])new Object[]{Component.translatable((String)this.selectedFoundationDao.translationKey()), Realm.formatTribulationCount(waves, 1), damage});
+            if (waves > 0) {
+                return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_foundation", (Object[])new Object[]{Component.translatable((String)this.selectedFoundationDao.translationKey()), Realm.formatTribulationCount(waves, 1), damage});
+            }
+            return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_normal");
         }
         if (realm == Realm.FOUNDATION_BUILDING && sub.isPeakFor(realm)) {
-            return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_golden_core", (Object[])new Object[]{Component.translatable((String)this.selectedGoldenCoreDao.translationKey()), Realm.formatTribulationCount(this.selectedGoldenCoreDao.tribulationStrikes(), 1), this.selectedGoldenCoreDao.tribulationDamage()});
+            int gcWaves = this.selectedGoldenCoreDao.tribulationStrikes();
+            if (gcWaves > 0) {
+                return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_golden_core", (Object[])new Object[]{Component.translatable((String)this.selectedGoldenCoreDao.translationKey()), Realm.formatTribulationCount(gcWaves, 1), this.selectedGoldenCoreDao.tribulationDamage()});
+            }
+            return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_normal");
         }
         int strikes = realm.tribulationCount(sub);
         int boltsPerWave = realm.tribulationBoltsPerWave(sub);

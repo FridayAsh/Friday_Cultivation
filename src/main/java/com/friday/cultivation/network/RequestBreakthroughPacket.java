@@ -149,12 +149,8 @@ public class RequestBreakthroughPacket {
     }
 
     private static int foundationTribulationWaves(FoundationDao dao) {
-        // 练气→筑基：按筑基之道品质分配波数（地/天/人 4 波，方案表）
-        return switch (dao) {
-            case EARTH -> 4;
-            case HEAVEN -> 4;
-            default -> 4;
-        };
+        // 筑基之道渡劫波数：人/血道不渡劫（0），地/天道渡劫（4 波）
+        return dao == null ? 0 : dao.tribulationWaves();
     }
 }
 
