@@ -558,6 +558,8 @@ public enum Realm {
 
     public int tribulationBoltsPerWave(SubStage stage) {
         return switch (this) {
+            // 锻体→练气：每波 9 道
+            case BODY_TEMPERING -> 9;
             // 练气→筑基：每波 9 道
             case QI_REFINING -> 9;
             // 筑基→金丹：每波 10 道
@@ -572,6 +574,8 @@ public enum Realm {
             case VOID_REFINING -> 9;
             // 合道→大乘：每波 9 道
             case BODY_INTEGRATION -> 9;
+            // 大乘：每波 9 道
+            case MAHAYANA -> 9;
             // 渡劫→真仙：每波 10 道
             case TRIBULATION_TRANSCENDENCE -> 10;
             // 散仙劫波：每波 10 道
@@ -597,7 +601,7 @@ public enum Realm {
             case SOUL_FORMATION -> 80;
             case VOID_REFINING -> 105;
             case BODY_INTEGRATION -> 135;
-            case MAHAYANA -> 0;
+            case MAHAYANA -> 178;
             case TRIBULATION_TRANSCENDENCE -> 215;
             case TRUE_IMMORTAL -> 300;
             case MYSTIC_IMMORTAL -> 360;
@@ -605,7 +609,7 @@ public enum Realm {
             case IMMORTAL_VENERABLE -> 510;
             case IMMORTAL_KING -> 600;
             case HALF_SAGE -> 645;
-            case SAGE -> 0;
+            case SAGE -> 710;
             case HALF_EMPEROR -> 745;
             case GREAT_EMPEROR -> 785;
             case LOOSE_IMMORTAL -> 255;
