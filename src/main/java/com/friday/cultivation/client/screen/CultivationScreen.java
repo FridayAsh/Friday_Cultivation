@@ -1739,7 +1739,10 @@ extends Screen {
         int strikes = realm.tribulationCount(sub);
         int boltsPerWave = realm.tribulationBoltsPerWave(sub);
         int damage = realm.tribulationStrikeDamage();
-        return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_tribulation", (Object[])new Object[]{Realm.formatTribulationCount(strikes, boltsPerWave), damage});
+        if (strikes > 0) {
+            return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_tribulation", (Object[])new Object[]{Realm.formatTribulationCount(strikes, boltsPerWave), damage});
+        }
+        return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_normal");
     }
 
     private void drawBreakthroughCentered(GuiGraphics gfx, Component text, int cx, int y, int maxW, int color, boolean strike) {

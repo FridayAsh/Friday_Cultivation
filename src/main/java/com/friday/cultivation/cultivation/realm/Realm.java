@@ -588,7 +588,8 @@ public enum Realm {
     public int tribulationStrikeDamage() {
         return switch (this) {
             case MORTAL -> 0;
-            case BODY_TEMPERING -> 0;
+            // 锻体→练气渡劫：伤害取练气标准（20）
+            case BODY_TEMPERING -> 20;
             case QI_REFINING -> 20;
             case FOUNDATION_BUILDING -> 30;
             case GOLDEN_CORE -> 45;
