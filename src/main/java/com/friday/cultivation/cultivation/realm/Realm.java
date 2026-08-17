@@ -493,27 +493,27 @@ public enum Realm {
     }
 
     public int tribulationCount(SubStage stage) {
+        // 炼虚之前（凡人~化神）：仅大境界突破（当前子阶段为巅峰）才渡劫
+        if (this.ordinal() < Realm.VOID_REFINING.ordinal()) {
+            if (stage == null || !stage.isPeakFor(this)) {
+                return 0;
+            }
+            return switch (this) {
+                case BODY_TEMPERING -> 4;          // 锻体→练气
+                case QI_REFINING -> 4;             // 练气→筑基
+                case FOUNDATION_BUILDING -> 4;     // 筑基→金丹
+                case GOLDEN_CORE -> 5;             // 金丹→元婴
+                case NASCENT_SOUL -> 5;            // 元婴→化神
+                case SOUL_FORMATION -> 5;          // 化神→炼虚
+                default -> 0;
+            };
+        }
+        // 炼虚之后（含炼虚）：每个小境界突破都渡劫
         return switch (this) {
-            case MORTAL -> 0;
-            case BODY_TEMPERING -> 0;
-            // 练气→筑基：4 波（筑基之道另有特殊处理，此处为兜底）
-            case QI_REFINING -> 4;
-            // 筑基→金丹：4 波
-            case FOUNDATION_BUILDING -> 4;
-            // 金丹→元婴：5 波
-            case GOLDEN_CORE -> 5;
-            // 元婴→化神：5 波
-            case NASCENT_SOUL -> 5;
-            // 化神→炼虚：5 波
-            case SOUL_FORMATION -> 5;
-            // 炼虚→合道：5 波
             case VOID_REFINING -> 5;
-            // 合道→大乘：6 波
             case BODY_INTEGRATION -> 6;
-            case MAHAYANA -> 0;
-            // 渡劫→真仙：6 波
+            case MAHAYANA -> 6;
             case TRIBULATION_TRANSCENDENCE -> 6;
-            // 散仙劫波：6 波
             case LOOSE_IMMORTAL -> 6;
             // 真仙/玄仙：每 3 重天渡劫（3/6/9 波）
             case TRUE_IMMORTAL, MYSTIC_IMMORTAL -> {
@@ -541,13 +541,8 @@ public enum Realm {
             }
             // 半圣→圣人：7 波
             case HALF_SAGE -> 7;
-            // 圣人三子阶段：入微→道韵→悟虚 无渡劫；悟虚圆满→半帝 9 波
-            case SAGE -> {
-                if (stage != null && stage.isPeakFor(this)) {
-                    yield 9;
-                }
-                yield 0;
-            }
+            // 圣人三子阶段：每档都渡劫 7 波
+            case SAGE -> 7;
             // 半帝→大帝：8 波
             case HALF_EMPEROR -> 8;
             // 大帝九帝界：每个帝界突破均渡劫，第一帝界 9 波起每界 +1（9~17 波）
@@ -557,6 +552,7 @@ public enum Realm {
                 }
                 yield 9;
             }
+            default -> 0;
         };
     }
 
