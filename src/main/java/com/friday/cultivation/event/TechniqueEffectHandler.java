@@ -113,6 +113,8 @@ public final class TechniqueEffectHandler {
     private static final UUID UUID_BODY_TEMPERING_HP = UUID.nameUUIDFromBytes("xiaoxiang.bodyTempering.hp".getBytes());
     /** 突破累计生命加成（每次大/小境界突破累加） */
     private static final UUID UUID_BREAKTHROUGH_HP = UUID.nameUUIDFromBytes("xiaoxiang.breakthrough.hp".getBytes());
+    /** 境界标准生命基础（把原版基础 20 补到 standardMaxHealth） */
+    private static final UUID UUID_REALM_BASE_HP = UUID.nameUUIDFromBytes("xiaoxiang.realm.baseHp".getBytes());
     /** 全局生命倍率（×4，含所有加成）：境界标准生命整体放大 */
     private static final UUID UUID_REALM_HP_MULT = UUID.nameUUIDFromBytes("xiaoxiang.realm.hpMult".getBytes());
 
@@ -160,6 +162,9 @@ public final class TechniqueEffectHandler {
         double bodyTemperingHp = TechniqueEffectHandler.bodyTemperingHpBonus(sp, data);
         // 锻体 HP 加成排除在全局 ×4 之外：值 ÷4，×4 后恰好还原原值
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BODY_TEMPERING_HP, "xiaoxiang_body_tempering_hp", bodyTemperingHp / 4.0, AttributeModifier.Operation.ADDITION);
+        // 境界标准生命基础（原版基础 20 补到 standardMaxHealth）
+        double realmBaseHp = data == null ? 0.0 : data.getRealm().standardMaxHealth() - 20.0;
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_REALM_BASE_HP, "xiaoxiang_realm_base_hp", realmBaseHp, AttributeModifier.Operation.ADDITION);
         // 突破累计生命加成（每次大/小境界突破累加；data 可能为 null，如死亡/复活瞬间 capability 未附加）
         double breakthroughHp = data == null ? 0.0 : (double)data.getBreakthroughHpBonus();
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BREAKTHROUGH_HP, "xiaoxiang_breakthrough_hp", breakthroughHp, AttributeModifier.Operation.ADDITION);
@@ -332,6 +337,9 @@ public final class TechniqueEffectHandler {
         double bodyTemperingHp = TechniqueEffectHandler.bodyTemperingHpBonus(sp, data);
         // 锻体 HP 加成排除在全局 ×4 之外：值 ÷4，×4 后恰好还原原值
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BODY_TEMPERING_HP, "xiaoxiang_body_tempering_hp", bodyTemperingHp / 4.0, AttributeModifier.Operation.ADDITION);
+        // 境界标准生命基础（原版基础 20 补到 standardMaxHealth）
+        double realmBaseHp = data.getRealm().standardMaxHealth() - 20.0;
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_REALM_BASE_HP, "xiaoxiang_realm_base_hp", realmBaseHp, AttributeModifier.Operation.ADDITION);
         // 突破累计生命加成（每次大/小境界突破累加）
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BREAKTHROUGH_HP, "xiaoxiang_breakthrough_hp", (double)data.getBreakthroughHpBonus(), AttributeModifier.Operation.ADDITION);
         // 全局生命倍率 ×4（含所有加成，最终数值放大）
@@ -352,14 +360,17 @@ public final class TechniqueEffectHandler {
     }
 
     /**
-     * 锻体生命加成：
-     * - 锻体期间随当前层数变化（第 n 层 = n×10）；
-     * - 突破到练气及更高境界后，保留锻体期间练满的最高层加成（持久化），不再归零；
-     * - 用境界令牌返回锻体低层时，加成重新按当前层数计算。
+     * 锻体生命加成（固定继承值）：
+     * - 新逻辑：使用 CultivationData.bodyTemperingHpInherited（锻体境界时按标准值150×锻体百分比计算一次，永久继承）
+     * - 旧档迁移：若继承值为 0 且玩家已过锻体（或当前锻体），按旧层数记录折算一次并写入继承值
      */
     private static double bodyTemperingHpBonus(ServerPlayer sp, CultivationData data) {
         if (data == null) {
             return 0.0;
+        }
+        double inherited = data.getBodyTemperingHpInherited();
+        if (inherited > 0.0) {
+            return inherited;
         }
         int currentLevel = data.getRealm() == Realm.BODY_TEMPERING ? data.getSubStage().level() : 0;
         int stored = sp.getPersistentData().getInt(TAG_MAX_BODY_TEMPERING_LEVEL);
@@ -367,7 +378,6 @@ public final class TechniqueEffectHandler {
             stored = currentLevel;
             sp.getPersistentData().putInt(TAG_MAX_BODY_TEMPERING_LEVEL, stored);
         }
-        // 凡人无锻体加成；锻体期间按当前层数；高于锻体的境界（练气及以上）保留锻体最高层加成
         int effective;
         if (data.getRealm() == Realm.MORTAL) {
             effective = 0;
@@ -376,24 +386,13 @@ public final class TechniqueEffectHandler {
         } else {
             effective = stored;
         }
-        // 锻体累计生命：每层加成累加（1-3层每层+10、4-6层每层+20、7-9层每层+30、10层+100）
-        // 第n层总加成 = Σ(各层增量)：1=10 2=20 3=30 4=50 5=70 6=90 7=120 8=150 9=180 10=280
         if (effective <= 0) {
             return 0.0;
         }
-        long sum = 0L;
-        for (int lvl = 1; lvl <= effective; ++lvl) {
-            if (lvl >= 10) {
-                sum += 100L;
-            } else if (lvl >= 7) {
-                sum += 30L;
-            } else if (lvl >= 4) {
-                sum += 20L;
-            } else {
-                sum += 10L;
-            }
-        }
-        return (double)sum;
+        // 迁移：按标准生命值150 × 锻体百分比计算一次并写入继承值（永久继承）
+        double migrated = 150.0 * CultivationData.bodyTemperingPercent(effective);
+        data.setBodyTemperingHpInherited(migrated);
+        return migrated;
     }
 
     private static void applyAttributeModifier(Player p, Attribute attr, UUID uuid, String name, double value, AttributeModifier.Operation op) {

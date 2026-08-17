@@ -59,7 +59,7 @@ public class CreateImperialArtPacket {
         if (data.hasCreatedImperialArt()) {
             return false;
         }
-        if (data.getRealm() != Realm.TRUE_IMMORTAL || !data.getSubStage().isPeakFor(Realm.TRUE_IMMORTAL)) {
+        if (data.getRealm() != Realm.HALF_EMPEROR || !data.getSubStage().isPeakFor(Realm.HALF_EMPEROR)) {
             return false;
         }
         return data.hasKilledGreatEmperor();

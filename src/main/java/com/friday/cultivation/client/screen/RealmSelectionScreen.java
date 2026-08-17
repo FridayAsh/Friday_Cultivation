@@ -79,10 +79,7 @@ public class RealmSelectionScreen extends Screen {
 
     public RealmSelectionScreen() {
         super(Component.translatable("screen.friday_cultivation.realm_selector.title"));
-        List<Realm> list = new ArrayList<>();
-        for (Realm r : Realm.values()) {
-            list.add(r);
-        }
+        List<Realm> list = new ArrayList<>(Realm.logicalOrder());
         this.realms = list;
 
         Realm curRealm = Realm.MORTAL;
@@ -359,9 +356,13 @@ public class RealmSelectionScreen extends Screen {
         for (Component opt : options) {
             maxW = Math.max(maxW, this.chipTextWidth(opt));
         }
-        int popupW = Math.max(anchorX2 - anchorX1, maxW + 16);
+        // 大境界 21 项分两列，避免下拉超高截断
+        int columns = isRealm ? 2 : 1;
+        int rows = (options.size() + columns - 1) / columns;
         int optionH = 13;
-        int popupH = options.size() * optionH + 4;
+        int colW = Math.max(anchorX2 - anchorX1, maxW + 16) / columns + 4;
+        int popupW = colW * columns + 4;
+        int popupH = rows * optionH + 4;
         int popupX = anchorX1;
         int popupY = anchorY2 + 3;
         if (popupY + popupH > this.height - 4) {
@@ -377,28 +378,30 @@ public class RealmSelectionScreen extends Screen {
         gfx.fill(popupX - 1, popupY - 1, popupX + popupW + 1, popupY + popupH + 1, INK_BLACK);
         gfx.fill(popupX, popupY, popupX + popupW, popupY + popupH, POPUP_BG);
 
-        int oy = popupY + 2;
         for (int i = 0; i < options.size(); ++i) {
             Component opt = options.get(i);
-            boolean hover = mouseX >= popupX && mouseX < popupX + popupW && mouseY >= oy && mouseY < oy + optionH;
+            int col = i / rows;
+            int row = i % rows;
+            int ox = popupX + 2 + col * colW;
+            int oy = popupY + 2 + row * optionH;
+            boolean hover = mouseX >= ox && mouseX < ox + colW && mouseY >= oy && mouseY < oy + optionH;
             boolean selected = i == selectedIdx;
             int bg = hover ? VERMILLION : (selected ? CHIP_HOVER_BG : POPUP_BG);
-            gfx.fill(popupX, oy, popupX + popupW, oy + optionH, bg);
+            gfx.fill(ox, oy, ox + colW, oy + optionH, bg);
             if (selected) {
                 // 金色呼吸左标
-                gfx.fill(popupX + 1, oy, popupX + 3, oy + optionH, pulseColor(GOLD, 0.18f, 150, 255));
+                gfx.fill(ox + 1, oy, ox + 3, oy + optionH, pulseColor(GOLD, 0.18f, 150, 255));
             }
             int textColor = hover || selected ? TEXT_LIGHT : TEXT_MUTED;
             int tw = this.chipTextWidth(opt);
-            this.drawScaled(gfx, opt, popupX + (popupW - tw) / 2, oy + (optionH - 7) / 2, textColor, 0.72f);
+            this.drawScaled(gfx, opt, ox + (colW - tw) / 2, oy + (optionH - 7) / 2, textColor, 0.72f);
 
-            this.dropdownOptionRects.add(new int[]{popupX, oy, popupX + popupW, oy + optionH, i});
+            this.dropdownOptionRects.add(new int[]{ox, oy, ox + colW, oy + optionH, i});
 
             // 选项间细线分隔
             if (i < options.size() - 1) {
-                gfx.fill(popupX + 6, oy + optionH - 1, popupX + popupW - 6, oy + optionH, INK_BLACK);
+                gfx.fill(ox + 6, oy + optionH - 1, ox + colW - 6, oy + optionH, INK_BLACK);
             }
-            oy += optionH;
         }
         gfx.pose().popPose();
     }

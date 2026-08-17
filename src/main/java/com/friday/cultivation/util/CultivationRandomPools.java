@@ -170,6 +170,18 @@ public final class CultivationRandomPools {
                 pillTierTrueImmortal[2] = PillTier.IMMORTAL;
                 break;
             }
+            case MYSTIC_IMMORTAL:
+            case IMMORTAL_LORD:
+            case IMMORTAL_VENERABLE:
+            case IMMORTAL_KING: {
+                // 玄仙/仙君/仙尊/仙王：介于真仙与半圣之间，仙级品阶
+                PillTier[] pillTierXian = new PillTier[3];
+                pillTierXian[0] = PillTier.SUPREME;
+                pillTierXian[1] = PillTier.SUPREME;
+                pillTierArray = pillTierXian;
+                pillTierXian[2] = PillTier.IMMORTAL;
+                break;
+            }
             case HALF_SAGE: 
             case SAGE:
             case HALF_EMPEROR: {
@@ -201,6 +213,7 @@ public final class CultivationRandomPools {
             case SOUL_FORMATION, VOID_REFINING -> ItemTier.HIGH;
             case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE -> ItemTier.SUPREME;
             case TRUE_IMMORTAL -> ItemTier.IMMORTAL;
+            case MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING -> ItemTier.IMMORTAL;
             case HALF_SAGE, SAGE, HALF_EMPEROR -> ItemTier.SAGE;
             case LOOSE_IMMORTAL, GREAT_EMPEROR -> ItemTier.IMMORTAL;
         };
@@ -213,6 +226,7 @@ public final class CultivationRandomPools {
             case GOLDEN_CORE, NASCENT_SOUL -> ItemTier.MID;
             case SOUL_FORMATION, VOID_REFINING -> ItemTier.HIGH;
             case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL -> ItemTier.SUPREME;
+            case MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING -> ItemTier.SUPREME;
             case HALF_SAGE, SAGE, HALF_EMPEROR -> ItemTier.SAGE;
             case LOOSE_IMMORTAL, GREAT_EMPEROR -> ItemTier.SUPREME;
         };
@@ -226,6 +240,7 @@ public final class CultivationRandomPools {
             case SOUL_FORMATION, VOID_REFINING -> ItemTier.HIGH;
             case BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE -> ItemTier.SUPREME;
             case TRUE_IMMORTAL -> ItemTier.IMMORTAL;
+            case MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING -> ItemTier.IMMORTAL;
             case HALF_SAGE, SAGE, HALF_EMPEROR -> ItemTier.SAGE;
             case LOOSE_IMMORTAL, GREAT_EMPEROR -> ItemTier.IMMORTAL;
         };

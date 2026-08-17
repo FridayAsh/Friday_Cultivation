@@ -1348,7 +1348,7 @@ extends AbstractVillager {
             case SOUL_FORMATION -> 0.24f;
             case VOID_REFINING, BODY_INTEGRATION -> 0.27f;
             case MAHAYANA, TRIBULATION_TRANSCENDENCE -> 0.3f;
-            case TRUE_IMMORTAL, HALF_SAGE, SAGE, HALF_EMPEROR, LOOSE_IMMORTAL, GREAT_EMPEROR -> 0.33f;
+            case TRUE_IMMORTAL, MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING, HALF_SAGE, SAGE, HALF_EMPEROR, LOOSE_IMMORTAL, GREAT_EMPEROR -> 0.33f;
             case MORTAL, BODY_TEMPERING, QI_REFINING -> 0.0f;
         };
     }
@@ -1366,7 +1366,7 @@ extends AbstractVillager {
             case SOUL_FORMATION -> 0.24f;
             case VOID_REFINING, BODY_INTEGRATION -> 0.27f;
             case MAHAYANA, TRIBULATION_TRANSCENDENCE -> 0.3f;
-            case TRUE_IMMORTAL, HALF_SAGE, SAGE, HALF_EMPEROR, LOOSE_IMMORTAL, GREAT_EMPEROR -> 0.33f;
+            case TRUE_IMMORTAL, MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING, HALF_SAGE, SAGE, HALF_EMPEROR, LOOSE_IMMORTAL, GREAT_EMPEROR -> 0.33f;
             case MORTAL, BODY_TEMPERING, QI_REFINING -> 0.0f;
         };
     }
@@ -1572,6 +1572,10 @@ extends AbstractVillager {
                 break;
             }
             case TRUE_IMMORTAL: 
+            case MYSTIC_IMMORTAL:
+            case IMMORTAL_LORD:
+            case IMMORTAL_VENERABLE:
+            case IMMORTAL_KING:
             case HALF_SAGE:
             case SAGE:
             case HALF_EMPEROR:
@@ -1698,7 +1702,7 @@ extends AbstractVillager {
             case MORTAL, BODY_TEMPERING, QI_REFINING -> (Item)ModItems.LOW_SPIRIT_STONE.get();
             case FOUNDATION_BUILDING, GOLDEN_CORE -> (Item)ModItems.MID_SPIRIT_STONE.get();
             case NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, BODY_INTEGRATION -> (Item)ModItems.HIGH_SPIRIT_STONE.get();
-            case MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, HALF_SAGE, SAGE, HALF_EMPEROR, LOOSE_IMMORTAL, GREAT_EMPEROR -> (Item)ModItems.SUPREME_SPIRIT_STONE.get();
+            case MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING, HALF_SAGE, SAGE, HALF_EMPEROR, LOOSE_IMMORTAL, GREAT_EMPEROR -> (Item)ModItems.SUPREME_SPIRIT_STONE.get();
         };
     }
 
@@ -2182,6 +2186,10 @@ extends AbstractVillager {
             case MAHAYANA: 
             case TRIBULATION_TRANSCENDENCE: 
             case TRUE_IMMORTAL: 
+            case MYSTIC_IMMORTAL:
+            case IMMORTAL_LORD:
+            case IMMORTAL_VENERABLE:
+            case IMMORTAL_KING:
             case HALF_SAGE:
             case SAGE:
             case HALF_EMPEROR:
@@ -2211,6 +2219,10 @@ extends AbstractVillager {
             case MAHAYANA -> 20.0;
             case TRIBULATION_TRANSCENDENCE -> 25.0;
             case TRUE_IMMORTAL -> 30.0;
+            case MYSTIC_IMMORTAL -> 30.25;
+            case IMMORTAL_LORD -> 30.5;
+            case IMMORTAL_VENERABLE -> 30.75;
+            case IMMORTAL_KING -> 31.0;
             case HALF_SAGE -> 31.0;
             case SAGE -> 32.0;
             case HALF_EMPEROR -> 34.0;
@@ -3678,6 +3690,10 @@ extends AbstractVillager {
             case MAHAYANA -> ChatFormatting.RED;
             case TRIBULATION_TRANSCENDENCE -> ChatFormatting.DARK_BLUE;
             case TRUE_IMMORTAL -> ChatFormatting.GOLD;
+            case MYSTIC_IMMORTAL -> ChatFormatting.YELLOW;
+            case IMMORTAL_LORD -> ChatFormatting.AQUA;
+            case IMMORTAL_VENERABLE -> ChatFormatting.DARK_AQUA;
+            case IMMORTAL_KING -> ChatFormatting.DARK_GREEN;
             case HALF_SAGE, SAGE -> ChatFormatting.DARK_AQUA;
             case HALF_EMPEROR -> ChatFormatting.DARK_RED;
             case GREAT_EMPEROR -> ChatFormatting.DARK_RED;

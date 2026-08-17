@@ -401,6 +401,34 @@ public final class ModItems {
                 nArray12[1] = 13215850;
                 break;
             }
+            case MYSTIC_IMMORTAL: {
+                int[] nArrayMystic = new int[2];
+                nArrayMystic[0] = 11532419;
+                nArray = nArrayMystic;
+                nArrayMystic[1] = 5770522;
+                break;
+            }
+            case IMMORTAL_LORD: {
+                int[] nArrayLord = new int[2];
+                nArrayLord[0] = 15243267;
+                nArray = nArrayLord;
+                nArrayLord[1] = 8331045;
+                break;
+            }
+            case IMMORTAL_VENERABLE: {
+                int[] nArrayVenerable = new int[2];
+                nArrayVenerable[0] = 13754238;
+                nArray = nArrayVenerable;
+                nArrayVenerable[1] = 7616755;
+                break;
+            }
+            case IMMORTAL_KING: {
+                int[] nArrayKing = new int[2];
+                nArrayKing[0] = 16755343;
+                nArray = nArrayKing;
+                nArrayKing[1] = 9324935;
+                break;
+            }
             case HALF_SAGE: {
                 int[] nArrayHalfSage = new int[2];
                 nArrayHalfSage[0] = 8388736;
@@ -445,7 +473,7 @@ public final class ModItems {
             case MORTAL, BODY_TEMPERING, QI_REFINING -> Rarity.COMMON;
             case FOUNDATION_BUILDING, GOLDEN_CORE -> Rarity.UNCOMMON;
             case NASCENT_SOUL, SOUL_FORMATION -> Rarity.RARE;
-            case VOID_REFINING, BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, HALF_SAGE, SAGE, HALF_EMPEROR, LOOSE_IMMORTAL, GREAT_EMPEROR -> Rarity.EPIC;
+            case VOID_REFINING, BODY_INTEGRATION, MAHAYANA, TRIBULATION_TRANSCENDENCE, TRUE_IMMORTAL, MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING, HALF_SAGE, SAGE, HALF_EMPEROR, LOOSE_IMMORTAL, GREAT_EMPEROR -> Rarity.EPIC;
         };
     }
 

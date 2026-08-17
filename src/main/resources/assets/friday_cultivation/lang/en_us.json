@@ -434,6 +434,10 @@
   "realm.friday_cultivation.mahayana": "Mahayana",
   "realm.friday_cultivation.tribulation_transcendence": "Tribulation Transcendence",
   "realm.friday_cultivation.true_immortal": "True Immortal",
+  "realm.friday_cultivation.mystic_immortal": "Mystic Immortal",
+  "realm.friday_cultivation.immortal_lord": "Immortal Lord",
+  "realm.friday_cultivation.immortal_venerable": "Immortal Venerable",
+  "realm.friday_cultivation.immortal_king": "Immortal King",
   "realm.friday_cultivation.loose_immortal": "Loose Immortal",
   "realm.friday_cultivation.loose_immortal.level.1": "One-Tribulation Loose Immortal",
   "realm.friday_cultivation.loose_immortal.level.2": "Two-Tribulation Loose Immortal",
@@ -558,6 +562,8 @@
   "item.friday_cultivation.chi_yan_sword_sage": "Chi-Flame Sage Sword",
   "item.friday_cultivation.han_bing_sword_sage": "Han-Frost Sage Sword",
   "screen.friday_cultivation.wudao_short": "Dao Insight",
+  
+
   "item.friday_cultivation.realm_token_half_sage": "Realm Token: Half Sage",
   "item.friday_cultivation.realm_token_sage": "Realm Token: Sage",
   "item.friday_cultivation.realm_token_half_emperor": "Realm Token: Half Emperor",

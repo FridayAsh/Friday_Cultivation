@@ -82,6 +82,7 @@ extends Item {
                 CultivationData.ZhenyuanBaselineResult zhenyuan = data.syncZhenyuanToRealmBaseline(this.realm, this.realm.firstSubStage());
                 data.setCurrentQi(data.getMaxQi() / 2L);
                 data.setCultivationProgress(0L);
+                com.friday.cultivation.event.TechniqueEffectHandler.refreshMaxHealth(sp);
                 CapabilityEvents.syncToClient(sp);
                 sp.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.realm_token.set_synced_zhenyuan", (Object[])new Object[]{this.targetDisplayName(), zhenyuan.automaticPerAttribute(), zhenyuan.unallocatedZhenyuan()}), false);
             });

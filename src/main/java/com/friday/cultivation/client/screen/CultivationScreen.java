@@ -1197,7 +1197,8 @@ extends Screen {
             this.drawBreakthroughCentered(gfx, (Component)current, cx, y, width - 8, -12950192, false);
             y += 13;
             y = this.canChooseGoldenCoreRoute(data) ? this.renderGoldenCoreBreakthroughOptions(gfx, x, rightX, y, data, boneAge, hasBloodTalisman, mouseX, mouseY) : (y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_locked_stage"), cx, y, width - 8, -9807288) + 4);
-        } else if (realm == Realm.TRUE_IMMORTAL && sub.isPeakFor(Realm.TRUE_IMMORTAL)) {
+        } else if (realm == Realm.HALF_EMPEROR && sub.isPeakFor(Realm.HALF_EMPEROR)) {
+            // 半帝巅峰 → 突破大帝：击杀过大帝 + 装备自创帝法
             boolean killedEmperor = data.hasKilledGreatEmperor();
             boolean hasArt = data.hasCreatedImperialArt();
             boolean artEquipped = Technique.IMPERIAL_ART.id().equals(data.getEquippedTechniqueId());
@@ -1807,7 +1808,7 @@ extends Screen {
         if (data.getRealm() == Realm.FOUNDATION_BUILDING && data.getSubStage().isPeakFor(Realm.FOUNDATION_BUILDING)) {
             return data.isEligibleGoldenCoreDao(this.selectedGoldenCoreDao, LifespanHelper.displayBoneAge(data), this.hasBloodTransformationTalisman(player));
         }
-        if (data.getRealm() == Realm.TRUE_IMMORTAL && data.getSubStage().isPeakFor(Realm.TRUE_IMMORTAL)) {
+        if (data.getRealm() == Realm.HALF_EMPEROR && data.getSubStage().isPeakFor(Realm.HALF_EMPEROR)) {
             return data.canBreakthroughToGreatEmperor();
         }
         return true;

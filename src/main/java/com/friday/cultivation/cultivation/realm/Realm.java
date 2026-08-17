@@ -8,6 +8,7 @@
 package com.friday.cultivation.cultivation.realm;
 
 import com.friday.cultivation.cultivation.realm.SubStage;
+import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
@@ -28,7 +29,12 @@ public enum Realm {
     SAGE("sage"),
     HALF_EMPEROR("half_emperor"),
     GREAT_EMPEROR("great_emperor"),
-    LOOSE_IMMORTAL("loose_immortal");
+    LOOSE_IMMORTAL("loose_immortal"),
+    // 新增 4 境界（追加末尾，不改变上面 17 个枚举的 ordinal）
+    MYSTIC_IMMORTAL("mystic_immortal"),       // 玄仙
+    IMMORTAL_LORD("immortal_lord"),           // 仙君
+    IMMORTAL_VENERABLE("immortal_venerable"), // 仙尊
+    IMMORTAL_KING("immortal_king");           // 仙王
 
     private final String id;
 
@@ -54,7 +60,7 @@ public enum Realm {
             case QI_REFINING -> 9;
             case GOLDEN_CORE -> 9;
             case BODY_INTEGRATION -> 5;
-            case TRUE_IMMORTAL -> 9;
+            case TRUE_IMMORTAL, MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING -> 9;
             case SAGE -> 3;
             case GREAT_EMPEROR -> 9;
             case FOUNDATION_BUILDING, NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, MAHAYANA, TRIBULATION_TRANSCENDENCE -> 4;
@@ -63,7 +69,7 @@ public enum Realm {
 
     /** 是否使用数字层（1-based） */
     public boolean usesNumericLevels() {
-        return this == BODY_TEMPERING || this == QI_REFINING || this == GOLDEN_CORE || this == BODY_INTEGRATION || this == TRUE_IMMORTAL || this == HALF_SAGE || this == SAGE || this == HALF_EMPEROR || this == GREAT_EMPEROR;
+        return this == BODY_TEMPERING || this == QI_REFINING || this == GOLDEN_CORE || this == BODY_INTEGRATION || this == TRUE_IMMORTAL || this == MYSTIC_IMMORTAL || this == IMMORTAL_LORD || this == IMMORTAL_VENERABLE || this == IMMORTAL_KING || this == HALF_SAGE || this == SAGE || this == HALF_EMPEROR || this == GREAT_EMPEROR;
     }
 
     /** 获取该境界第 level 层的 SubStage（数字层 1-based；4 档 0-3；越界返回 null） */
@@ -88,6 +94,10 @@ public enum Realm {
             };
         }
         if (this == TRUE_IMMORTAL) {
+            return level >= 1 && level <= 9 ? new SubStage("heaven_" + level, level) : null;
+        }
+        if (this == MYSTIC_IMMORTAL || this == IMMORTAL_LORD || this == IMMORTAL_VENERABLE || this == IMMORTAL_KING) {
+            // 玄仙/仙君/仙尊/仙王：九小境界复用真仙的一到九重天
             return level >= 1 && level <= 9 ? new SubStage("heaven_" + level, level) : null;
         }
         if (this == SAGE) {
@@ -149,15 +159,25 @@ public enum Realm {
         return this.subStageAt(this.usesNumericLevels() ? n : n - 1);
     }
 
+    /** 逻辑顺序（显式链表，用于进度显示）：散仙在真仙之前，新 4 境界插在真仙与半圣之间 */
+    private static final List<Realm> LOGICAL_ORDER = List.of(
+        MORTAL, BODY_TEMPERING, QI_REFINING, FOUNDATION_BUILDING, GOLDEN_CORE,
+        NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, BODY_INTEGRATION, MAHAYANA,
+        TRIBULATION_TRANSCENDENCE, LOOSE_IMMORTAL,
+        TRUE_IMMORTAL, MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING,
+        HALF_SAGE, SAGE, HALF_EMPEROR, GREAT_EMPEROR);
+
+    /** 突破链逻辑顺序（供境界选择等 UI 排序使用） */
+    public static List<Realm> logicalOrder() {
+        return Realm.LOGICAL_ORDER;
+    }
+
     public int progressIndex(SubStage subStage) {
         if (this == MORTAL) {
             return 0;
         }
-        if (this == LOOSE_IMMORTAL) {
-            return 38;
-        }
         int acc = 0;
-        for (Realm r : Realm.values()) {
+        for (Realm r : Realm.LOGICAL_ORDER) {
             if (r == this) {
                 break;
             }
@@ -196,6 +216,22 @@ public enum Realm {
         if (this == TRUE_IMMORTAL) {
             int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
             return (19000 + lvl * 200) * 2;
+        }
+        if (this == MYSTIC_IMMORTAL) {
+            int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
+            return (21000 + lvl * 200) * 2;
+        }
+        if (this == IMMORTAL_LORD) {
+            int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
+            return (23000 + lvl * 200) * 2;
+        }
+        if (this == IMMORTAL_VENERABLE) {
+            int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
+            return (25000 + lvl * 200) * 2;
+        }
+        if (this == IMMORTAL_KING) {
+            int lvl = subStage == null ? 1 : Math.max(1, subStage.level());
+            return (27000 + lvl * 200) * 2;
         }
         if (this == HALF_SAGE) {
             return 22000 * 2;
@@ -245,10 +281,44 @@ public enum Realm {
             case TRIBULATION_TRANSCENDENCE -> 600000;
             case LOOSE_IMMORTAL -> 1000000;
             case TRUE_IMMORTAL -> 1000000;
+            case MYSTIC_IMMORTAL -> 1200000;
+            case IMMORTAL_LORD -> 1400000;
+            case IMMORTAL_VENERABLE -> 1600000;
+            case IMMORTAL_KING -> 1800000;
             case HALF_SAGE -> 2000000;
             case SAGE -> 3000000;
             case HALF_EMPEROR -> 5000000;
             case GREAT_EMPEROR -> 10000000;
+        };
+    }
+
+    /**
+     * 标准生命值（凡人 100 → 大帝 8000），玩家 MAX_HEALTH 基础与加成基准。
+     * 曲线：前期平缓（+50~130）、中期加速（+200~400）、后期趋缓逼近 8000。
+     */
+    public double standardMaxHealth() {
+        return switch (this) {
+            case MORTAL -> 100.0;
+            case BODY_TEMPERING -> 150.0;
+            case QI_REFINING -> 220.0;
+            case FOUNDATION_BUILDING -> 320.0;
+            case GOLDEN_CORE -> 460.0;
+            case NASCENT_SOUL -> 620.0;
+            case SOUL_FORMATION -> 820.0;
+            case VOID_REFINING -> 1080.0;
+            case BODY_INTEGRATION -> 1400.0;
+            case MAHAYANA -> 1780.0;
+            case TRIBULATION_TRANSCENDENCE -> 2200.0;
+            case LOOSE_IMMORTAL -> 2600.0;
+            case TRUE_IMMORTAL -> 3100.0;
+            case MYSTIC_IMMORTAL -> 3700.0;
+            case IMMORTAL_LORD -> 4400.0;
+            case IMMORTAL_VENERABLE -> 5200.0;
+            case IMMORTAL_KING -> 6100.0;
+            case HALF_SAGE -> 6600.0;
+            case SAGE -> 7100.0;
+            case HALF_EMPEROR -> 7600.0;
+            case GREAT_EMPEROR -> 8000.0;
         };
     }
 
@@ -288,11 +358,15 @@ public enum Realm {
             case MAHAYANA -> 9;
             case TRIBULATION_TRANSCENDENCE -> 10;
             case TRUE_IMMORTAL -> 11;
-            case HALF_SAGE -> 12;
-            case SAGE -> 13;
-            case HALF_EMPEROR -> 14;
+            case MYSTIC_IMMORTAL -> 12;
+            case IMMORTAL_LORD -> 13;
+            case IMMORTAL_VENERABLE -> 14;
+            case IMMORTAL_KING -> 15;
+            case HALF_SAGE -> 16;
+            case SAGE -> 17;
+            case HALF_EMPEROR -> 18;
             case LOOSE_IMMORTAL -> 12;
-            case GREAT_EMPEROR -> 15;
+            case GREAT_EMPEROR -> 19;
         };
     }
 
@@ -321,6 +395,10 @@ public enum Realm {
             case MAHAYANA -> 218.0;
             case TRIBULATION_TRANSCENDENCE -> 240.0;
             case TRUE_IMMORTAL -> 262.0;
+            case MYSTIC_IMMORTAL -> 280.0;
+            case IMMORTAL_LORD -> 296.0;
+            case IMMORTAL_VENERABLE -> 312.0;
+            case IMMORTAL_KING -> 326.0;
             case HALF_SAGE -> 320.0;
             case SAGE -> 340.0;
             case HALF_EMPEROR -> 370.0;
@@ -343,6 +421,7 @@ public enum Realm {
             case MAHAYANA -> 90;
             case TRIBULATION_TRANSCENDENCE -> 95;
             case TRUE_IMMORTAL -> 100;
+            case MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING -> 100;
             case HALF_SAGE -> 100;
             case SAGE -> 100;
             case HALF_EMPEROR -> 100;
@@ -352,10 +431,25 @@ public enum Realm {
     }
 
     public Realm next() {
-        // 主链路：凡人→…→真仙→半圣→圣人→半帝→大帝（大帝为终点）
+        // 主链路：凡人→锻体→…→渡劫→真仙→玄仙→仙君→仙尊→仙王→半圣→圣人→半帝→大帝（大帝为终点）
         // 散仙（LOOSE_IMMORTAL）是渡劫失败独立旁支，不参与主链路进阶
         if (this == GREAT_EMPEROR || this == LOOSE_IMMORTAL) {
             return this;
+        }
+        if (this == TRUE_IMMORTAL) {
+            return MYSTIC_IMMORTAL;
+        }
+        if (this == MYSTIC_IMMORTAL) {
+            return IMMORTAL_LORD;
+        }
+        if (this == IMMORTAL_LORD) {
+            return IMMORTAL_VENERABLE;
+        }
+        if (this == IMMORTAL_VENERABLE) {
+            return IMMORTAL_KING;
+        }
+        if (this == IMMORTAL_KING) {
+            return HALF_SAGE;
         }
         int idx = this.ordinal() + 1;
         while (idx < Realm.values().length) {
@@ -371,6 +465,21 @@ public enum Realm {
     public Realm prev() {
         if (this == MORTAL) {
             return this;
+        }
+        if (this == MYSTIC_IMMORTAL) {
+            return TRUE_IMMORTAL;
+        }
+        if (this == IMMORTAL_LORD) {
+            return MYSTIC_IMMORTAL;
+        }
+        if (this == IMMORTAL_VENERABLE) {
+            return IMMORTAL_LORD;
+        }
+        if (this == IMMORTAL_KING) {
+            return IMMORTAL_VENERABLE;
+        }
+        if (this == HALF_SAGE) {
+            return IMMORTAL_KING;
         }
         int idx = this.ordinal() - 1;
         while (idx >= 0) {
@@ -418,6 +527,30 @@ public enum Realm {
                 }
                 yield 0;
             }
+            // 玄仙：与真仙一致（三重天 3 波、六重天 6 波、九重天 9 波）
+            case MYSTIC_IMMORTAL -> {
+                if (stage != null && stage.level() == 3) {
+                    yield 3;
+                }
+                if (stage != null && stage.level() == 6) {
+                    yield 6;
+                }
+                if (stage != null && stage.level() == 9) {
+                    yield 9;
+                }
+                yield 0;
+            }
+            // 仙君：1-9 重天每次突破都渡劫 3 波
+            case IMMORTAL_LORD -> 3;
+            // 仙尊：1-9 重天每次突破都渡劫 4 波
+            case IMMORTAL_VENERABLE -> 4;
+            // 仙王：1-8 重天每次突破 5 波；九重天圆满 9 波 → 突破半圣
+            case IMMORTAL_KING -> {
+                if (stage != null && stage.level() == 9) {
+                    yield 9;
+                }
+                yield 5;
+            }
             // 半圣→圣人：9波×9道
             case HALF_SAGE -> 9;
             // 圣人三子阶段：入微→道韵→悟虚 无渡劫；悟虚圆满→半帝 9波×9道
@@ -464,7 +597,7 @@ public enum Realm {
             case BODY_INTEGRATION -> 8;
             case TRIBULATION_TRANSCENDENCE -> 9;
             // 真仙渡劫每波 9 道（配合 tribulationCount：3重天 3波、6重天 6波、9重天 9波 → 27/54/81 道）
-            case TRUE_IMMORTAL -> 9;
+            case TRUE_IMMORTAL, MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING -> 9;
             // 半圣/圣人/半帝渡劫每波 9 道
             case HALF_SAGE, SAGE, HALF_EMPEROR -> 9;
             // 大帝渡劫每波 9 道（配合 tribulationCount：5~13 波 → 45~117 道）
@@ -487,6 +620,10 @@ public enum Realm {
             case MAHAYANA -> 0;
             case TRIBULATION_TRANSCENDENCE -> 150;
             case TRUE_IMMORTAL -> 180;
+            case MYSTIC_IMMORTAL -> 185;
+            case IMMORTAL_LORD -> 190;
+            case IMMORTAL_VENERABLE -> 195;
+            case IMMORTAL_KING -> 200;
             case HALF_SAGE, SAGE, HALF_EMPEROR -> 190;
             case GREAT_EMPEROR -> 200;
             case LOOSE_IMMORTAL -> 0;

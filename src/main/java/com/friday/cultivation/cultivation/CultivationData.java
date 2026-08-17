@@ -86,6 +86,8 @@ implements INBTSerializable<CompoundTag> {
     private ItemStack swordFlightStack = ItemStack.EMPTY;
     /** 灵气飞行显式开关（双击空格激活/取消） */
     private boolean qiFlightToggled = false;
+    /** 锻体加成固定生命值（锻体境界时按标准值×锻体百分比计算一次，永久继承到后续境界） */
+    private double bodyTemperingHpInherited = 0.0;
     /** 悟道进度（半圣/半帝境界专用：悟道条，满后突破下一境界） */
     private long wuDaoProgress = 0L;
     /** 悟道随机源（服务端浮动/额外获得） */
@@ -532,24 +534,16 @@ implements INBTSerializable<CompoundTag> {
 
     /**
      * 突破加成算法（锻体后的所有境界，无论大/小境界突破都累加）：
-     * - 按境界档次（练气=1 起，大帝=13 档封顶）递增，低境界两位数起步、
-     *   大帝每次加四位数（最多 2000）
-     * - 大境界突破加成多一点（×1.0），小境界突破加成少一点（×0.35）
-     * - 灵气加成约为生命加成的 5 倍（大帝每次几千灵气）
-     * - 确定性伪随机抖动 ±20%（参考修为值设计），同境界同层永远同一结果
+     * - 百分比化：每次突破 + 标准生命值(当前境界) × 5%，大境界 ×1.0、小境界 ×0.35
+     * - 灵气加成约为生命加成的 5 倍
      */
     public void applyBreakthroughBonus(boolean majorBreakthrough) {
         if (this.realm == null || this.realm == Realm.MORTAL || this.realm == Realm.BODY_TEMPERING || this.realm == Realm.LOOSE_IMMORTAL) {
             return;
         }
-        int tier = Math.max(0, this.realm.ordinal() - Realm.QI_REFINING.ordinal());
-        // 生命基础：练气约 40（两位数），大帝约 2000（封顶）
-        long baseHp = Math.min(2000L, 40L + (long)tier * 150L);
+        double base = this.realm.standardMaxHealth() * 0.05;
         double mult = majorBreakthrough ? 1.0 : 0.35;
-        // 确定性伪随机抖动 ±20%
-        java.util.Random rnd = new java.util.Random((long)this.realm.ordinal() * 1000003L + (long)this.subStage.level() * 7919L + 104729L);
-        double jitter = 0.8 + rnd.nextDouble() * 0.4;
-        long hpGain = Math.max(1L, Math.round((double)baseHp * mult * jitter));
+        long hpGain = Math.max(1L, Math.round(base * mult));
         long qiGain = hpGain * 5L;
         this.breakthroughHpBonus += hpGain;
         this.breakthroughQiBonus += qiGain;
@@ -2079,6 +2073,41 @@ implements INBTSerializable<CompoundTag> {
         return this.cultivationProgress >= this.getMaxCultivation();
     }
 
+    /** 锻体加成固定生命值（锻体境界时计算一次，永久继承到后续境界） */
+    public double getBodyTemperingHpInherited() {
+        return this.bodyTemperingHpInherited;
+    }
+
+    public void setBodyTemperingHpInherited(double v) {
+        this.bodyTemperingHpInherited = Math.max(0.0, v);
+    }
+
+    /** 锻体百分比（按层数）：1~3层 +10/20/30%，4~6层 +45/60/75%，7~9层 +95/115/135%，10层 +185% */
+    public static double bodyTemperingPercent(int level) {
+        return switch (level) {
+            case 1 -> 0.10;
+            case 2 -> 0.20;
+            case 3 -> 0.30;
+            case 4 -> 0.45;
+            case 5 -> 0.60;
+            case 6 -> 0.75;
+            case 7 -> 0.95;
+            case 8 -> 1.15;
+            case 9 -> 1.35;
+            case 10 -> 1.85;
+            default -> 0.0;
+        };
+    }
+
+    /** 处于锻体境界时，按锻体标准生命值(150)×锻体百分比计算一次固定加成（永久继承） */
+    public void refreshBodyTemperingInheritedHp() {
+        if (this.realm != Realm.BODY_TEMPERING) {
+            return;
+        }
+        int lvl = this.subStage == null ? 1 : Math.max(1, this.subStage.level());
+        this.bodyTemperingHpInherited = 150.0 * CultivationData.bodyTemperingPercent(lvl);
+    }
+
     public void advanceOnSuccess() {
         if (this.isLooseImmortal()) {
             this.cultivationProgress = 0L;
@@ -2126,6 +2155,10 @@ implements INBTSerializable<CompoundTag> {
         }
         this.subStage = this.subStage.nextFor(this.realm);
         this.currentQi = this.getMaxQi();
+        // 锻体境界小突破：按新层数重算锻体加成固定值（永久继承）
+        if (this.realm == Realm.BODY_TEMPERING) {
+            this.refreshBodyTemperingInheritedHp();
+        }
         if (this.realm != Realm.BODY_TEMPERING) {
             int reward = 1 + this.spiritRoot.bonus().extraZhenyuanPerSubLevel() + PhysiqueBonusHelper.extraZhenyuanPerMinor(this.physique);
             this.addUnallocatedZhenyuan(reward);
@@ -2278,6 +2311,7 @@ implements INBTSerializable<CompoundTag> {
         boolean wasSoul = this.soulState;
         this.realm = other.realm;
         this.subStage = other.subStage;
+        this.bodyTemperingHpInherited = other.bodyTemperingHpInherited;
         this.currentQi = other.currentQi;
         this.cultivationProgress = other.cultivationProgress;
         this.totalQiAbsorbed = other.totalQiAbsorbed;
@@ -2452,6 +2486,7 @@ implements INBTSerializable<CompoundTag> {
         tag.putInt("swordFlightOriginalSlot", this.swordFlightOriginalSlot);
         tag.putBoolean("qiFlightToggled", this.qiFlightToggled);
         tag.putLong("wuDaoProgress", this.wuDaoProgress);
+        tag.putDouble("bodyTemperingHpInherited", this.bodyTemperingHpInherited);
         tag.putBoolean("voidEscapeActive", this.voidEscapeActive);
         tag.putInt("voidEscapeStability", this.voidEscapeStability);
         tag.putString("inverseFiveElementMark", this.getInverseFiveElementMark().id());
@@ -2614,6 +2649,7 @@ implements INBTSerializable<CompoundTag> {
         this.swordFlightOriginalSlot = tag.contains("swordFlightOriginalSlot", 3) ? tag.getInt("swordFlightOriginalSlot") : -1;
         this.qiFlightToggled = tag.getBoolean("qiFlightToggled");
         this.wuDaoProgress = tag.contains("wuDaoProgress", 4) ? Math.max(0L, tag.getLong("wuDaoProgress")) : 0L;
+        this.bodyTemperingHpInherited = tag.contains("bodyTemperingHpInherited", 6) ? tag.getDouble("bodyTemperingHpInherited") : 0.0;
         // 灵气飞行状态随数据同步（syncToClient 传输），存档亦保留；登录时由 CapabilityEvents 重置
         this.voidEscapeActive = tag.getBoolean("voidEscapeActive");
         this.voidEscapeStability = tag.contains("voidEscapeStability", 3) ? tag.getInt("voidEscapeStability") : 0;

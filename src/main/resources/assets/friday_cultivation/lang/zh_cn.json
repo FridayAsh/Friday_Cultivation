@@ -434,6 +434,10 @@
   "realm.friday_cultivation.mahayana": "大乘期",
   "realm.friday_cultivation.tribulation_transcendence": "渡劫期",
   "realm.friday_cultivation.true_immortal": "真仙",
+  "realm.friday_cultivation.mystic_immortal": "玄仙",
+  "realm.friday_cultivation.immortal_lord": "仙君",
+  "realm.friday_cultivation.immortal_venerable": "仙尊",
+  "realm.friday_cultivation.immortal_king": "仙王",
   "realm.friday_cultivation.loose_immortal": "散仙",
   "realm.friday_cultivation.loose_immortal.level.1": "一劫散仙",
   "realm.friday_cultivation.loose_immortal.level.2": "二劫散仙",
@@ -558,6 +562,7 @@
   "item.friday_cultivation.chi_yan_sword_sage": "赤焰圣剑",
   "item.friday_cultivation.han_bing_sword_sage": "寒冰圣剑",
   "screen.friday_cultivation.wudao_short": "悟道",
+
   "screen.friday_cultivation.realm_selector.no_substage": "本境界无小境界",
   "screen.friday_cultivation.realm_selector.title": "境界选择",
   "screen.friday_cultivation.realm_selector.realm": "大境界：%s",
