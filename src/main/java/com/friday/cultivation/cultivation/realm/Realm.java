@@ -496,26 +496,27 @@ public enum Realm {
         return switch (this) {
             case MORTAL -> 0;
             case BODY_TEMPERING -> 0;
-            case QI_REFINING -> 0;
-            case FOUNDATION_BUILDING -> {
-                if (stage != null && stage == SubStage.PEAK) {
-                    yield 3;
-                }
-                yield 1;
-            }
-            case GOLDEN_CORE, NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, TRIBULATION_TRANSCENDENCE -> 9;
-            // 合道五境按小境界分配波数：入境 5 波起，每境 +1 波（入境5/御境6/合境7/域境8/界境9）
-            case BODY_INTEGRATION -> {
-                if (stage != null && stage.level() >= 1 && stage.level() <= 5) {
-                    yield 4 + stage.level();
-                }
-                yield 9;
-            }
+            // 练气→筑基：4 波（筑基之道另有特殊处理，此处为兜底）
+            case QI_REFINING -> 4;
+            // 筑基→金丹：4 波
+            case FOUNDATION_BUILDING -> 4;
+            // 金丹→元婴：5 波
+            case GOLDEN_CORE -> 5;
+            // 元婴→化神：5 波
+            case NASCENT_SOUL -> 5;
+            // 化神→炼虚：5 波
+            case SOUL_FORMATION -> 5;
+            // 炼虚→合道：5 波
+            case VOID_REFINING -> 5;
+            // 合道→大乘：6 波
+            case BODY_INTEGRATION -> 6;
             case MAHAYANA -> 0;
-            case LOOSE_IMMORTAL -> -1;
-            case TRUE_IMMORTAL -> {
-                // 真仙每 3 重天渡劫一次：三重天→四重天 3波×9道，六重天→七重天 6波×9道
-                // 九重天圆满 9波×9道 → 突破半圣
+            // 渡劫→真仙：6 波
+            case TRIBULATION_TRANSCENDENCE -> 6;
+            // 散仙劫波：6 波
+            case LOOSE_IMMORTAL -> 6;
+            // 真仙/玄仙：每 3 重天渡劫（3/6/9 波）
+            case TRUE_IMMORTAL, MYSTIC_IMMORTAL -> {
                 if (stage != null && stage.level() == 3) {
                     yield 3;
                 }
@@ -527,41 +528,28 @@ public enum Realm {
                 }
                 yield 0;
             }
-            // 玄仙：与真仙一致（三重天 3 波、六重天 6 波、九重天 9 波）
-            case MYSTIC_IMMORTAL -> {
-                if (stage != null && stage.level() == 3) {
-                    yield 3;
-                }
-                if (stage != null && stage.level() == 6) {
-                    yield 6;
-                }
-                if (stage != null && stage.level() == 9) {
-                    yield 9;
-                }
-                yield 0;
-            }
-            // 仙君：1-9 重天每次突破都渡劫 3 波
-            case IMMORTAL_LORD -> 3;
-            // 仙尊：1-9 重天每次突破都渡劫 4 波
-            case IMMORTAL_VENERABLE -> 4;
-            // 仙王：1-8 重天每次突破 5 波；九重天圆满 9 波 → 突破半圣
+            // 仙君：每重天 5 波
+            case IMMORTAL_LORD -> 5;
+            // 仙尊：每重天 6 波
+            case IMMORTAL_VENERABLE -> 6;
+            // 仙王：每重天 7 波；九重天圆满 9 波 → 突破半圣
             case IMMORTAL_KING -> {
                 if (stage != null && stage.level() == 9) {
                     yield 9;
                 }
-                yield 5;
+                yield 7;
             }
-            // 半圣→圣人：9波×9道
-            case HALF_SAGE -> 9;
-            // 圣人三子阶段：入微→道韵→悟虚 无渡劫；悟虚圆满→半帝 9波×9道
+            // 半圣→圣人：7 波
+            case HALF_SAGE -> 7;
+            // 圣人三子阶段：入微→道韵→悟虚 无渡劫；悟虚圆满→半帝 9 波
             case SAGE -> {
                 if (stage != null && stage.isPeakFor(this)) {
                     yield 9;
                 }
                 yield 0;
             }
-            // 半帝→大帝：9波×9道
-            case HALF_EMPEROR -> 9;
+            // 半帝→大帝：8 波
+            case HALF_EMPEROR -> 8;
             // 大帝九帝界：每个帝界突破均渡劫，第一帝界 9 波起每界 +1（9~17 波）
             case GREAT_EMPEROR -> {
                 if (stage != null && stage.level() >= 1 && stage.level() <= 9) {
@@ -574,34 +562,28 @@ public enum Realm {
 
     public int tribulationBoltsPerWave(SubStage stage) {
         return switch (this) {
-            case GOLDEN_CORE -> {
-                // 金丹九转（圆满）时每波 3 道，其余各转每波 1 道
-                if (stage != null && stage.isPeakFor(this)) {
-                    yield 3;
-                }
-                yield 1;
-            }
-            case NASCENT_SOUL -> {
-                if (stage != null && stage == SubStage.PEAK) {
-                    yield 6;
-                }
-                yield 3;
-            }
-            case SOUL_FORMATION -> 6;
-            case VOID_REFINING -> {
-                if (stage != null && stage == SubStage.PEAK) {
-                    yield 8;
-                }
-                yield 6;
-            }
-            case BODY_INTEGRATION -> 8;
-            case TRIBULATION_TRANSCENDENCE -> 9;
-            // 真仙渡劫每波 9 道（配合 tribulationCount：3重天 3波、6重天 6波、9重天 9波 → 27/54/81 道）
+            // 练气→筑基：每波 9 道
+            case QI_REFINING -> 9;
+            // 筑基→金丹：每波 10 道
+            case FOUNDATION_BUILDING -> 10;
+            // 金丹→元婴：每波 8 道
+            case GOLDEN_CORE -> 8;
+            // 元婴→化神：每波 8 道
+            case NASCENT_SOUL -> 8;
+            // 化神→炼虚：每波 8 道
+            case SOUL_FORMATION -> 8;
+            // 炼虚→合道：每波 9 道
+            case VOID_REFINING -> 9;
+            // 合道→大乘：每波 9 道
+            case BODY_INTEGRATION -> 9;
+            // 渡劫→真仙：每波 10 道
+            case TRIBULATION_TRANSCENDENCE -> 10;
+            // 散仙劫波：每波 10 道
+            case LOOSE_IMMORTAL -> 10;
+            // 真仙/玄仙/仙君/仙尊/仙王：每波 9 道
             case TRUE_IMMORTAL, MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING -> 9;
-            // 半圣/圣人/半帝渡劫每波 9 道
-            case HALF_SAGE, SAGE, HALF_EMPEROR -> 9;
-            // 大帝渡劫每波 9 道（配合 tribulationCount：5~13 波 → 45~117 道）
-            case GREAT_EMPEROR -> 9;
+            // 半圣/圣人/半帝/大帝：每波 9 道
+            case HALF_SAGE, SAGE, HALF_EMPEROR, GREAT_EMPEROR -> 9;
             default -> 1;
         };
     }

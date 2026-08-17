@@ -149,10 +149,11 @@ public class RequestBreakthroughPacket {
     }
 
     private static int foundationTribulationWaves(FoundationDao dao) {
+        // 练气→筑基：按筑基之道品质分配波数（地/天/人 4 波，方案表）
         return switch (dao) {
-            case EARTH -> 1;
-            case HEAVEN -> 3;
-            default -> 0;
+            case EARTH -> 4;
+            case HEAVEN -> 4;
+            default -> 4;
         };
     }
 }
