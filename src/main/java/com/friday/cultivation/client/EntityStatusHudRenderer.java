@@ -57,10 +57,24 @@ public class EntityStatusHudRenderer {
     private static final float BAR_SCREEN_SCALE = (float) (BASE_BAR_W * 0.4 * 0.65 / 8.0);
     // 受伤后血条显示时长（tick）：受伤短暂显示方案，3 秒后自动隐藏
     private static final long HURT_SHOW_TICKS = 60L;
+    // 新实体血量检测冷却期（tick）：新生成实体（如史莱姆分裂/自然生成）血量同步可能有波动，
+    // 冷却期内不触发受伤判定，避免误显示血条
+    private static final long HURT_DETECT_COOLDOWN_TICKS = 20L;
     /** 实体ID → 上次受伤时的游戏 tick（客户端本地追踪） */
     private static final java.util.Map<Integer, Long> LAST_HURT = new java.util.HashMap<>();
-    /** 实体ID → 上次记录的血量（纯客户端血量下降检测用） */
-    private static final java.util.Map<Integer, Float> LAST_HEALTH = new java.util.HashMap<>();
+    /** 实体ID → 血量追踪（当前血量 + 首次出现的游戏 tick） */
+    private static final java.util.Map<Integer, HealthTrack> LAST_HEALTH = new java.util.HashMap<>();
+
+    /** 血量追踪：当前血量 + 首次出现的游戏 tick（用于新实体冷却期） */
+    private static final class HealthTrack {
+        float health;
+        final long firstSeenTick;
+
+        HealthTrack(float health, long firstSeenTick) {
+            this.health = health;
+            this.firstSeenTick = firstSeenTick;
+        }
+    }
 
     private EntityStatusHudRenderer() {
     }
@@ -86,17 +100,25 @@ public class EntityStatusHudRenderer {
         // 受伤检测为纯客户端方案：每帧比较生物血量，血量下降即视为受伤并记录时刻
         //（LivingHurtEvent 在客户端物理端不触发，伤害计算在服务端逻辑，故不能用事件）。
         java.util.List<BarEntry> entries = new java.util.ArrayList<>();
+        java.util.Set<Integer> seenIds = new java.util.HashSet<>();
         AABB box = player.getBoundingBox().inflate(MAX_DISTANCE, MAX_DISTANCE, MAX_DISTANCE);
         for (Entity e : mc.level.getEntities(player, box, EntityStatusHudRenderer::canShowStatus)) {
             LivingEntity living = (LivingEntity) e;
             int id = e.getId();
+            seenIds.add(id);
             float hp = living.getHealth();
-            Float lastHp = LAST_HEALTH.get(id);
-            if (lastHp != null && hp < lastHp - 0.01f) {
-                // 血量下降 → 受伤
-                LAST_HURT.put(id, nowTick);
+            HealthTrack track = LAST_HEALTH.get(id);
+            if (track == null) {
+                // 首次见到该实体：只记录基线与出现时刻，不判定受伤（避免新生成实体误报）
+                LAST_HEALTH.put(id, new HealthTrack(hp, nowTick));
+            } else {
+                if (nowTick - track.firstSeenTick >= HURT_DETECT_COOLDOWN_TICKS && hp < track.health - 0.01f) {
+                    // 已过冷却期且血量下降 → 受伤
+                    LAST_HURT.put(id, nowTick);
+                }
+                // 持续更新基线血量（冷却期内同步波动值，避免之后误判）
+                track.health = hp;
             }
-            LAST_HEALTH.put(id, hp);
 
             // 受伤短暂显示：仅渲染最近 3 秒内受过伤的生物
             Long hurtTick = LAST_HURT.get(id);
@@ -120,8 +142,9 @@ public class EntityStatusHudRenderer {
             float realDist = (float) player.distanceToSqr(living);
             entries.add(new BarEntry(living, proj.x, proj.y, barW, barH, realDist));
         }
-        // 清理过期记录（防内存泄漏）：血量表只保留仍在范围内且有新值的，受伤表保留 3 秒
+        // 清理过期记录（防内存泄漏）：受伤表保留 3 秒；血量表只保留本帧仍可见的实体
         LAST_HURT.entrySet().removeIf(e -> nowTick - e.getValue() > HURT_SHOW_TICKS);
+        LAST_HEALTH.keySet().removeIf(id -> !seenIds.contains(id));
 
         // 第二阶段：按真实距离从远到近排序——远的先绘制，近的最后绘制（覆盖在上面），
         // 因此重叠时永远优先显示离玩家近的生物血条
