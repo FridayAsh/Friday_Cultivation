@@ -1228,8 +1228,15 @@ extends Screen {
             y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_waiting"), cx, y, width - 8, -9807288) + 4;
         }
         Component hint = this.breakthroughHint(data, boneAge, hasBloodTalisman);
-        // 渡劫/突破提示放在突破按钮上方
+        // 渡劫/突破提示放在突破按钮上方，多行时向上生长避免盖住按钮
         int hintBtnY = this.breakthroughBtn.getY() - 16;
+        float scale = 0.7f;
+        int rawMaxW = Math.max(1, (int) ((float) (width - 8) / scale));
+        int hintLines = this.font.split((net.minecraft.network.chat.FormattedText) hint, rawMaxW).size();
+        int lineH = (int) Math.ceil(9.0f * scale) + 3;
+        if (hintLines > 1) {
+            hintBtnY -= (hintLines - 1) * lineH;
+        }
         this.drawBreakthroughParagraphCentered(gfx, hint, cx, hintBtnY, width - 8, -9807288);
     }
 
