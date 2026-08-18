@@ -144,7 +144,11 @@ implements INBTSerializable<CompoundTag> {
     /** 当前渡劫劫种（默认雷劫） */
     private TribulationType tribulationType = TribulationType.LIGHTNING;
     /** 当前渡劫伤害比例（strikeDamage<=0 时用标准生命×比例） */
-    private double tribulationDamageRatio = 0.0;    private boolean soulState = false;
+    private double tribulationDamageRatio = 0.0;
+    /** 渡劫隐藏五维奖励（不显示在雷达图；体质/筋骨/身法/法伤/气海 各维度点数） */
+    private int[] tribulationHiddenAttrs = new int[]{0, 0, 0, 0, 0};
+    /** 渡劫五维奖励最低境界 ordinal（低于此境界时隐藏奖励不生效） */
+    private int tribulationRewardMinRealmOrdinal = -1;    private boolean soulState = false;
     private int soulTicks = 0;
     private boolean reincarnationPending = false;
     private boolean reincarnationReady = false;
@@ -771,6 +775,36 @@ implements INBTSerializable<CompoundTag> {
     /** 当前渡劫伤害比例（0 = 用固定伤害） */
     public double getTribulationDamageRatio() {
         return this.tribulationDamageRatio;
+    }
+
+    /** 记录渡劫隐藏五维奖励（五维各+bonus，记录最低生效境界） */
+    public void addTribulationHiddenAttrs(int bonus, Realm minRealm) {
+        if (bonus <= 0) {
+            return;
+        }
+        for (int i = 0; i < 5; i++) {
+            this.tribulationHiddenAttrs[i] += bonus;
+        }
+        int ord = minRealm == null ? -1 : minRealm.ordinal();
+        if (ord > this.tribulationRewardMinRealmOrdinal) {
+            this.tribulationRewardMinRealmOrdinal = ord;
+        }
+    }
+
+    /** 渡劫隐藏五维当前生效点数（realm 低于最低境界时不生效） */
+    public int hiddenAttr(int index) {
+        if (index < 0 || index >= 5) {
+            return 0;
+        }
+        if (this.tribulationRewardMinRealmOrdinal >= 0 && this.realm.ordinal() < this.tribulationRewardMinRealmOrdinal) {
+            return 0;
+        }
+        return this.tribulationHiddenAttrs[index];
+    }
+
+    /** 渡劫隐藏五维总点数（用于展示） */
+    public int[] getTribulationHiddenAttrs() {
+        return this.tribulationHiddenAttrs.clone();
     }
 
     /** 当前渡劫劫种 */

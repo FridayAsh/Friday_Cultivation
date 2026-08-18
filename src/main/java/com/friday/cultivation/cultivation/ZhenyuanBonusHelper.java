@@ -49,13 +49,38 @@ public final class ZhenyuanBonusHelper {
         return CultivationCapability.get(player).orElse(null);
     }
 
+    /** 体质总点数（含渡劫隐藏奖励，隐藏不显示在雷达图） */
+    private static int constitutionPoints(CultivationData d) {
+        return d == null ? 0 : d.getAttrConstitution() + d.hiddenAttr(0);
+    }
+
+    /** 筋骨总点数（含渡劫隐藏奖励） */
+    private static int physiquePoints(CultivationData d) {
+        return d == null ? 0 : d.getAttrPhysique() + d.hiddenAttr(1);
+    }
+
+    /** 身法总点数（含渡劫隐藏奖励） */
+    private static int agilityPoints(CultivationData d) {
+        return d == null ? 0 : d.getAttrAgility() + d.hiddenAttr(2);
+    }
+
+    /** 法伤总点数（含渡劫隐藏奖励） */
+    private static int spellPowerPoints(CultivationData d) {
+        return d == null ? 0 : d.getAttrSpellPower() + d.hiddenAttr(3);
+    }
+
+    /** 气海总点数（含渡劫隐藏奖励） */
+    private static int qiSeaPoints(CultivationData d) {
+        return d == null ? 0 : d.getAttrQiSea() + d.hiddenAttr(4);
+    }
+
     public static double constitutionHpBonus(Player player) {
         CultivationData d = ZhenyuanBonusHelper.dataOf(player);
         if (d == null) {
             return 0.0;
         }
         // 每点真元体质 +HP_PER_POINT 生命值
-        return (double)d.getAttrConstitution() * HP_PER_POINT;
+        return (double)ZhenyuanBonusHelper.constitutionPoints(d) * HP_PER_POINT;
     }
 
     /** 每点真元体质 +ARMOR_PER_POINT 盔甲值 */
@@ -64,7 +89,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null) {
             return 0.0;
         }
-        return (double)d.getAttrConstitution() * ARMOR_PER_POINT;
+        return (double)ZhenyuanBonusHelper.constitutionPoints(d) * ARMOR_PER_POINT;
     }
 
     /** 每点真元体质 +TOUGHNESS_PER_POINT 韧性 */
@@ -73,7 +98,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null) {
             return 0.0;
         }
-        return (double)d.getAttrConstitution() * TOUGHNESS_PER_POINT;
+        return (double)ZhenyuanBonusHelper.constitutionPoints(d) * TOUGHNESS_PER_POINT;
     }
 
     public static int physiqueAttackBonus(Player player) {
@@ -81,7 +106,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.MELEE_DAMAGE)) {
             return 0;
         }
-        return d.getAttrPhysique() * PHYSIQUE_ATK_PER_POINT;
+        return ZhenyuanBonusHelper.physiquePoints(d) * PHYSIQUE_ATK_PER_POINT;
     }
 
     public static double physiqueMiningSpeedPct(Player player) {
@@ -89,7 +114,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.MINING_SPEED)) {
             return 0.0;
         }
-        return (double)d.getAttrPhysique() * PHYSIQUE_MINING_SPEED_PCT_PER_POINT;
+        return (double)ZhenyuanBonusHelper.physiquePoints(d) * PHYSIQUE_MINING_SPEED_PCT_PER_POINT;
     }
 
     public static double physiqueMiningSpeedBonus(Player player) {
@@ -101,7 +126,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.MOVEMENT_SPEED)) {
             return 0.0;
         }
-        return (double)d.getAttrAgility() * AGILITY_MOVE_PCT_PER_POINT / 100.0;
+        return (double)ZhenyuanBonusHelper.agilityPoints(d) * AGILITY_MOVE_PCT_PER_POINT / 100.0;
     }
 
     public static double agilityJumpHeightMult(Player player) {
@@ -109,7 +134,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.JUMP_HEIGHT)) {
             return 0.0;
         }
-        return (double)d.getAttrAgility() * AGILITY_JUMP_PCT_PER_POINT / 100.0;
+        return (double)ZhenyuanBonusHelper.agilityPoints(d) * AGILITY_JUMP_PCT_PER_POINT / 100.0;
     }
 
     public static double agilityJumpVelocityMult(Player player) {
@@ -125,14 +150,14 @@ public final class ZhenyuanBonusHelper {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.SPELL_DAMAGE)) {
             return 1.0;
         }
-        return 1.0 + (double)d.getAttrSpellPower() * SPELL_DAMAGE_PCT_PER_POINT / 100.0;
+        return 1.0 + (double)ZhenyuanBonusHelper.spellPowerPoints(d) * SPELL_DAMAGE_PCT_PER_POINT / 100.0;
     }
 
     public static long qiSeaFlatBonus(CultivationData d) {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.MAX_QI)) {
             return 0L;
         }
-        return (long)d.getAttrQiSea() * QI_SEA_FLAT_PER_POINT;
+        return (long)ZhenyuanBonusHelper.qiSeaPoints(d) * QI_SEA_FLAT_PER_POINT;
     }
 
     public static long qiSeaFlatBonus(Player player) {
@@ -143,7 +168,7 @@ public final class ZhenyuanBonusHelper {
         if (d == null || !d.isBonusCategoryEnabled(CultivationBonusCategory.QI_RECOVERY)) {
             return 0L;
         }
-        return (long)d.getAttrQiSea() * QI_SEA_QI_RECOVERY_PER_POINT;
+        return (long)ZhenyuanBonusHelper.qiSeaPoints(d) * QI_SEA_QI_RECOVERY_PER_POINT;
     }
 
     public static long qiSeaRecoveryPerSecond(Player player) {

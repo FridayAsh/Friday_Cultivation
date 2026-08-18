@@ -2391,5 +2391,9 @@
   "tribulation_tier.friday_cultivation.fate_defier": "Fate Defier",
   "tribulation_tier.friday_cultivation.sovereign_of_daos": "Sovereign of Daos",
   "message.friday_cultivation.tribulation.tier_reward": "[%s] tribulation passed; bonus %s Zhenyuan",
-  "screen.friday_cultivation.breakthrough.hint_tribulation_tier": "* Talent [%s]: %s bolts, %s dmg each; survive to ascend, die to fall"
+  "screen.friday_cultivation.breakthrough.hint_tribulation_tier": "* Talent [%s]: %s bolts, %s dmg each; survive to ascend, die to fall",
+  "screen.friday_cultivation.attr.talent_label": "Talent",
+  "screen.friday_cultivation.attr.talent_hint": "Determined by Spirit Root, Physique and Technique. Higher talent = harder tribulation, higher reward; reward lost below earned realm",
+  "screen.friday_cultivation.attr.talent_difficulty": "Tribulation difficulty: %sx (bolts & damage)",
+  "screen.friday_cultivation.attr.talent_reward": "Tribulation reward: %sx (hidden five-attr bonus)"
 }

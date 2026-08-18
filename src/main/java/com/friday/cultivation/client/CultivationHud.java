@@ -284,11 +284,13 @@ public class CultivationHud {
                 graphics.blit(fillTex, x, y + topH, width, botH, 0.0f, (float)halfH, texW, texH - halfH, texW, texH);
                 graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
             } else if (targetW <= clipScreen) {
-                // 很小：整图等比缩放到 targetW（左端圆角随比例，但极小段直接整图缩放）
+                // 很小（刚开始填充）：只采样贴图左端像素（不包含右端圆角），
+                // 避免整图缩放把右端圆角压到左侧造成像素溢出条外
+                int leftSrc = Math.max(1, (int)Math.round((double)targetW * (double)texW / (double)width));
                 setBarColor(graphics, topColor);
-                graphics.blit(fillTex, x, y, targetW, topH, 0.0f, 0.0f, texW, halfH, texW, texH);
+                graphics.blit(fillTex, x, y, targetW, topH, 0.0f, 0.0f, leftSrc, halfH, texW, texH);
                 setBarColor(graphics, bottomColor);
-                graphics.blit(fillTex, x, y + topH, targetW, botH, 0.0f, (float)halfH, texW, texH - halfH, texW, texH);
+                graphics.blit(fillTex, x, y + topH, targetW, botH, 0.0f, (float)halfH, leftSrc, texH - halfH, texW, texH);
                 graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
             } else {
                 // 电池护盾 clip：左端固定圆角段（与底槽缩放一致）+ 右侧从贴图尾部滑入

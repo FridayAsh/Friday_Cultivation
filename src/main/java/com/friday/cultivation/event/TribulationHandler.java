@@ -336,12 +336,12 @@ public final class TribulationHandler {
         boolean minorBreakthrough;
         data.advanceOnSuccess();
         data.clearTribulation();
-        // 渡劫成功后按综合评判档位给额外真元奖励（更强雷劫 → 更高回报）
+        // 渡劫成功后按综合评判档位给隐藏五维奖励（更强雷劫 → 更高回报；不显示在雷达图，低于获得境界失效）
         if (fromTribulation) {
             double rewardMult = TribulationScalingHelper.rewardMult(player, data);
             if (rewardMult > 1.0) {
                 int bonus = Math.max(1, (int) Math.round(rewardMult * 5.0 - 5.0));
-                data.addUnallocatedZhenyuan(bonus);
+                data.addTribulationHiddenAttrs(bonus, data.getRealm());
                 player.displayClientMessage(Component.translatable("message.friday_cultivation.tribulation.tier_reward",
                         Component.translatable(TribulationScalingHelper.tierTranslationKey(player, data)), bonus), false);
             }
