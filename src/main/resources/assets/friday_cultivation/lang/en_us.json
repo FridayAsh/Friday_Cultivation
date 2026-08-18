@@ -2395,5 +2395,5 @@
   "screen.friday_cultivation.attr.talent_label": "Talent",
   "screen.friday_cultivation.attr.talent_hint": "Determined by Spirit Root, Physique and Technique. Higher talent = harder tribulation, higher reward; reward lost below earned realm",
   "screen.friday_cultivation.attr.talent_difficulty": "Tribulation difficulty: %sx (bolts & damage)",
-  "screen.friday_cultivation.attr.talent_reward": "Tribulation reward: %sx (hidden five-attr bonus)"
+  "screen.friday_cultivation.attr.talent_reward": "Tribulation reward: %s%% of current stats (hidden bonus)"
 }

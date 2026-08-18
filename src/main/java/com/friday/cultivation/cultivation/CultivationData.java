@@ -2639,6 +2639,15 @@ implements INBTSerializable<CompoundTag> {
         tag.putLong("nextLooseImmortalTribulationTick", this.nextLooseImmortalTribulationTick);
         tag.putBoolean("looseImmortalChoicePending", this.looseImmortalChoicePending);
         tag.putBoolean("looseImmortalTribulationActive", this.looseImmortalTribulationActive);
+        // 渡劫隐藏加成持久化：[[percent, minRealm], ...]
+        net.minecraft.nbt.ListTag tribList = new net.minecraft.nbt.ListTag();
+        for (double[] e : this.tribulationBonusEntries) {
+            net.minecraft.nbt.CompoundTag entry = new net.minecraft.nbt.CompoundTag();
+            entry.putDouble("p", e[0]);
+            entry.putInt("r", (int) e[1]);
+            tribList.add(entry);
+        }
+        tag.put("tribulationBonus", tribList);
         return tag;
     }
 
@@ -2648,6 +2657,15 @@ implements INBTSerializable<CompoundTag> {
         }
         if (tag.contains("subStage", 8)) {
             this.subStage = SubStage.byId(tag.getString("subStage"), this.realm);
+        }
+        // 渡劫隐藏加成加载
+        this.tribulationBonusEntries.clear();
+        if (tag.contains("tribulationBonus", 9)) {
+            net.minecraft.nbt.ListTag tribList = tag.getList("tribulationBonus", 10);
+            for (int ti = 0; ti < tribList.size(); ti++) {
+                net.minecraft.nbt.CompoundTag entry = tribList.getCompound(ti);
+                this.tribulationBonusEntries.add(new double[]{entry.getDouble("p"), entry.getInt("r")});
+            }
         }
         this.currentQi = tag.getLong("currentQi");
         this.cultivationProgress = tag.contains("cultivationProgress", 4) ? tag.getLong("cultivationProgress") : this.currentQi;

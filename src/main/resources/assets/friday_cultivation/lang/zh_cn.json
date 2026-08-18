@@ -2395,5 +2395,5 @@
   "screen.friday_cultivation.attr.talent_label": "天资",
   "screen.friday_cultivation.attr.talent_hint": "由灵根、体质、功法品质综合评定。天资越高，渡劫越猛、奖励越高；低于获得境界时奖励失效",
   "screen.friday_cultivation.attr.talent_difficulty": "渡劫难度：%s 倍（道数与伤害）",
-  "screen.friday_cultivation.attr.talent_reward": "渡劫奖励：%s 倍（隐藏五维加成）"
+  "screen.friday_cultivation.attr.talent_reward": "渡劫奖励：当前五维总属性值的 %s%%（隐藏加成）"
 }
