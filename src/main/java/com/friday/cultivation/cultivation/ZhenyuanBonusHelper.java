@@ -49,29 +49,46 @@ public final class ZhenyuanBonusHelper {
         return CultivationCapability.get(player).orElse(null);
     }
 
+    /** 渡劫隐藏加成乘数（连乘复利；身法不受加成） */
+    private static double hiddenMult(CultivationData d) {
+        return d == null ? 1.0 : d.activeTribulationMultiplier();
+    }
+
     /** 体质总点数（含渡劫隐藏奖励，隐藏不显示在雷达图） */
     private static int constitutionPoints(CultivationData d) {
-        return d == null ? 0 : d.getAttrConstitution() + d.hiddenAttr(0);
+        if (d == null) {
+            return 0;
+        }
+        return (int) Math.round(d.getAttrConstitution() * ZhenyuanBonusHelper.hiddenMult(d));
     }
 
     /** 筋骨总点数（含渡劫隐藏奖励） */
     private static int physiquePoints(CultivationData d) {
-        return d == null ? 0 : d.getAttrPhysique() + d.hiddenAttr(1);
+        if (d == null) {
+            return 0;
+        }
+        return (int) Math.round(d.getAttrPhysique() * ZhenyuanBonusHelper.hiddenMult(d));
     }
 
     /** 身法总点数（含渡劫隐藏奖励） */
     private static int agilityPoints(CultivationData d) {
-        return d == null ? 0 : d.getAttrAgility() + d.hiddenAttr(2);
+        return d == null ? 0 : d.getAttrAgility();
     }
 
     /** 法伤总点数（含渡劫隐藏奖励） */
     private static int spellPowerPoints(CultivationData d) {
-        return d == null ? 0 : d.getAttrSpellPower() + d.hiddenAttr(3);
+        if (d == null) {
+            return 0;
+        }
+        return (int) Math.round(d.getAttrSpellPower() * ZhenyuanBonusHelper.hiddenMult(d));
     }
 
     /** 气海总点数（含渡劫隐藏奖励） */
     private static int qiSeaPoints(CultivationData d) {
-        return d == null ? 0 : d.getAttrQiSea() + d.hiddenAttr(4);
+        if (d == null) {
+            return 0;
+        }
+        return (int) Math.round(d.getAttrQiSea() * ZhenyuanBonusHelper.hiddenMult(d));
     }
 
     public static double constitutionHpBonus(Player player) {

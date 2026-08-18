@@ -113,6 +113,8 @@ public final class TechniqueEffectHandler {
     private static final UUID UUID_BODY_TEMPERING_HP = UUID.nameUUIDFromBytes("xiaoxiang.bodyTempering.hp".getBytes());
     /** 突破累计生命加成（每次大/小境界突破累加） */
     private static final UUID UUID_BREAKTHROUGH_HP = UUID.nameUUIDFromBytes("xiaoxiang.breakthrough.hp".getBytes());
+    /** 渡劫隐藏加成生命倍率（作用总 MAX_HEALTH） */
+    private static final UUID UUID_TRIBULATION_HP_MULT = UUID.nameUUIDFromBytes("xiaoxiang.tribulation.hpMult".getBytes());
     /** 境界标准生命基础（把原版基础 20 补到 standardMaxHealth） */
     private static final UUID UUID_REALM_BASE_HP = UUID.nameUUIDFromBytes("xiaoxiang.realm.baseHp".getBytes());
     /** 全局生命倍率（×4，含所有加成）：境界标准生命整体放大 */
@@ -168,6 +170,8 @@ public final class TechniqueEffectHandler {
         // 突破累计生命加成（每次大/小境界突破累加；data 可能为 null，如死亡/复活瞬间 capability 未附加）
         double breakthroughHp = data == null ? 0.0 : (double)data.getBreakthroughHpBonus();
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BREAKTHROUGH_HP, "xiaoxiang_breakthrough_hp", breakthroughHp, AttributeModifier.Operation.ADDITION);
+        // 渡劫隐藏加成生命倍率（作用总 MAX_HEALTH）
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_TRIBULATION_HP_MULT, "xiaoxiang_tribulation_hp_mult", data == null ? 0.0 : data.activeTribulationMultiplier() - 1.0, AttributeModifier.Operation.MULTIPLY_TOTAL);
         double zhenyuanSpeed = movementBonusEnabled ? ZhenyuanBonusHelper.agilityMoveSpeedMult((Player)sp) : 0.0;
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MOVEMENT_SPEED, UUID_ZHENYUAN_SPEED, "xiaoxiang_zhenyuan_speed", zhenyuanSpeed, AttributeModifier.Operation.MULTIPLY_BASE);
         TechniqueEffectHandler.syncInfiniteEffect(sp, MobEffects.NIGHT_VISION, bonus.nightVision);
@@ -340,6 +344,8 @@ public final class TechniqueEffectHandler {
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_REALM_BASE_HP, "xiaoxiang_realm_base_hp", realmBaseHp, AttributeModifier.Operation.ADDITION);
         // 突破累计生命加成（每次大/小境界突破累加）
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BREAKTHROUGH_HP, "xiaoxiang_breakthrough_hp", (double)data.getBreakthroughHpBonus(), AttributeModifier.Operation.ADDITION);
+        // 渡劫隐藏加成生命倍率（作用总 MAX_HEALTH）
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_TRIBULATION_HP_MULT, "xiaoxiang_tribulation_hp_mult", data == null ? 0.0 : data.activeTribulationMultiplier() - 1.0, AttributeModifier.Operation.MULTIPLY_TOTAL);
         // clamp 当前生命值到新上限
         if (sp.getHealth() > sp.getMaxHealth()) {
             sp.setHealth(sp.getMaxHealth());

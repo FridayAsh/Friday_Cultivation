@@ -13,6 +13,8 @@ package com.friday.cultivation.cultivation;
 
 import com.friday.cultivation.event.tribulation.TribulationSpec;
 import com.friday.cultivation.event.tribulation.TribulationType;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.friday.cultivation.cultivation.CultivationBonusCategory;
 import com.friday.cultivation.cultivation.FoundationDao;
@@ -145,10 +147,8 @@ implements INBTSerializable<CompoundTag> {
     private TribulationType tribulationType = TribulationType.LIGHTNING;
     /** 当前渡劫伤害比例（strikeDamage<=0 时用标准生命×比例） */
     private double tribulationDamageRatio = 0.0;
-    /** 渡劫隐藏五维奖励（不显示在雷达图；体质/筋骨/身法/法伤/气海 各维度点数） */
-    private int[] tribulationHiddenAttrs = new int[]{0, 0, 0, 0, 0};
-    /** 渡劫五维奖励最低境界 ordinal（低于此境界时隐藏奖励不生效） */
-    private int tribulationRewardMinRealmOrdinal = -1;    private boolean soulState = false;
+    /** 渡劫隐藏加成（不显示在雷达图）：每次渡劫记录 [百分比, 最低境界ordinal]，各自按境界生效 */
+    private final List<double[]> tribulationBonusEntries = new ArrayList<>();    private boolean soulState = false;
     private int soulTicks = 0;
     private boolean reincarnationPending = false;
     private boolean reincarnationReady = false;
@@ -192,10 +192,8 @@ implements INBTSerializable<CompoundTag> {
 
     public void setRealm(Realm realm) {
         Realm realm2 = this.realm = realm == null ? Realm.MORTAL : realm;
-        // 境界切换（如令牌）低于渡劫奖励最低境界时：清空隐藏五维奖励
-        if (this.tribulationRewardMinRealmOrdinal >= 0 && this.realm.ordinal() < this.tribulationRewardMinRealmOrdinal) {
-            this.clearTribulationHiddenAttrs();
-        }
+        // 境界切换（如令牌）低于渡劫奖励最低境界时：清除低于境界的加成
+        this.tribulationBonusEntries.removeIf(e -> this.realm.ordinal() < e[1]);
         if (this.realm == Realm.LOOSE_IMMORTAL) {
             if (this.looseImmortalTribulations <= 0) {
                 this.looseImmortalTribulations = 1;
@@ -781,40 +779,44 @@ implements INBTSerializable<CompoundTag> {
         return this.tribulationDamageRatio;
     }
 
-    /** 记录渡劫隐藏五维奖励（五维各+bonus，记录最低生效境界） */
-    public void addTribulationHiddenAttrs(int bonus, Realm minRealm) {
-        if (bonus <= 0) {
+    /** 记录渡劫隐藏加成（百分比作用于玩家总属性值，复利；每次渡劫独立 entry） */
+    public void addTribulationBonus(double percent, Realm minRealm) {
+        if (percent <= 0.0) {
             return;
         }
-        for (int i = 0; i < 5; i++) {
-            this.tribulationHiddenAttrs[i] += bonus;
-        }
         int ord = minRealm == null ? -1 : minRealm.ordinal();
-        if (ord > this.tribulationRewardMinRealmOrdinal) {
-            this.tribulationRewardMinRealmOrdinal = ord;
+        // 境界跌落（低于已记录的最低境界）：清空全部（重修重得）
+        for (double[] e : new ArrayList<>(this.tribulationBonusEntries)) {
+            if (this.realm.ordinal() < e[1]) {
+                this.tribulationBonusEntries.remove(e);
+            }
         }
+        this.tribulationBonusEntries.add(new double[]{percent, ord});
     }
 
-    /** 境界跌落（任何情况）时清空渡劫隐藏五维奖励，支持重修重得更高数值 */
-    public void clearTribulationHiddenAttrs() {
-        this.tribulationHiddenAttrs = new int[]{0, 0, 0, 0, 0};
-        this.tribulationRewardMinRealmOrdinal = -1;
+    /** 当前生效的隐藏加成乘数（所有 realm>=minRealm 的 entry 连乘 (1+percent)） */
+    public double activeTribulationMultiplier() {
+        double mult = 1.0;
+        for (double[] e : this.tribulationBonusEntries) {
+            if (e[1] < 0 || this.realm.ordinal() >= e[1]) {
+                mult *= (1.0 + e[0]);
+            }
+        }
+        return mult;
     }
 
-    /** 渡劫隐藏五维当前生效点数（realm 低于最低境界时不生效） */
-    public int hiddenAttr(int index) {
-        if (index < 0 || index >= 5) {
-            return 0;
-        }
-        if (this.tribulationRewardMinRealmOrdinal >= 0 && this.realm.ordinal() < this.tribulationRewardMinRealmOrdinal) {
-            return 0;
-        }
-        return this.tribulationHiddenAttrs[index];
+    /** 境界跌落时清空全部渡劫隐藏加成（支持重修重得更高数值） */
+    public void clearTribulationBonus() {
+        this.tribulationBonusEntries.clear();
     }
 
-    /** 渡劫隐藏五维总点数（用于展示） */
-    public int[] getTribulationHiddenAttrs() {
-        return this.tribulationHiddenAttrs.clone();
+    /** 渡劫隐藏加成总数（用于展示，返回百分比总和近似） */
+    public double getTribulationBonusPercent() {
+        double sum = 0.0;
+        for (double[] e : this.tribulationBonusEntries) {
+            sum += e[0];
+        }
+        return sum;
     }
 
     /** 当前渡劫劫种 */
@@ -2381,7 +2383,7 @@ implements INBTSerializable<CompoundTag> {
         this.realm = targetRealm;
         this.subStage = targetSub;
         // 境界跌落：清空渡劫隐藏五维奖励（支持重修重得更高数值）
-        this.clearTribulationHiddenAttrs();
+        this.clearTribulationBonus();
         this.syncAutomaticZhenyuanAfterRealmDemotion(oldRealm, oldSub, targetRealm, targetSub);
         this.setCurrentQi(0L);
         this.ensureSpellsForRealm();
