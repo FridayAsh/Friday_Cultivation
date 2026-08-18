@@ -1,378 +1,410 @@
-# Friday Cultivation（Friday修仙）
+# Friday Cultivation（Friday修仙）—— 完整项目介绍
 
-> **Minecraft 1.20.1 / Forge 47.2.0 修仙模组** —— 完整复刻「小翔的修仙世界」修仙体系，并在其基础上重构了境界链、标准生命值与雷劫体系。
+> Minecraft 1.20.1 / Forge 47.2.0 修仙模组，完整复刻「小翔的修仙世界」修仙体系。
+> 本文档系统介绍项目全部系统、特色、核心文件与调用的 API。
+
+---
+
+## 〇、项目总览
 
 - **Mod ID**：`friday_cultivation`
 - **版本**：0.1.0
-- **环境**：Minecraft 1.20.1 / Forge 47.2.0 / JDK 17
-- **主类**：`FridayCultivationMod`
+- **主类**：`FridayCultivationMod`（`com.friday.cultivation`）
 - **代码规模**：约 500 个 Java 文件，覆盖原模组全部 475 个顶层类
+- **核心机制**：Forge Capability（玩家/区块/妖兽数据）、Forge 事件总线、自定义网络包、Patchouli 文档、数据包（炼丹/炼器/灵气配方）
+
+### 主类注册流程（FridayCultivationMod）
+- 注册：方块、物品、实体、方块实体、效果、粒子、菜单、配方、战利品、世界生成、创造标签
+- Capability：`CultivationData`（玩家）、`BeastCultivationData`（妖兽）、`ChunkQiPool`（区块灵气）
+- 数据包加载：`PillEffectSpecLoader`（丹药）、`BlockQiSpecLoader`（方块灵气）
+- 网络：`ModNetwork` 注册全部网络包
+- 配置：`ModCommonConfig` / `ModClientConfig`
+- 客户端：`ClientSetup` 统一注册渲染/按键/粒子/覆盖层
 
 ---
 
 ## 一、境界体系（Realm System）
 
-### 境界列表（21 境界）
+**特色**：21 境界完整突破链，数字层/四阶段/专属子阶段混合，标准生命值，雷劫体系。
 
-当前共 **21 个境界**，采用**数字层**、**四阶段**与**专属子阶段**混合体系，按突破链逻辑顺序排列：
+**核心文件**：
+- `cultivation/realm/Realm.java`：21 境界枚举（凡人→锻体→练气→筑基→金丹→元婴→化神→炼虚→合道→大乘→渡劫→散仙→真仙→玄仙→仙君→仙尊→仙王→半圣→圣人→半帝→大帝），含 `standardMaxHealth()`（标准生命值）、`tribulationSpec()`（雷劫配置）、`next()/prev()`（突破链）、`maxQi()`（灵气上限）、`baseLifespan()`（寿命）
+- `cultivation/realm/SubStage.java`：子阶段（数字层/四阶段/专属档）
+- `cultivation/realm/BeastRealm.java`：妖兽独立境界
 
-| # | 境界 | 英文 ID | 子阶段 | 标准生命值 |
-|---|------|---------|--------|-----------|
-| 1 | 凡人 | mortal | — | 100 |
-| 2 | 锻体 | body_tempering | 第一层 ~ 第十层（10 层） | 150 |
-| 3 | 练气 | qi_refining | 第一层 ~ 第九层（9 层） | 220 |
-| 4 | 筑基 | foundation_building | 初期 / 中期 / 后期 / 大圆满 | 320 |
-| 5 | 金丹 | golden_core | 第一转 ~ 第九转（9 转） | 460 |
-| 6 | 元婴 | nascent_soul | 初期 / 中期 / 后期 / 大圆满 | 620 |
-| 7 | 化神 | soul_formation | 初期 / 中期 / 后期 / 大圆满 | 820 |
-| 8 | 炼虚 | void_refining | 初期 / 中期 / 后期 / 大圆满 | 1080 |
-| 9 | 合道 | body_integration | 入境 / 御境 / 合境 / 域境 / 界境（5 境） | 1400 |
-| 10 | 大乘 | mahayana | 初期 / 中期 / 后期 / 大圆满 | 1780 |
-| 11 | 渡劫 | tribulation_transcendence | 初期 / 中期 / 后期 / 大圆满 | 2200 |
-| 12 | 散仙 | loose_immortal | 一劫 ~ 九劫散仙（渡劫失败旁支） | 2600 |
-| 13 | 真仙 | true_immortal | 第一重天 ~ 第九重天（9 重天） | 3100 |
-| 14 | 玄仙 | mystic_immortal | 一到九重天（9 重天） | 3700 |
-| 15 | 仙君 | immortal_lord | 一到九重天（9 重天） | 4400 |
-| 16 | 仙尊 | immortal_venerable | 一到九重天（9 重天） | 5200 |
-| 17 | 仙王 | immortal_king | 一到九重天（9 重天） | 6100 |
-| 18 | 半圣 | half_sage | 斩情 / 斩念 / 斩我（3 档） | 6600 |
-| 19 | 圣人 | sage | 入微 / 道韵 / 悟虚（3 档） | 7100 |
-| 20 | 半帝 | half_emperor | 叩关 / 铸心 / 法体 / 灵劫 / 凝印 / 聚威（6 档） | 7600 |
-| 21 | 大帝 | great_emperor | 第一帝界 ~ 第九帝界（9 帝界） | 8000 |
-
-### 突破主链路
-
-```
-凡人 → 锻体 → 练气 → 筑基 → 金丹 → 元婴 → 化神 → 炼虚 → 合道 → 大乘 → 渡劫
-→ 散仙（旁支）→ 真仙 → 玄仙 → 仙君 → 仙尊 → 仙王 → 半圣 → 圣人 → 半帝 → 大帝
-```
-
-### 突破机制
-
-- 锻体十层圆满 → 突破进入练气一层
-- 练气九层圆满 → 选择筑基之道（地/天/人）并渡雷劫 → 筑基
-- 筑基大圆满 → 选择金丹之道并渡雷劫 → 金丹
-- 金丹九转圆满 → 渡雷劫 → 元婴；合道界境圆满 → 渡雷劫 → 大乘
-- 真仙/玄仙每 3 重天渡劫一次（三重天 3波×9道、六重天 6波×9道、九重天 9波×9道）
-- 仙君每重天 3 波、仙尊 4 波、仙王 5 波（九重天圆满 9 波 → 半圣）
-- 半圣/半帝突破渡劫 9 波×9 道；大帝每帝界突破渡劫（9 波起每界 +1）
-- **半帝 → 大帝前置**：需击杀过大帝生灵 + 自创并装备帝法功法
-- **半圣/圣人/半帝/大帝**：需修为值满 + 悟道值满（悟道条）方可突破
-- 渡劫失败境界倒退（渡劫期巅峰失败另走散仙机制）；突破小境界奖励真元，大境界奖励更多并全属性成长
-
-### 生命值体系
-
-- **标准生命值**：每个境界有标准生命值（凡人 100 → 大帝 8000），作为玩家 MAX_HEALTH 基础
-- **锻体加成**：锻体境界时按锻体层数计算固定生命加成（150 × 锻体百分比），永久继承到后续境界
-- **突破加成**：每次突破累加生命（按标准值百分比）
-- 真元/功法/灵根提供额外生命加成（固定值逻辑）
+**调用 API**：`Realm.values()`、`realm.standardMaxHealth()`、`realm.tribulationCount()/tribulationBoltsPerWave()/tribulationStrikeDamage()`、`realm.next()/prev()`
 
 ---
 
-## 二、修炼系统（Cultivation System）
+## 二、渡劫系统（Tribulation System）
 
-### 灵气体系（Qi）
+**特色**：数据驱动劫谱、劫种抽象、防御链、事件钩子、天骄档位综合评判、复利隐藏加成。
 
-- **环境灵气**：世界自动生成灵气（自然灵气、区块灵气池），装备功法后自动吸收
-- **灵气吸收**：吸收倍率随境界提升；可装备功法 / 蒲团打坐 / 聚灵阵 / 灵石补充
-- **灵气值**：凡人无灵气，锻体起拥有灵气上限，突破后灵气上限增长
-- **灵气回复**：气海属性提供每秒回复，灵气满后可施法
+**核心文件**（`event/tribulation/`）：
+- `TribulationSpec.java`：数据驱动劫谱（波数/道数/伤害/间隔/劫种）
+- `TribulationType.java`：劫种抽象接口 + 雷劫实现（闪电生成/伤害结算）
+- `TribulationDefense.java`：防御链（宗门护盾/雷灵根减免，可插拔注册）
+- `TribulationEvents.java`：渡劫生命周期事件（Started/BoltStrike/WaveEnd/Succeeded/Failed）
+- `TribulationTier.java`：天骄档位（凡尘→君临万道，难度倍率/奖励百分比/颜色）
+- `TribulationScalingHelper.java`：综合评判（灵根/体质/功法品质 → 档位）
+- `TribulationQuality.java`：可扩展品阶接口（新增枚举自动接入）
+- `TribulationConstants.java`：全部硬编码常量集中
 
-### 修为与悟道
+**主处理**：`event/TribulationHandler.java`（渡劫主循环、雷击、成功/失败、突破奖励）
 
-- **修为值**：吸收灵气转化为修为，修为满后可突破
-- **悟道值**：半圣/圣人/半帝/大帝专有，吸收灵气时累积悟道（含顿悟档位），悟道满方可突破
-- **时间加速**：最高 ×10000 修炼加速（TimeAcceleration）
-
-### 真元系统（Zhenyuan）
-
-- 突破大小境界获得真元，可自由分配
-- **五大属性**：体质（生命/盔甲/韧性）、筋骨（近战伤害/挖掘速度）、身法（移速/跳跃）、法伤（法术伤害）、气海（灵气上限/回复）
+**调用 API**：`MinecraftForge.EVENT_BUS.post()`（事件）、`TribulationDefense.applyAll()`（防御）、`TribulationScalingHelper.tier()`（档位）、`CultivationData.activeTribulationMultiplier()`（隐藏加成）
 
 ---
 
-## 三、灵根体系（Spirit Root）
+## 三、修炼系统（Cultivation System）
 
-共 **25 种灵根**，影响灵气吸收效率、可学法术与突破奖励：
+**特色**：灵气吸收、修为/悟道、真元五维、突破奖励。
 
-- **五行单灵根**：金/木/水/火/土单灵根
-- **双灵根**：五行两两组合（10 种）
-- **变异灵根**：异灵根、变异灵根等特殊类型
+**核心文件**：
+- `cultivation/CultivationData.java`：玩家核心数据（境界/修为/灵气/真元/悟道/突破加成/渡劫隐藏加成），Capability 存储
+- `cultivation/CultivationCapability.java`：Capability 注册与获取
+- `cultivation/ZhenyuanBonusHelper.java`：真元五维加成（体质→生命/盔甲/韧性、筋骨→攻击/挖掘、身法→移速/跳跃、法伤→法术伤害、气海→灵气上限/回复）
+- `cultivation/qi/`：灵气生态（`QiEcosystem`、`PlayerQiAbsorptionHelper`、`ChunkQiPool`、`BlockQiSpec`）
+- `cultivation/qi/consumer/`：灵气消费者（`PlayerQiConsumer`、`WanderingCultivatorConsumer`）
+- `cultivation/qi/field/`：灵气场效果（`IQiFieldEffect`、`QiFieldRegistry`、`QiModifier`）
+- `cultivation/qi/state/`：区块灵气状态（`ChunkQiCapability`、`ChunkQiPool`、`QiUpgradeTickHandler`）
 
----
-
-## 四、体质体系（Physique）
-
-共 **13 种体质**，提供特殊属性加成与玩法规则：
-
-- 先天剑体、无垢仙体、混沌体、绝脉石体、九阴玄体等
-- 每种体质提供：生命倍率、近战/法术倍率、灵气上限倍率、特殊能力（如混沌体突破奖励随机法术）
+**调用 API**：`CultivationCapability.get(player)`、`data.getRealm()/getCurrentQi()/getMaxQi()`、`ZhenyuanBonusHelper.constitutionHpBonus()`、`PlayerQiConsumer.cultivationEfficiencyPerParticle()`
 
 ---
 
-## 五、法术体系（Spell）
+## 四、灵根体系（Spirit Root）
 
-共 **58 种法术**，按境界解锁，分主动/被动/飞行/战斗/辅助等类别：
+**特色**：25 种灵根（五行单灵根/双灵根/变异/混沌），影响吸收效率、法术、突破奖励。
 
-- **飞行类**：御剑飞行、灵气飞行、御空术
-- **剑类**：飞剑、剑气、御剑术、天剑术
-- **战斗类**：掌心雷、佛怒火莲、无上生死平衡、天劫神雷
-- **控制类**：时间凝滞、锁灵术、空间封锁
-- **辅助类**：神识探测、灵气护盾、疗伤术、聚灵术
-- **神通类**：法天象地、大道神雷、虚无遁术
+**核心文件**：
+- `cultivation/SpiritRoot.java`：灵根枚举
+- `cultivation/SpiritRootBonus.java`：灵根加成数据
+- `cultivation/SpiritRootBonusHelper.java`：灵根加成计算（吸收倍率、法术倍率、生命）
 
----
-
-## 六、功法体系（Technique）
-
-共 **27 种功法**，装备后提供属性加成与特殊能力：
-
-- 木系长寿、火系焚身、金系剑诀、水系玄水、土系厚土
-- 无垢仙诀、大帝帝法（自创）等
-- 功法有品质分级，提供生命/移速/击退抗性/法术倍率等加成
+**调用 API**：`data.getSpiritRoot()`、`SpiritRootBonusHelper.qiAbsorptionMultiplier()`、`SpiritRootBonusHelper.hpBonus()`
 
 ---
 
-## 七、身份体系（Identity）
+## 五、体质体系（Physique）
 
-共 **23 种初始身份**，决定初始属性、灵根/体质倾向、寿命与地府轮回表现：
+**特色**：13 种体质（先天剑体/无垢仙体/混沌体/绝脉石体等），特殊属性与玩法规则。
 
-- 凡人、散修、宗门弟子、王侯、世家子弟等
+**核心文件**：
+- `cultivation/Physique.java`：体质枚举 + Rarity（LOW~SPECIAL）
+- `cultivation/PhysiqueBonus.java`：体质加成数据
+- `cultivation/PhysiqueBonusHelper.java`：体质加成计算（生命倍率/近战/法术/灵气上限）
 
----
-
-## 八、炼丹系统（Alchemy）
-
-- **丹方**：筑基丹、金丹丹、血气丹、回灵丹、造生丹、血魄丹等
-- **品质**：低 / 中 / 高 / 极品 / 仙品（五级）
-- **炼丹炉**：方块实体，锁灵后可炼制，消耗灵气
-- **丹方数据包**：可自定义炼丹配方
+**调用 API**：`data.getPhysique()`、`PhysiqueBonusHelper.hpMultiplier()`、`PhysiqueBonusHelper.grantChaosBodyMinorBreakthroughSpell()`
 
 ---
 
-## 九、炼器系统（Refining）
+## 六、法术体系（Spell）
 
-- **法宝**：玄铁剑、青木剑、法器等
-- **品质**：低 / 中 / 高 / 极品 / 仙品（五级）
-- **炼器炉**：方块实体，自动重试炼制，消耗灵气
-- **配方数据包**：可自定义炼器配方
+**特色**：58 种法术（飞行/剑术/战斗/控制/辅助/神通），按境界解锁。
 
----
+**核心文件**：
+- `cultivation/spell/Spell.java`：法术枚举（58 种）
+- `cultivation/spell/SpellElement.java` / `SpellType.java`：法术元素/类型
+- `cultivation/spell/SpellWheelLayout.java`：法术轮盘布局
+- `network/CastSpellPacket.java`：施法网络包
+- `event/PassiveSpellHandler.java`：被动法术
+- `event/ChargeableSpellHandler.java`：蓄力法术
 
-## 十、阵法体系（Formation）
-
-共 **7 类阵法** + **多级阵盘**：
-
-- **聚灵阵**：聚集灵气加速修炼
-- **宗门护盾阵**：保护宗门范围
-- **时停域阵**：范围内时间凝滞
-- **长生阵**：生命恢复
-- **禁飞阵**：禁止飞行
-- **迷宫阵**：困敌
-- **丰收阵**：加速作物生长
-
-- 阵旗、阵盘（低/中/高/极品/仙品五级）、阵法核心、符文方块
-- 阵法预览（客户端显示范围）
+**调用 API**：`data.hasSpell()/isSpellEnabled()`、`SpellScalingHelper`（法术缩放）、`SpellDamageSourceHelper`（伤害源）
 
 ---
 
-## 十一、宗门系统（Sect）
+## 七、功法体系（Technique）
 
-- **宗门令牌**：加入/创建宗门
-- **宗门护盾**：保护宗门建筑
-- **宗门建筑**：宗门大厅、修炼室、藏经阁等
-- **角色体系**：宗主 / 长老 / 弟子等
-- **宗门任务**：任务发布、贡献度
-- **宗门 NPC**：驻守宗门
+**特色**：27 种功法（木系长寿/火系焚身/金系剑诀/帝法等），装备提供属性加成。
 
----
+**核心文件**：
+- `cultivation/technique/Technique.java`：功法枚举 + Bonus
+- `cultivation/technique/TechniqueBonusHelper.java`：功法加成计算
+- `cultivation/technique/TechniqueLoadoutHelper.java`：功法装配
+- `cultivation/technique/WeaponBonusHelper.java`：武器加成
+- `event/TechniqueEffectHandler.java`：功法效果（生命/移速/击退抗性/夜视等）
 
-## 十二、地府与轮回（Difu & Reincarnation）
-
-- **死亡进入地府**：灵魂状态，可自由行动
-- **转世重生**：重开人生（新的身份/灵根/体质）
-- **原身回归**：保留修为回归
-- **索命使**：追魂机制（索命使 NPC）
-- **牛头马面**：地府守卫
-- **命书转世 / 轮回命盘**：物品
-- **寿元系统**：寿命耗尽触发轮回
+**调用 API**：`TechniqueBonusHelper.equippedOf()`、`TechniqueBonusHelper.maxHpBonus()`、`data.getEquippedTechniqueId()`
 
 ---
 
-## 十三、渡劫系统（Tribulation）
+## 八、身份体系（Identity）
 
-- **雷劫**：金丹起各境界按子阶段渡雷劫，波数与强度随境界递增
-- **波次**：金丹 1~3 波、元婴 3~6 波、化神 6 波、炼虚 6~8 波、合道 5~9 波、渡劫 9 波
-- **真仙/玄仙**：每 3 重天渡劫（3/6/9 波×9 道）
-- **仙君 3 波 / 仙尊 4 波 / 仙王 5 波**逐境递增，仙王九重天 9 波 → 半圣
-- **半圣/半帝/大帝**：各 9 波×9 道；大帝每帝界突破渡劫
-- **失败惩罚**：境界倒退甚至身死道消（散仙之路）
-- **雷劫伤害**：随境界递增（练气 30 → 大帝 200）
+**特色**：23 种初始身份，决定初始属性/灵根/体质/寿命/轮回表现。
+
+**核心文件**：
+- `cultivation/Identity.java`：身份枚举
+- `cultivation/draw/`：身份抽取（`DrawCard`、`IdentityDrawDeck`、`IdentityDrawSampler`）
+- `event/IdentityDrawHandler.java`：身份抽取处理
+- `client/screen/IdentityDrawScreen.java`：抽取界面
+
+**调用 API**：`IdentityDrawSampler`（抽取）、`data.setIdentity()`、`ConfirmIdentityDrawPacket`
+
+---
+
+## 九、炼丹系统（Alchemy）
+
+**特色**：筑基丹/金丹丹/血气丹等，五级品质，炼丹炉方块，数据包配方。
+
+**核心文件**：
+- `cultivation/alchemy/`：`AlchemyRank`、`AlchemyRecipe`、`AlchemyRecipes`、`PillEffectSpec`、`PillTier`
+- `cultivation/alchemy/datapack/PillEffectSpecLoader.java`：丹药数据包加载
+- `block/alchemy/`：`AlchemyCoreBlock`、`AlchemyCoreBlockEntity`、`AlchemyFurnaceStructure`
+- `inventory/AlchemyMenu.java`、`client/screen/AlchemyScreen.java`
+- `network/ExecuteAlchemyPacket.java`
+
+**调用 API**：`AlchemyRecipes`（配方）、`AlchemyCoreBlockEntity.deductQi()`、`PillEffectSpecLoader`（数据包）
+
+---
+
+## 十、炼器系统（Refining）
+
+**特色**：玄铁剑/青木剑等法宝，五级品质，炼器炉，数据包配方。
+
+**核心文件**：
+- `cultivation/refining/`：`RefiningRank`、`RefiningRecipe`、`RefiningRecipes`
+- `block/refining/`：`RefiningCoreBlock`、`RefiningCoreBlockEntity`、`RefiningFurnaceStructure`
+- `inventory/RefiningMenu.java`、`client/screen/RefiningScreen.java`
+- `network/ExecuteRefiningPacket.java`、`SetRefiningAutoRetryPacket.java`
+
+**调用 API**：`RefiningRecipes`、`RefiningCoreBlockEntity.deductQi()`、`RefiningScreen`（自动重试）
+
+---
+
+## 十一、阵法体系（Formation）
+
+**特色**：7 类阵法（聚灵/护盾/时停/长生/禁飞/迷宫/丰收），五级阵盘，阵法核心/符文。
+
+**核心文件**：
+- `block/formation/`：13 个阵法方块（`FormationCorePlateBlockEntity`、`FormationRuneBlockEntity`、各 Flag 方块）
+- `cultivation/qi/formation/`：`FormationType`、`CoreTier`
+- `cultivation/qi/field/`：`IQiFieldEffect`、`QiFieldRegistry`
+- `inventory/FormationMenu.java`、`client/screen/FormationScreen.java`
+- `event/FormationRuneHandler.java`、`event/FormationMeridianBodyHandler.java`
+- `client/ClientFormationRangePreview.java`、`client/FormationSurveyRenderer.java`
+
+**调用 API**：`FormationType`（阵法类型）、`FormationCorePlateBlockEntity.getCurrentQi()`、`QiFieldRegistry`（灵气场）
+
+---
+
+## 十二、宗门系统（Sect）
+
+**特色**：宗门令牌/护盾/建筑/角色/任务/NPC。
+
+**核心文件**：
+- `cultivation/sect/`：`SectNameGenerator`、`SectRole`、`SectSavedData`
+- `item/SectTokenItem.java`：宗门令牌
+- `block/formation/SectProtectionFlagBlock.java`、`SectProtectionBarrierBlock.java`
+- `event/SectProtectionDomeHandler.java`：宗门护盾
+- `event/SectCombatHandler.java`：宗门战斗
+- `client/screen/SectScreen.java`、`SectJoinDialogueScreen.java`
+- `network/`：`JoinSectPacket`、`SectTaskActionPacket`、`OpenSectScreenPacket` 等
+
+**调用 API**：`SectSavedData`（宗门数据）、`SectProtectionDomeHandler.domeContaining()`、`SectTokenItem.playerHasTokenForCore()`
+
+---
+
+## 十三、地府与轮回（Difu & Reincarnation）
+
+**特色**：死亡进地府、灵魂状态、转世重生、索命使、牛头马面、寿元。
+
+**核心文件**：
+- `event/SoulStateHandler.java`：灵魂状态/地府传送
+- `event/ReincarnationManager.java`：转世管理
+- `event/SoulReaperOrderHandler.java`：索命使
+- `entity/npc/SoulReaperEntity.java`：索命使实体
+- `client/screen/DeathChoiceScreen.java`、`ReincarnationScreen.java`
+- `network/`：`DeathChoicePacket`、`ReincarnationChoicePacket`、`SoulStatePacket` 等
+- `worldgen/DifuVillageFeature.java`：地府村庄
+
+**调用 API**：`SoulStateHandler.resolveDeathChoice()`、`data.isSoulState()`、`ReincarnationManager`
 
 ---
 
 ## 十四、妖兽体系（Beast）
 
-- **独立妖兽境界体系**：凡兽 → 妖兽 → 妖王 → 妖圣
-- 妖兽可修炼成长、吸收灵气
+**特色**：独立妖兽境界（凡兽→妖圣），妖兽可修炼成长。
+
+**核心文件**：
+- `cultivation/beast/`：`BeastCapability`、`BeastCultivationData`
+- `cultivation/realm/BeastRealm.java`：妖兽境界
+- `event/BeastCultivationHandler.java`：妖兽修炼
+
+**调用 API**：`BeastCapability.get()`、`BeastCultivationData`
 
 ---
 
 ## 十五、NPC 体系（Entity）
 
-### 游历修士（Wandering Cultivator）
+**特色**：游历修士（对话/交易/战斗/御剑）、索命使、法术投射物。
 
-- 随机生成于世界的修士 NPC
-- **交互界面**：对话、交易、背包
-- **交易系统**：售卖丹药、法宝、书籍、灵石
-- **战斗**：会使用法术、御剑飞行、虚遁、护盾
-- **身份皮肤**：不同境界不同外观
+**核心文件**：
+- `entity/npc/WanderingCultivatorEntity.java`：游历修士（3767 行，超大 NPC）
+- `entity/npc/`：`CultivatorTrades`、`NpcSpellCaster`、`CultivatorRealmRoller`、`SoulReaperEntity`、`CorpseEntity`
+- `entity/npc/ai/`：`CultivatorFlightCombatGoal`、`CultivatorRangedKitingGoal`、`CultivatorSpellAttackGoal`
+- `entity/`：16 个法术投射物（`SwordProjectileEntity`、`MeteorEntity`、`BuddhaFireLotusEntity`、`ShockwaveEntity` 等）
+- `client/screen/WanderingCultivatorScreen.java`：修士交互界面
+- `client/renderer/WanderingCultivatorRenderer.java`：修士渲染
 
-### 其他实体
-
-- 索命使（地府追魂）、牛头马面
-- 法术投射物：飞剑、剑气、神雷、火莲、冰壳、陨石、冲击波等
-- 灵兽实体
+**调用 API**：`WanderingCultivatorEntity`（NPC 数据）、`NpcSpellCaster`（NPC 施法）、`CultivatorTrades`（交易）
 
 ---
 
 ## 十六、物品与装备（Item）
 
-共 **36+ 物品**：
+**特色**：36+ 物品（丹药/法宝/灵石/书籍/阵旗/令牌/生物蛋）。
 
-- **丹药**：筑基丹、金丹丹、血气丹、回灵丹、造生丹等
-- **法宝武器**：玄铁剑、青木剑、帝兵等
-- **灵石**：下/中/上品灵石（灵气来源）
-- **书籍**：功法书、法术书、知识书
-- **阵旗/阵盘**：阵法相关物品
-- **宗门令牌、命书、轮回命盘**：功能物品
-- **生物蛋**：修士、索命使等
+**核心文件**：
+- `item/`：29 个物品（`PillItem`、`SpiritStoneItem`、`SpellBookItem`、`TechniqueBookItem`、`SectTokenItem`、`RealmTokenItem` 等）
+- `item/weapon/`：7 个武器（`TieredWeapon`、`ChiYanSwordItem`、`HanBingSwordItem`、`QingMuSwordItem`、`XuanIronSwordItem`、`SpiritSwordItem`、`SoulHookItem`）
+- `registry/ModItems.java`：物品注册
+
+**调用 API**：`ModItems.XXX.get()`、`TieredWeapon`（武器品质）、`PillItem`（丹药效果）
 
 ---
 
 ## 十七、网络系统（Network）
 
-- **89 个网络包**（87 个 Packet 文件）
-- 覆盖：突破请求、面板交互、转世选择、飞行输入、阵法同步、宗门任务、交易等
+**特色**：89 个网络包，覆盖突破/面板/转世/飞行/阵法/宗门/交易。
+
+**核心文件**：
+- `network/ModNetwork.java`：网络通道注册
+- `network/`：89 个 Packet（`RequestBreakthroughPacket`、`CastSpellPacket`、`SyncCultivationDataPacket`、`RealmSelectionPacket`、`SpendZhenyuanPacket` 等）
+
+**调用 API**：`ModNetwork.CHANNEL.send()`、`PacketDistributor`、`ctx.enqueueWork()`
 
 ---
 
 ## 十八、世界生成（World Gen）
 
-- **地府**：独立维度，地府村庄
-- **宗门建筑**：宗门大厅、修炼室等自然生成
-- **灵脉**：灵脉核心方块、灵气源泉
-- **资源**：灵石矿脉等
+**特色**：地府维度、宗门建筑、灵脉、灵石矿脉。
+
+**核心文件**：
+- `worldgen/`：`SectSettlementFeature`（宗门建筑）、`DifuVillageFeature`（地府村庄）、`NaiheBridgeBuilder`（奈何桥）、`SpiritVeinSpringFeature`（灵脉）、`CultivationBuildingFeature`
+- `registry/ModDimensions.java`：地府维度
+- `registry/ModFeatures.java`：世界生成注册
+
+**调用 API**：`ModFeatures`（注册）、`SectSettlementFeature`（宗门生成）、`ModDimensions.DIFU`
 
 ---
 
 ## 十九、客户端界面（Client UI）
 
-### 修仙主面板（CultivationScreen）
+**特色**：修仙主面板、HUD、修士交互、境界编辑器、令牌选择。
 
-- 属性、灵根、体质、法术、功法、宗门、突破多标签页
-- 修炼进度条、悟道条、状态显示
+**核心文件**：
+- `client/screen/CultivationScreen.java`：修仙主面板（3933 行，属性/灵根/体质/法术/功法/宗门/突破）
+- `client/CultivationHud.java`：左上角 HUD（境界/修为/灵气/悟道/状态）
+- `client/EntityStatusHudRenderer.java`：生物头顶生命条（GUI 空间渲染，兼容光影）
+- `client/screen/`：19 个界面（`AlchemyScreen`、`FormationScreen`、`SectScreen`、`WanderingCultivatorScreen`、`DeathChoiceScreen` 等）
+- `client/screen/widget/`：7 个自定义控件（`CinnabarButton`、`BambooTabButton`、`DrawCardWidget` 等）
+- `client/ClientSetup.java`：客户端统一注册
 
-### HUD
-
-- 境界、修为、灵气、悟道条实时显示
-- 生物头顶生命条（受伤短暂显示 3 秒，恒定大小，按距离排序）
-- 状态提示（可突破、打坐、渡劫等）
-
-### 其他界面
-
-- 游历修士交互界面（对话、交易、背包）
-- 境界编辑器（创造模式调试用）
-- 宗门界面、阵法界面、炼丹/炼器界面
-- 令牌选择界面
+**调用 API**：`GuiGraphics`、`RenderGuiOverlayEvent`、`Screen`、`CinnabarButton`
 
 ---
 
 ## 二十、命令与配置（Command & Config）
 
-### 命令
+**特色**：灵气命令、离线认证、通用/客户端配置。
 
-- `qi` 灵气相关命令
-- `offlineauth` 离线认证命令
+**核心文件**：
+- `command/QiCommand.java`：灵气命令
+- `command/OfflineAuthCommand.java`：离线认证
+- `config/ModCommonConfig.java`：通用配置
+- `config/ModClientConfig.java`：客户端配置（HUD 位置等）
 
-### 配置
-
-- 通用配置（ModCommonConfig）
-- 客户端配置（ModClientConfig）：HUD 位置等
+**调用 API**：`Commands.literal()`、`ModCommonConfig`、`ModClientConfig.hudPosition()`
 
 ---
 
 ## 二十一、音效与特效（Effects & Particles）
 
-- **状态效果**：12+ 效果（燃血、锁灵、重力压制、时间凝滞等）
-- **粒子**：灵气粒子、突破粒子、吸收粒子、雷劫特效
-- **渲染**：剑光、飞剑轨迹、护盾波纹、阵法预览、能量护盾
+**特色**：12+ 状态效果、3 种粒子、大量客户端特效。
+
+**核心文件**：
+- `cultivation/effect/`：12 个效果（`BloodBurnEffect`、`TimeStasisEffect`、`RootedEffect`、`GravitySuppressionEffect` 等）
+- `client/particle/`：3 种粒子（`AmbientQiParticle`、`BreakthroughParticle`、`QiAbsorbParticle`）
+- `client/`：大量特效（`TimeStasisClientEffects`、`RealmPressureClientEffects`、`SoulVisualHandler`、`QiShieldVisualHandler` 等）
+- `registry/ModEffects.java`、`ModParticles.java`：注册
+
+**调用 API**：`MobEffect`、`ParticleProvider`、`RenderLevelStageEvent`、`RenderSystem`
 
 ---
 
-## 二十二、地府装备与魂技（Soul System）
+## 二十二、飞行系统（Flight）
 
-- **灵魂状态**：死亡后灵魂离体，可出窍探索
-- **魂技**：灵魂相关法术
-- **魂锁**：灵魂锁链控制
+**特色**：御剑飞行、灵气飞行、虚遁。
+
+**核心文件**：
+- `flight/`：`CultivationFlightHandler`、`CultivationFlightEvents`、`CultivationFlightClientHandler`、`CultivationSwordFlightRenderer`
+- `network/QiFlightTogglePacket.java`：飞行切换
+- `event/VoidEscapeHandler.java`：虚遁
+
+**调用 API**：`data.isQiFlightToggled()`、`CultivationFlightHandler`、`VoidEscapeHandler.exit()`
 
 ---
 
-## 开发与构建
+## 二十三、工具与辅助（Util）
 
-### 环境要求
+**特色**：格式化、随机池、伤害辅助、地形破坏。
 
-- JDK 17
-- Minecraft 1.20.1 / Forge 1.20.1-47.2.0
+**核心文件**：
+- `util/`：`CompactNumberFormat`、`CultivationRandomPools`、`SpellDamageSourceHelper`、`SpellLightningHelper`、`SpellScalingHelper`、`SpellTerrainDestructionHelper`、`TooltipUtils`、`QiStorageBlocks`、`ShimmerColors`、`OfflineAuthStore`
 
-### 构建
+**调用 API**：`TooltipUtils`（物品提示）、`SpellScalingHelper`（法术缩放）、`SpellTerrainDestructionHelper`（地形破坏）
 
-```bash
-gradlew build
-```
+---
 
-产物位于 `build/libs/`，同时同步到 `jars/` 目录供直接部署。
+## 二十四、战利品与数据包（Loot & Datapack）
 
-### 部署
+**特色**：自定义战利品、数据包配方。
 
-将 `jars/Friday_Cultivation-0.1.0.jar` 复制到游戏 `mods` 目录即可。
+**核心文件**：
+- `loot/AddItemLootModifier.java`：战利品修改
+- `registry/ModLootModifiers.java`：注册
+- `cultivation/alchemy/datapack/PillEffectSpecLoader.java`：丹药数据包
+- `cultivation/qi/datapack/BlockQiSpecLoader.java`：方块灵气数据包
 
-### 目录结构
+**调用 API**：`LootModifier`、`AddReloadListenerEvent`、`PreparableReloadListener`
+
+---
+
+## 二十五、注册中心（Registry）
+
+**特色**：统一注册所有内容。
+
+**核心文件**（`registry/`）：
+- `ModBlocks`、`ModItems`、`ModEntities`、`ModBlockEntities`、`ModEffects`、`ModParticles`、`ModMenuTypes`、`ModRecipes`、`ModCreativeTabs`、`ModDimensions`、`ModFeatures`、`ModLootModifiers`
+
+**调用 API**：`DeferredRegister`、`RegistryObject`、`ForgeRegistries`
+
+---
+
+## 目录结构总览
 
 ```
 src/main/java/com/friday/cultivation/
-├── cultivation/        # 核心数据：境界、灵根、体质、修炼、真元、法术、功法
-│   ├── realm/          # 境界与子阶段枚举
-│   ├── qi/             # 灵气系统（状态/来源/阵法/消费）
-│   ├── alchemy/        # 炼丹
-│   ├── refining/       # 炼器
-│   ├── beast/          # 妖兽
-│   ├── spell/          # 法术
-│   ├── technique/      # 功法
-│   └── sect/           # 宗门
-├── entity/             # 实体（投射物、灵兽）
-│   └── npc/            # 游历修士、索命使 NPC
-├── event/              # 事件处理（58 个：渡劫、威压、转世、功法、灵气吸收等）
-├── network/            # 网络包（89 个）
-├── item/ block/ inventory/  # 物品、方块、容器
-├── worldgen/           # 地府村庄、宗门建筑等世界生成
-├── command/ config/ util/ registry/ loot/ flight/
-└── client/             # 客户端渲染、HUD、界面（54 个）
+├── FridayCultivationMod.java      # 主类
+├── block/                         # 方块（炼丹/炼器/阵法/灵脉/杂项）
+├── client/                        # 客户端（HUD/特效/渲染/界面/粒子）
+│   ├── model/ renderer/ particle/ screen/ screen/widget/
+├── command/ config/               # 命令与配置
+├── cultivation/                   # 核心数据（境界/灵根/体质/修炼/真元/法术/功法）
+│   ├── realm/ qi/ alchemy/ refining/ beast/ draw/ effect/
+│   ├── spell/ technique/ sect/
+├── entity/                        # 实体（投射物/NPC）
+│   └── npc/ ai/
+├── event/                         # 事件处理（58 个）
+│   └── tribulation/               # 渡劫系统（8 个）
+├── flight/ gametest/ inventory/ item/ item/weapon/
+├── loot/ network/ registry/ util/ worldgen/
 src/main/resources/
-├── assets/friday_cultivation/
-│   ├── lang/           # 中/英本地化
-│   └── patchouli_books/ # 修仙全书（Patchouli 文档）
-└── data/               # 数据包（配方、战利品等）
+├── assets/friday_cultivation/     # 贴图/模型/lang/Patchouli
+└── data/                          # 数据包（配方/战利品）
 ```
-
----
-
-## 历史
-
-- **2026-08（境界体系重构）**：新增玄仙/仙君/仙尊/仙王 4 境界（各 9 重天，追加枚举末尾不破坏存档）；散仙移入突破链（真仙之前，比真仙低级）；主链路改为显式链表；新增标准生命值（凡人 100→大帝 8000）并接入玩家 MAX_HEALTH 基础；锻体加成改为固定继承值（150×百分比，10 层 185%）；突破加成百分比化（标准值 5%）；大帝前置（击杀大帝+帝法）移至半帝；雷劫全面重排；**取消全局 ×4 生命倍率**（标准生命值不再被放大，真元/锻体 HP 加成还原原值）
-- **2026-08**：境界体系重构 —— 凡人改为锻体（十层）、练气改为九层、真仙九重天、金丹九转、合道五境、大帝九帝界与帝法帝兵；修复地府索命使崩溃、转世保留锻体生命加成、自写飞行等问题
-- **2026-08（生物血条）**：生物头顶生命条（GUI 空间渲染兼容光影、恒定大小、受伤短暂显示、按距离排序）
-- **2026-08**：完整复刻「小翔的修仙世界」核心系统并持续修复
 
 ---
 
