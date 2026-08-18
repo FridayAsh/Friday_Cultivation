@@ -2379,5 +2379,17 @@
   "sub_stage.friday_cultivation.half_emperor_yin": "凝印",
   "sub_stage.friday_cultivation.half_emperor_wei": "聚威",
   "item.friday_cultivation.realm_selector_token": "境界选择令牌",
-  "screen.friday_cultivation.breakthrough.hint_normal": "※ 此突破无需渡劫，修为满即可晋升"
+  "screen.friday_cultivation.breakthrough.hint_normal": "※ 此突破无需渡劫，修为满即可晋升",
+  "tribulation_tier.friday_cultivation.mortal_dust": "凡尘",
+  "tribulation_tier.friday_cultivation.spirit_dawn": "灵慧初开",
+  "tribulation_tier.friday_cultivation.dao_bone": "道骨初成",
+  "tribulation_tier.friday_cultivation.inner_light": "玄光内蕴",
+  "tribulation_tier.friday_cultivation.phoenix_gift": "凤骨天资",
+  "tribulation_tier.friday_cultivation.immortal_grace": "仙姿玉骨",
+  "tribulation_tier.friday_cultivation.heaven_envy": "天妒之才",
+  "tribulation_tier.friday_cultivation.thunder_favor": "天雷眷顾",
+  "tribulation_tier.friday_cultivation.fate_defier": "逆天改命",
+  "tribulation_tier.friday_cultivation.sovereign_of_daos": "君临万道",
+  "message.friday_cultivation.tribulation.tier_reward": "天资【%s】渡劫功成，额外获得 %s 点真元奖励",
+  "screen.friday_cultivation.breakthrough.hint_tribulation_tier": "※ 天资【%s】将触发 %s 道雷劫，每道 %s 伤害；渡过则晋升，渡不过死亡且境界倒退"
 }

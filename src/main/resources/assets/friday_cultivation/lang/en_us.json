@@ -2379,5 +2379,17 @@
   "sub_stage.friday_cultivation.half_emperor_yin": "Condense Seal",
   "sub_stage.friday_cultivation.half_emperor_wei": "Gather Might",
   "item.friday_cultivation.realm_selector_token": "Realm Selector Token",
-  "screen.friday_cultivation.breakthrough.hint_normal": "※ No tribulation required for this breakthrough"
+  "screen.friday_cultivation.breakthrough.hint_normal": "※ No tribulation required for this breakthrough",
+  "tribulation_tier.friday_cultivation.mortal_dust": "Mortal Dust",
+  "tribulation_tier.friday_cultivation.spirit_dawn": "Spirit Dawn",
+  "tribulation_tier.friday_cultivation.dao_bone": "Dao Bone",
+  "tribulation_tier.friday_cultivation.inner_light": "Inner Light",
+  "tribulation_tier.friday_cultivation.phoenix_gift": "Phoenix Gift",
+  "tribulation_tier.friday_cultivation.immortal_grace": "Immortal Grace",
+  "tribulation_tier.friday_cultivation.heaven_envy": "Heaven Envy",
+  "tribulation_tier.friday_cultivation.thunder_favor": "Thunder Favor",
+  "tribulation_tier.friday_cultivation.fate_defier": "Fate Defier",
+  "tribulation_tier.friday_cultivation.sovereign_of_daos": "Sovereign of Daos",
+  "message.friday_cultivation.tribulation.tier_reward": "[%s] tribulation passed; bonus %s Zhenyuan",
+  "screen.friday_cultivation.breakthrough.hint_tribulation_tier": "* Talent [%s]: %s bolts, %s dmg each; survive to ascend, die to fall"
 }

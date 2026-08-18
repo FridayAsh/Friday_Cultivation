@@ -1749,6 +1749,17 @@ extends Screen {
         int boltsPerWave = realm.tribulationBoltsPerWave(sub);
         int damage = realm.tribulationStrikeDamage();
         if (strikes > 0) {
+            // 综合评判：按天资档位修正渡劫难度（道数/伤害）并显示档位名
+            com.friday.cultivation.event.tribulation.TribulationTier tier = com.friday.cultivation.event.tribulation.TribulationScalingHelper.tier(net.minecraft.client.Minecraft.getInstance().player, data);
+            double mult = tier.difficultyMult();
+            int scaledBolts = Math.max(1, (int) Math.round(strikes * boltsPerWave * mult));
+            int scaledDamage = Math.max(1, (int) Math.round(damage * mult));
+            if (mult > 1.01) {
+                return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_tribulation_tier",
+                        Component.translatable(tier.translationKey()),
+                        Realm.formatTribulationCount(Math.max(1, (int) Math.ceil((double) scaledBolts / Math.max(1, boltsPerWave))), boltsPerWave),
+                        scaledDamage);
+            }
             return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_tribulation", (Object[])new Object[]{Realm.formatTribulationCount(strikes, boltsPerWave), damage});
         }
         return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_normal");

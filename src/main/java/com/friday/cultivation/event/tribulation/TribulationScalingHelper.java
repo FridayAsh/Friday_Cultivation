@@ -8,26 +8,81 @@ import com.friday.cultivation.cultivation.technique.Technique;
 import com.friday.cultivation.cultivation.technique.TechniqueBonusHelper;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.Map;
+
 /**
- * 渡劫综合评判：灵根 / 体质 / 功法品质越好 → 渡劫越多（天骄遭天妒）。
- * 修正系数 = 1.0 + 灵根系数 + 体质系数 + 功法系数。
+ * 渡劫综合评判：灵根 / 体质 / 功法品质越好 → 渡劫越猛、奖励越高。
+ *
+ * 可扩展设计：
+ * - 功法 ItemTier / 体质 Physique.Rarity 实现 TribulationQuality 接口，
+ *   新增枚举值按 ordinal 自动归一接入，无需改本类。
+ * - 灵根 SpiritRoot 无连续品阶，用分组映射表；新增灵根只需加一行表项。
  */
 public final class TribulationScalingHelper {
     private TribulationScalingHelper() {
     }
 
-    /**
-     * 综合修正系数：最终道数 = 基准道数 × 此系数。
-     */
-    public static double scalingMultiplier(Player player, CultivationData data) {
-        double spiritRoot = spiritRootQuality(data);
-        double physique = physiqueQuality(data);
-        double technique = techniqueQuality(player);
-        return 1.0 + spiritRoot + physique + technique;
+    // ---- 维度权重（灵根 1.2 / 体质 0.5 / 功法 0.3，合计 2.0）----
+    private static final double SPIRIT_ROOT_WEIGHT = 1.2;
+    private static final double PHYSIQUE_WEIGHT = 0.5;
+    private static final double TECHNIQUE_WEIGHT = 0.3;
+
+    /** 灵根品阶分组表（新增灵根在此加一行即可接入） */
+    private static final Map<SpiritRoot, Double> SPIRIT_ROOT_SCALE = Map.ofEntries(
+            Map.entry(SpiritRoot.NONE, 0.0),
+            Map.entry(SpiritRoot.TRIPLE, 0.2),
+            Map.entry(SpiritRoot.QUADRUPLE, 0.25),
+            Map.entry(SpiritRoot.DUAL_METAL_WOOD, 0.35),
+            Map.entry(SpiritRoot.DUAL_METAL_WATER, 0.35),
+            Map.entry(SpiritRoot.DUAL_METAL_FIRE, 0.35),
+            Map.entry(SpiritRoot.DUAL_METAL_EARTH, 0.35),
+            Map.entry(SpiritRoot.DUAL_WOOD_WATER, 0.35),
+            Map.entry(SpiritRoot.DUAL_WOOD_FIRE, 0.35),
+            Map.entry(SpiritRoot.DUAL_WOOD_EARTH, 0.35),
+            Map.entry(SpiritRoot.DUAL_WATER_FIRE, 0.35),
+            Map.entry(SpiritRoot.DUAL_WATER_EARTH, 0.35),
+            Map.entry(SpiritRoot.DUAL_FIRE_EARTH, 0.35),
+            Map.entry(SpiritRoot.HEAVENLY_SWORD, 0.55),
+            Map.entry(SpiritRoot.HEAVENLY_METAL, 0.55),
+            Map.entry(SpiritRoot.HEAVENLY_WOOD, 0.55),
+            Map.entry(SpiritRoot.HEAVENLY_WATER, 0.55),
+            Map.entry(SpiritRoot.HEAVENLY_FIRE, 0.55),
+            Map.entry(SpiritRoot.HEAVENLY_EARTH, 0.55),
+            Map.entry(SpiritRoot.HEAVENLY_HIDDEN, 0.6),
+            Map.entry(SpiritRoot.MUTANT_ICE, 0.75),
+            Map.entry(SpiritRoot.MUTANT_LIGHTNING, 0.75),
+            Map.entry(SpiritRoot.FIVE_ROOT, 0.85),
+            Map.entry(SpiritRoot.BROKEN_VEIN_BODY, 0.95),
+            Map.entry(SpiritRoot.FIVE_ELEMENT_CHAOS, 1.0)
+    );
+
+    /** 综合系数（0~2.0）：灵根 + 体质 + 功法 */
+    public static double compositeScore(Player player, CultivationData data) {
+        return spiritRootScore(data) + physiqueScore(data) + techniqueScore(player);
     }
 
-    /** 灵根品质系数（0 ~ SPIRIT_ROOT_WEIGHT） */
-    private static double spiritRootQuality(CultivationData data) {
+    /** 档位判定 */
+    public static TribulationTier tier(Player player, CultivationData data) {
+        return TribulationTier.of(compositeScore(player, data));
+    }
+
+    /** 档位名称（本地化键） */
+    public static String tierTranslationKey(Player player, CultivationData data) {
+        return tier(player, data).translationKey();
+    }
+
+    /** 渡劫道数/伤害倍率 */
+    public static double difficultyMult(Player player, CultivationData data) {
+        return tier(player, data).difficultyMult();
+    }
+
+    /** 渡劫成功奖励倍率 */
+    public static double rewardMult(Player player, CultivationData data) {
+        return tier(player, data).rewardMult();
+    }
+
+    /** 灵根系数（0~1.2） */
+    private static double spiritRootScore(CultivationData data) {
         if (data == null) {
             return 0.0;
         }
@@ -35,25 +90,16 @@ public final class TribulationScalingHelper {
         if (root == null) {
             return 0.0;
         }
-        // 简化分级：混沌五灵根/变异/天灵根高；双灵根中；杂灵根低；无灵根最低
-        double quality = switch (root) {
-            case NONE -> 0.0;
-            case TRIPLE, QUADRUPLE -> 0.15;
-            case DUAL_METAL_WOOD, DUAL_METAL_WATER, DUAL_METAL_FIRE, DUAL_METAL_EARTH,
-                 DUAL_WOOD_WATER, DUAL_WOOD_FIRE, DUAL_WOOD_EARTH, DUAL_WATER_FIRE,
-                 DUAL_WATER_EARTH, DUAL_FIRE_EARTH -> 0.3;
-            case HEAVENLY_SWORD, HEAVENLY_METAL, HEAVENLY_WOOD, HEAVENLY_WATER,
-                 HEAVENLY_FIRE, HEAVENLY_EARTH, HEAVENLY_HIDDEN -> 0.5;
-            case MUTANT_ICE, MUTANT_LIGHTNING -> 0.6;
-            case FIVE_ROOT -> 0.7;
-            case BROKEN_VEIN_BODY, FIVE_ELEMENT_CHAOS -> 0.8;
-            default -> 0.2;
-        };
-        return quality * TribulationConstants.SPIRIT_ROOT_WEIGHT;
+        Double scale = SPIRIT_ROOT_SCALE.get(root);
+        if (scale == null) {
+            // 未在表中的灵根：默认按枚举顺序比例（新增自动接入）
+            return SPIRIT_ROOT_WEIGHT * ((double) root.ordinal() / (double) SpiritRoot.values().length);
+        }
+        return SPIRIT_ROOT_WEIGHT * scale;
     }
 
-    /** 体质品质系数（0 ~ PHYSIQUE_WEIGHT） */
-    private static double physiqueQuality(CultivationData data) {
+    /** 体质系数（0~0.5）：Physique.Rarity 实现 TribulationQuality 自动归一 */
+    private static double physiqueScore(CultivationData data) {
         if (data == null) {
             return 0.0;
         }
@@ -61,19 +107,11 @@ public final class TribulationScalingHelper {
         if (physique == null) {
             return 0.0;
         }
-        double quality = switch (physique.rarity()) {
-            case LOW -> 0.1;
-            case MID -> 0.2;
-            case HIGH -> 0.4;
-            case SUPREME -> 0.7;
-            case IMMORTAL -> 0.85;
-            case SPECIAL -> 1.0;
-        };
-        return quality * TribulationConstants.PHYSIQUE_WEIGHT;
+        return PHYSIQUE_WEIGHT * qualityOf(physique.rarity());
     }
 
-    /** 功法品质系数（0 ~ TECHNIQUE_WEIGHT） */
-    private static double techniqueQuality(Player player) {
+    /** 功法系数（0~0.3）：ItemTier 实现 TribulationQuality 自动归一 */
+    private static double techniqueScore(Player player) {
         Technique technique = TechniqueBonusHelper.equippedOf(player);
         if (technique == null) {
             return 0.0;
@@ -82,15 +120,15 @@ public final class TribulationScalingHelper {
         if (tier == null) {
             return 0.0;
         }
-        double quality = switch (tier) {
-            case LOW -> 0.1;
-            case MID -> 0.2;
-            case HIGH -> 0.4;
-            case SUPREME -> 0.7;
-            case IMMORTAL -> 0.85;
-            case SAGE -> 0.95;
-            case GREAT_EMPEROR -> 1.0;
-        };
-        return quality * TribulationConstants.TECHNIQUE_WEIGHT;
+        return TECHNIQUE_WEIGHT * qualityOf(tier);
+    }
+
+    /** 品阶归一化：实现 TribulationQuality 的枚举按 ordinal 比例（0~1） */
+    private static double qualityOf(Enum<?> e) {
+        Object[] values = e.getClass().getEnumConstants();
+        if (values.length <= 1) {
+            return 0.0;
+        }
+        return (double) e.ordinal() / (double) (values.length - 1);
     }
 }

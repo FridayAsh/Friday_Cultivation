@@ -133,11 +133,12 @@ public final class TribulationHandler {
     }
 
     public static void beginTribulation(ServerPlayer player, CultivationData data, int strikes, int boltsPerWave, int strikeDamageOverride) {
-        // 综合评判：灵根/体质/功法品质越好 → 渡劫道数越多（天骄遭天妒）
-        double mult = TribulationScalingHelper.scalingMultiplier(player, data);
+        // 综合评判：灵根/体质/功法品质越好 → 渡劫道数与伤害越高（天骄遭天妒）
+        double mult = TribulationScalingHelper.difficultyMult(player, data);
         int scaled = Math.max(1, (int) Math.round(strikes * boltsPerWave * mult));
         int scaledWaves = Math.max(1, (int) Math.ceil((double) scaled / Math.max(1, boltsPerWave)));
-        TribulationHandler.beginTribulationInternal(player, data, scaledWaves, boltsPerWave, strikeDamageOverride, false);
+        int scaledDamage = Math.max(1, (int) Math.round(strikeDamageOverride * mult));
+        TribulationHandler.beginTribulationInternal(player, data, scaledWaves, boltsPerWave, scaledDamage, false);
     }
 
     public static void beginLooseImmortalTribulation(ServerPlayer player, CultivationData data, int strikes, int boltsPerWave, int strikeDamageOverride) {
@@ -335,6 +336,16 @@ public final class TribulationHandler {
         boolean minorBreakthrough;
         data.advanceOnSuccess();
         data.clearTribulation();
+        // 渡劫成功后按综合评判档位给额外真元奖励（更强雷劫 → 更高回报）
+        if (fromTribulation) {
+            double rewardMult = TribulationScalingHelper.rewardMult(player, data);
+            if (rewardMult > 1.0) {
+                int bonus = Math.max(1, (int) Math.round(rewardMult * 5.0 - 5.0));
+                data.addUnallocatedZhenyuan(bonus);
+                player.displayClientMessage(Component.translatable("message.friday_cultivation.tribulation.tier_reward",
+                        Component.translatable(TribulationScalingHelper.tierTranslationKey(player, data)), bonus), false);
+            }
+        }
         // 突破后生命值、灵气值直接设为上限（灵气在 advanceOnSuccess 内已设满）
         player.setHealth(player.getMaxHealth());
         boolean bl = minorBreakthrough = before == data.getRealm() && beforeStage != data.getSubStage();
