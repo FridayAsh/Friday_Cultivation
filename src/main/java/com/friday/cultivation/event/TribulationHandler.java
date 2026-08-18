@@ -226,6 +226,13 @@ public final class TribulationHandler {
     }
 
     private static int currentStrikeDamage(CultivationData data) {
+        if (data == null) {
+            return 0;
+        }
+        // 比例模式：strikeDamage<=0 且 damageRatio>0 时，伤害 = 标准生命值 × 比例
+        if (data.getCurrentTribulationStrikeDamage() <= 0 && data.getTribulationDamageRatio() > 0.0) {
+            return Math.max(1, (int) Math.round(data.getRealm().standardMaxHealth() * data.getTribulationDamageRatio()));
+        }
         return Math.max(0, data.getCurrentTribulationStrikeDamage());
     }
 
@@ -234,6 +241,14 @@ public final class TribulationHandler {
         if (data == null) {
             return TribulationSpec.of(1, 1, 0);
         }
+        // 优先使用 Realm 数据驱动劫谱（真实波数/道数/伤害）
+        if (!data.isLooseImmortalTribulationActive()) {
+            TribulationSpec spec = data.getRealm().tribulationSpec(data.getSubStage());
+            if (spec != null) {
+                return spec;
+            }
+        }
+        // 散仙劫/临时：按运行时值构造
         int damage = Math.max(0, data.getCurrentTribulationStrikeDamage());
         int waves = Math.max(1, data.getTribulationStrikesRemaining() <= 0 ? 1 : data.getTribulationStrikesRemaining() + 1);
         int bolts = data.getTribulationBoltsPerWave();

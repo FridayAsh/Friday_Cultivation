@@ -8,6 +8,7 @@
 package com.friday.cultivation.cultivation.realm;
 
 import com.friday.cultivation.cultivation.realm.SubStage;
+import com.friday.cultivation.event.tribulation.TribulationSpec;
 import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -614,6 +615,21 @@ public enum Realm {
             case GREAT_EMPEROR -> 785;
             case LOOSE_IMMORTAL -> 255;
         };
+    }
+
+    /**
+     * 当前子阶段的渡劫配置（数据驱动劫谱）。
+     * 返回 null 表示该突破无需渡劫。
+     * 由低到高：单次伤害约=标准生命值×10%，波数/道数按方案数值表。
+     */
+    public TribulationSpec tribulationSpec(SubStage stage) {
+        int waves = this.tribulationCount(stage);
+        if (waves <= 0) {
+            return null;
+        }
+        int bolts = this.tribulationBoltsPerWave(stage);
+        int damage = this.tribulationStrikeDamage();
+        return TribulationSpec.of(waves, bolts, damage);
     }
 
     public static String formatTribulationCount(int waves, int boltsPerWave) {

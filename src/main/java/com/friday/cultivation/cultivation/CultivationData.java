@@ -142,7 +142,9 @@ implements INBTSerializable<CompoundTag> {
     private int tribulationStrikeDamageOverride = 0;
 
     /** 当前渡劫劫种（默认雷劫） */
-    private TribulationType tribulationType = TribulationType.LIGHTNING;    private boolean soulState = false;
+    private TribulationType tribulationType = TribulationType.LIGHTNING;
+    /** 当前渡劫伤害比例（strikeDamage<=0 时用标准生命×比例） */
+    private double tribulationDamageRatio = 0.0;    private boolean soulState = false;
     private int soulTicks = 0;
     private boolean reincarnationPending = false;
     private boolean reincarnationReady = false;
@@ -761,8 +763,14 @@ implements INBTSerializable<CompoundTag> {
         this.tribulationStrikeDamageOverride = spec == null ? 0 : Math.max(0, spec.strikeDamage());
         this.tribulationBoltsPerWave = spec == null ? 1 : Math.max(1, spec.boltsPerWave());
         this.tribulationType = spec == null ? TribulationType.LIGHTNING : spec.type();
+        this.tribulationDamageRatio = spec == null ? 0.0 : Math.max(0.0, spec.damageRatio());
         this.looseImmortalTribulationActive = false;
         this.clearPendingTribulationWave();
+    }
+
+    /** 当前渡劫伤害比例（0 = 用固定伤害） */
+    public double getTribulationDamageRatio() {
+        return this.tribulationDamageRatio;
     }
 
     /** 当前渡劫劫种 */
