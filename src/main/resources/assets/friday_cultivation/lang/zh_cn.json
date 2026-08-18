@@ -2390,7 +2390,7 @@
   "tribulation_tier.friday_cultivation.thunder_favor": "天雷眷顾",
   "tribulation_tier.friday_cultivation.fate_defier": "逆天改命",
   "tribulation_tier.friday_cultivation.sovereign_of_daos": "君临万道",
-  "message.friday_cultivation.tribulation.tier_reward": "天资【%s】渡劫功成，额外获得 %s 点真元奖励",
+  "message.friday_cultivation.tribulation.tier_reward": "天资【%s】渡劫功成，按当前五维 %s%% 获得隐藏奖励，五维各 +%s",
   "screen.friday_cultivation.breakthrough.hint_tribulation_tier": "※ 天资【%s】将触发 %s 道雷劫，每道 %s 伤害；渡过则晋升，渡不过死亡且境界倒退",
   "screen.friday_cultivation.attr.talent_label": "天资",
   "screen.friday_cultivation.attr.talent_hint": "由灵根、体质、功法品质综合评定。天资越高，渡劫越猛、奖励越高；低于获得境界时奖励失效",

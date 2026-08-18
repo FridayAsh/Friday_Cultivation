@@ -1974,7 +1974,7 @@ extends Screen {
             lines.add(Component.translatable(talentTier.translationKey()).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
             lines.add(Component.translatable("screen.friday_cultivation.attr.talent_hint"));
             lines.add(Component.translatable("screen.friday_cultivation.attr.talent_difficulty", String.format("%.1f", talentTier.difficultyMult())));
-            lines.add(Component.translatable("screen.friday_cultivation.attr.talent_reward", String.format("%.1f", talentTier.rewardMult())));
+            lines.add(Component.translatable("screen.friday_cultivation.attr.talent_reward", Math.round(talentTier.rewardPercent() * 100.0)));
             gfx.renderComponentTooltip(this.font, lines, mouseX, mouseY);
         }
         boolean meleeBonusEnabled = data.isBonusCategoryEnabled(CultivationBonusCategory.MELEE_DAMAGE);

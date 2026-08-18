@@ -336,14 +336,17 @@ public final class TribulationHandler {
         boolean minorBreakthrough;
         data.advanceOnSuccess();
         data.clearTribulation();
-        // 渡劫成功后按综合评判档位给隐藏五维奖励（更强雷劫 → 更高回报；不显示在雷达图，低于获得境界失效）
+        // 渡劫成功后按综合评判档位给隐藏五维奖励（更强雷劫 → 更高回报；不显示在雷达图）
         if (fromTribulation) {
-            double rewardMult = TribulationScalingHelper.rewardMult(player, data);
-            if (rewardMult > 1.0) {
-                int bonus = Math.max(1, (int) Math.round(rewardMult * 5.0 - 5.0));
+            double percent = TribulationScalingHelper.rewardPercent(player, data);
+            if (percent > 0.0) {
+                // 奖励 = 当前五维点数 × 档位百分比（五维各按当前点数计算，随境界提升而增长）
+                int base = (data.getAttrConstitution() + data.getAttrPhysique() + data.getAttrAgility()
+                        + data.getAttrSpellPower() + data.getAttrQiSea()) / 5;
+                int bonus = Math.max(1, (int) Math.round(base * percent));
                 data.addTribulationHiddenAttrs(bonus, data.getRealm());
                 player.displayClientMessage(Component.translatable("message.friday_cultivation.tribulation.tier_reward",
-                        Component.translatable(TribulationScalingHelper.tierTranslationKey(player, data)), bonus), false);
+                        Component.translatable(TribulationScalingHelper.tierTranslationKey(player, data)), bonus, Math.round(percent * 100.0)), false);
             }
         }
         // 突破后生命值、灵气值直接设为上限（灵气在 advanceOnSuccess 内已设满）

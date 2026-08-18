@@ -192,6 +192,10 @@ implements INBTSerializable<CompoundTag> {
 
     public void setRealm(Realm realm) {
         Realm realm2 = this.realm = realm == null ? Realm.MORTAL : realm;
+        // 境界切换（如令牌）低于渡劫奖励最低境界时：清空隐藏五维奖励
+        if (this.tribulationRewardMinRealmOrdinal >= 0 && this.realm.ordinal() < this.tribulationRewardMinRealmOrdinal) {
+            this.clearTribulationHiddenAttrs();
+        }
         if (this.realm == Realm.LOOSE_IMMORTAL) {
             if (this.looseImmortalTribulations <= 0) {
                 this.looseImmortalTribulations = 1;
@@ -789,6 +793,12 @@ implements INBTSerializable<CompoundTag> {
         if (ord > this.tribulationRewardMinRealmOrdinal) {
             this.tribulationRewardMinRealmOrdinal = ord;
         }
+    }
+
+    /** 境界跌落（任何情况）时清空渡劫隐藏五维奖励，支持重修重得更高数值 */
+    public void clearTribulationHiddenAttrs() {
+        this.tribulationHiddenAttrs = new int[]{0, 0, 0, 0, 0};
+        this.tribulationRewardMinRealmOrdinal = -1;
     }
 
     /** 渡劫隐藏五维当前生效点数（realm 低于最低境界时不生效） */
@@ -2370,6 +2380,8 @@ implements INBTSerializable<CompoundTag> {
         }
         this.realm = targetRealm;
         this.subStage = targetSub;
+        // 境界跌落：清空渡劫隐藏五维奖励（支持重修重得更高数值）
+        this.clearTribulationHiddenAttrs();
         this.syncAutomaticZhenyuanAfterRealmDemotion(oldRealm, oldSub, targetRealm, targetSub);
         this.setCurrentQi(0L);
         this.ensureSpellsForRealm();

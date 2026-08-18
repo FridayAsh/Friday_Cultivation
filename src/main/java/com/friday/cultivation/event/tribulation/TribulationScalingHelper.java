@@ -76,9 +76,9 @@ public final class TribulationScalingHelper {
         return tier(player, data).difficultyMult();
     }
 
-    /** 渡劫成功奖励倍率 */
-    public static double rewardMult(Player player, CultivationData data) {
-        return tier(player, data).rewardMult();
+    /** 渡劫成功奖励百分比（作用于当前五维点数） */
+    public static double rewardPercent(Player player, CultivationData data) {
+        return tier(player, data).rewardPercent();
     }
 
     /** 灵根系数（0~1.2） */
