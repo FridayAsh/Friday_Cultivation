@@ -56,14 +56,13 @@ public class CultivationHud {
     private static final int CULT_WIDTH = 90;
     private static final int QI_WIDTH = 80;
     private static final int WUDAO_WIDTH = 70;
-    /** 原版经验 HUD 组的总长度（经验条 + 左侧 Level 文本）。 */
+    /** 经验 HUD 组的总长度（经验条 + 左侧等级文本），保持原版组宽度。 */
     private static final int EXPERIENCE_GROUP_WIDTH = 182;
-    /** 原版经验条的高度；项目贴图按用户要求只渲染 70% 高度。 */
-    private static final int EXPERIENCE_VANILLA_BAR_HEIGHT = 6;
-    private static final int EXPERIENCE_BAR_HEIGHT = Math.max(1,
-            Math.round(EXPERIENCE_VANILLA_BAR_HEIGHT * 0.70f));
-    private static final int EXPERIENCE_LEVEL_LABEL_WIDTH = 42;
-    private static final int EXPERIENCE_LEVEL_GAP = 4;
+    /** 提高项目经验贴图的渲染高度，让中央经验值完整落在条带内部。 */
+    private static final int EXPERIENCE_BAR_HEIGHT = 8;
+    /** 中文等级文本实际占用区域；缩小该区域后可给经验贴图更多长度。 */
+    private static final int EXPERIENCE_LEVEL_LABEL_WIDTH = 34;
+    private static final int EXPERIENCE_LEVEL_GAP = 2;
     private static final int EXPERIENCE_BAR_WIDTH = EXPERIENCE_GROUP_WIDTH
             - EXPERIENCE_LEVEL_LABEL_WIDTH - EXPERIENCE_LEVEL_GAP;
 
@@ -149,7 +148,7 @@ public class CultivationHud {
                 Component.literal(String.valueOf(Math.max(0, player.totalExperience))), -1);
 
         // 等级标签放在经验条左侧，使用同一缩放体系并垂直居中。
-        Component level = Component.literal("Level:" + Math.max(0, player.experienceLevel));
+        Component level = Component.literal("等级:" + Math.max(0, player.experienceLevel));
         drawCenteredScaledInRect(graphics, mc, level, groupX, y,
                 EXPERIENCE_LEVEL_LABEL_WIDTH, height, 0.6f, -1, true);
     }
