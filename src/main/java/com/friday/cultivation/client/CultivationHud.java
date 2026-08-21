@@ -65,6 +65,8 @@ public class CultivationHud {
     private static final int EXPERIENCE_LEVEL_GAP = 2;
     private static final int EXPERIENCE_BAR_WIDTH = EXPERIENCE_GROUP_WIDTH
             - EXPERIENCE_LEVEL_LABEL_WIDTH - EXPERIENCE_LEVEL_GAP;
+    /** 原版经验等级文字颜色（Gui 中的 0x80FF20）。 */
+    private static final int EXPERIENCE_LEVEL_TEXT_COLOR = 0x80FF20;
 
     // 项目设定色：顶/底渐变
     private static final int HEALTH_TOP = -1944235;
@@ -149,8 +151,8 @@ public class CultivationHud {
 
         // 等级标签放在经验条左侧，使用同一缩放体系并垂直居中。
         Component level = Component.literal("等级:" + Math.max(0, player.experienceLevel));
-        drawCenteredScaledInRect(graphics, mc, level, groupX, y,
-                EXPERIENCE_LEVEL_LABEL_WIDTH, height, 0.6f, -1, true);
+        drawLeftScaledInRect(graphics, mc, level, groupX, y,
+                EXPERIENCE_LEVEL_LABEL_WIDTH, height, 0.6f, EXPERIENCE_LEVEL_TEXT_COLOR, true);
     }
 
     private static void render(GuiGraphics graphics, int screenWidth) {
@@ -436,6 +438,14 @@ public class CultivationHud {
         int drawX = x + (width - scaledW) / 2;
         int drawY = y + Math.max(0, (height - scaledH) / 2);
         drawScaled(graphics, mc, text, drawX, drawY, actualScale, color, shadow);
+    }
+
+    private static void drawLeftScaledInRect(GuiGraphics graphics, Minecraft mc, Component text, int x, int y, int width, int height, float scale, int color, boolean shadow) {
+        int textWidth = mc.font.width((FormattedText)text);
+        float actualScale = textWidth <= 0 ? scale : Math.min(scale, Math.max(0.18f, (float)width / (float)textWidth));
+        int scaledH = (int)(9.0f * actualScale);
+        int drawY = y + Math.max(0, (height - scaledH) / 2);
+        drawScaled(graphics, mc, text, x, drawY, actualScale, color, shadow);
     }
 
     private static void drawLeftScaled(GuiGraphics graphics, Minecraft mc, Component text, int x, int y, int width, float scale, int color, boolean shadow) {
