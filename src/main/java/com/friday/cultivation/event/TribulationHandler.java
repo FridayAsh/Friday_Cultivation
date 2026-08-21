@@ -479,16 +479,14 @@ public final class TribulationHandler {
         }
     }
 
-    /** 达到任一天骄档位时授予对应成就；档位来自成功渡劫的 Session。 */
+    /** 只有达到最高天骄档位时授予挑战成就；档位来自成功渡劫的 Session。 */
     private static void grantTianjiaoAdvancement(ServerPlayer player, TribulationSession session) {
         if (player == null || session == null || session.looseImmortal()
-                || !TribulationScalingHelper.hasKnownTier(session)
+                || TribulationScalingHelper.tier(session) != TribulationTier.SOVEREIGN_OF_DAOS
                 || player.getServer() == null) {
             return;
         }
-        TribulationTier tier = TribulationScalingHelper.tier(session);
-        ResourceLocation id = new ResourceLocation("friday_cultivation",
-                "talent/" + tier.name().toLowerCase(java.util.Locale.ROOT));
+        ResourceLocation id = new ResourceLocation("friday_cultivation", "talent/sovereign_of_daos");
         Advancement advancement = player.getServer().getAdvancements().getAdvancement(id);
         if (advancement == null) {
             return;

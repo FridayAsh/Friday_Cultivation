@@ -56,11 +56,16 @@ public class CultivationHud {
     private static final int CULT_WIDTH = 90;
     private static final int QI_WIDTH = 80;
     private static final int WUDAO_WIDTH = 70;
-    /** 经验条相对原版底部锚点上移的像素数。 */
-    private static final int EXPERIENCE_BAR_RAISE = 30;
-    private static final int EXPERIENCE_BAR_WIDTH = 182;
-    private static final int EXPERIENCE_BAR_HEIGHT = 6;
+    /** 原版经验 HUD 组的总长度（经验条 + 左侧 Level 文本）。 */
+    private static final int EXPERIENCE_GROUP_WIDTH = 182;
+    /** 原版经验条的高度；项目贴图按用户要求只渲染 70% 高度。 */
+    private static final int EXPERIENCE_VANILLA_BAR_HEIGHT = 6;
+    private static final int EXPERIENCE_BAR_HEIGHT = Math.max(1,
+            Math.round(EXPERIENCE_VANILLA_BAR_HEIGHT * 0.70f));
     private static final int EXPERIENCE_LEVEL_LABEL_WIDTH = 42;
+    private static final int EXPERIENCE_LEVEL_GAP = 4;
+    private static final int EXPERIENCE_BAR_WIDTH = EXPERIENCE_GROUP_WIDTH
+            - EXPERIENCE_LEVEL_LABEL_WIDTH - EXPERIENCE_LEVEL_GAP;
 
     // 项目设定色：顶/底渐变
     private static final int HEALTH_TOP = -1944235;
@@ -71,6 +76,12 @@ public class CultivationHud {
     private static final int QI_BOTTOM = -13729678;
     private static final int WUDAO_TOP = -8355712;
     private static final int WUDAO_BOTTOM = -10592674;
+    /**
+     * 原版 1.20.1 assets/minecraft/textures/gui/icons.png 经验条填充区域
+     * (x=120, y=70..72) 的内部像素采样：顶部/底部各取对应渐变色。
+     */
+    private static final int EXPERIENCE_TOP = 0x5F8B3E;
+    private static final int EXPERIENCE_BOTTOM = 0x436924;
 
     // 原版属性行（位于生命条右侧，与生命条同 y）
     private static final int ATTR_ICON_SIZE = 8;
@@ -126,20 +137,20 @@ public class CultivationHud {
                 || player.getXpNeededForNextLevel() <= 0) {
             return;
         }
+        int groupX = screenWidth / 2 - EXPERIENCE_GROUP_WIDTH / 2;
         int width = EXPERIENCE_BAR_WIDTH;
         int height = EXPERIENCE_BAR_HEIGHT;
-        int x = screenWidth / 2 - width / 2;
-        // “高度减少 30”按 HUD 坐标解释为整体上移 30 像素，条带厚度保持贴图原比例。
-        int y = screenHeight - 29 - EXPERIENCE_BAR_RAISE;
+        int x = groupX + EXPERIENCE_LEVEL_LABEL_WIDTH + EXPERIENCE_LEVEL_GAP;
+        // 保留原版经验 HUD 的底部锚点；仅缩短贴图渲染高度，不改变整组位置。
+        int y = screenHeight - 29;
         double progress = Math.max(0.0, Math.min(1.0, player.experienceProgress));
         renderTextureBar(graphics, mc, x, y, width, height, progress,
-                BLOOD_EMPTY, BLOOD_FILL, 96, 6, CULT_TOP, CULT_BOTTOM,
+                BLOOD_EMPTY, BLOOD_FILL, 96, 6, EXPERIENCE_TOP, EXPERIENCE_BOTTOM,
                 Component.literal(String.valueOf(Math.max(0, player.totalExperience))), -1);
 
         // 等级标签放在经验条左侧，使用同一缩放体系并垂直居中。
         Component level = Component.literal("Level:" + Math.max(0, player.experienceLevel));
-        int levelX = x - EXPERIENCE_LEVEL_LABEL_WIDTH - 4;
-        drawCenteredScaledInRect(graphics, mc, level, levelX, y,
+        drawCenteredScaledInRect(graphics, mc, level, groupX, y,
                 EXPERIENCE_LEVEL_LABEL_WIDTH, height, 0.6f, -1, true);
     }
 
