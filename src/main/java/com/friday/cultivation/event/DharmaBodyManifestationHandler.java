@@ -19,6 +19,7 @@ package com.friday.cultivation.event;
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.spell.Spell;
 import com.friday.cultivation.entity.npc.NpcSpellCaster;
 import com.friday.cultivation.entity.npc.WanderingCultivatorEntity;
@@ -152,7 +153,7 @@ public final class DharmaBodyManifestationHandler {
         if (data == null) {
             return false;
         }
-        if (data.getRealm().ordinal() < Realm.BODY_INTEGRATION.ordinal()) {
+        if (RealmTopology.isBefore(data.getRealm(), Realm.BODY_INTEGRATION)) {
             return false;
         }
         if (SpiritLockHandler.isEntityLocked((Entity)player)) {
@@ -163,7 +164,7 @@ public final class DharmaBodyManifestationHandler {
     }
 
     private static boolean canUse(WanderingCultivatorEntity npc) {
-        if (npc.getRealm().ordinal() < Realm.BODY_INTEGRATION.ordinal()) {
+        if (RealmTopology.isBefore(npc.getRealm(), Realm.BODY_INTEGRATION)) {
             return false;
         }
         if (SpiritLockHandler.isEntityLocked((Entity)npc)) {

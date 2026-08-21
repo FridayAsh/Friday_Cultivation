@@ -12,6 +12,7 @@ import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.GoldenCoreDao;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.spell.Spell;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,7 +27,7 @@ public final class GoldenCoreDaoBonusHelper {
             return GoldenCoreDao.NONE;
         }
         CultivationData data = CultivationCapability.get(player).orElse(null);
-        if (data == null || data.getRealm().ordinal() < Realm.GOLDEN_CORE.ordinal()) {
+        if (data == null || !RealmTopology.isAtLeast(data.getRealm(), Realm.GOLDEN_CORE)) {
             return GoldenCoreDao.NONE;
         }
         return data.getGoldenCoreDao();
@@ -74,7 +75,7 @@ public final class GoldenCoreDaoBonusHelper {
         if (player == null || data == null || baseRecovery <= 0L) {
             return baseRecovery;
         }
-        if (data.getRealm().ordinal() < Realm.GOLDEN_CORE.ordinal() || data.getGoldenCoreDao() != GoldenCoreDao.HEAVEN) {
+        if (!RealmTopology.isAtLeast(data.getRealm(), Realm.GOLDEN_CORE) || data.getGoldenCoreDao() != GoldenCoreDao.HEAVEN) {
             return baseRecovery;
         }
         BlockPos head = player.blockPosition().above();

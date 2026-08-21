@@ -11,6 +11,7 @@ package com.friday.cultivation.cultivation.spell;
 
 import com.friday.cultivation.cultivation.ItemTier;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.spell.SpellElement;
 import com.friday.cultivation.cultivation.spell.SpellType;
 import com.friday.cultivation.util.TooltipUtils;
@@ -242,7 +243,7 @@ public enum Spell {
         if (this == QI_SHIELD) {
             TooltipUtils.addSection(lines, "tooltip.friday_cultivation.section.stats");
             lines.add((Component)TooltipUtils.costLine((Component)Component.translatable((String)"spell.friday_cultivation.qi_shield.qi_cost_line")));
-            for (Realm realm : Realm.values()) {
+            for (Realm realm : RealmTopology.selectionOrder()) {
                 int percent = realm.qiShieldReductionPercent();
                 if (percent <= 0) continue;
                 lines.add((Component)TooltipUtils.statsLine((Component)Component.translatable((String)"spell.friday_cultivation.qi_shield.reduction_line", (Object[])new Object[]{realm.displayName(), percent})));

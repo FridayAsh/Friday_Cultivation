@@ -23,6 +23,7 @@ package com.friday.cultivation.item;
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.event.SoulReaperOrderHandler;
 import com.friday.cultivation.util.TooltipUtils;
@@ -90,7 +91,7 @@ extends Item {
             serverPlayer.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.soul_reaper_token.requires_soul"), true);
             return InteractionResultHolder.consume(stack);
         }
-        if (data.getRealm().ordinal() < Realm.QI_REFINING.ordinal()) {
+        if (RealmTopology.isBefore(data.getRealm(), Realm.QI_REFINING)) {
             serverPlayer.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.soul_reaper_token.requires_realm", (Object[])new Object[]{Realm.QI_REFINING.displayName()}), true);
             return InteractionResultHolder.consume(stack);
         }

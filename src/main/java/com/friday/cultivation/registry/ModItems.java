@@ -19,6 +19,7 @@ import com.friday.cultivation.cultivation.ItemTier;
 import com.friday.cultivation.cultivation.alchemy.PillTier;
 import com.friday.cultivation.cultivation.qi.SpiritVeinCoreTier;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.spell.Spell;
 import com.friday.cultivation.cultivation.technique.Technique;
 import com.friday.cultivation.item.BloodBurnPillItem;
@@ -678,9 +679,9 @@ public final class ModItems {
         HAN_BING_SWORD_GREAT_EMPEROR = ITEMS.register("han_bing_sword_great_emperor", () -> new HanBingSwordItem(ItemTier.GREAT_EMPEROR, 30, 100));
         REALM_SELECTOR_TOKEN = ITEMS.register("realm_selector_token", () -> new RealmSelectorTokenItem(new Item.Properties()));
         REALM_TOKENS = new EnumMap<Realm, RegistryObject<Item>>(Realm.class);
-        for (Enum enum_ : Realm.values()) {
-            id = "realm_token_" + ((Realm)enum_).id();
-            REALM_TOKENS.put((Realm)enum_, (RegistryObject<Item>)ITEMS.register(id, () -> ModItems.lambda$static$144((Realm)enum_)));
+        for (Realm realm : RealmTopology.selectionOrder()) {
+            id = "realm_token_" + realm.id();
+            REALM_TOKENS.put(realm, ITEMS.register(id, () -> ModItems.lambda$static$144(realm)));
         }
         LOOSE_IMMORTAL_REALM_TOKENS = new LinkedHashMap<Integer, RegistryObject<Item>>();
         int level = 1;
@@ -690,7 +691,7 @@ public final class ModItems {
             LOOSE_IMMORTAL_REALM_TOKENS.put(tokenLevel, ITEMS.register(id2, () -> new RealmTokenItem(new Item.Properties(), Realm.LOOSE_IMMORTAL, tokenLevel)));
         }
         CULTIVATOR_SPAWN_EGGS = new EnumMap<Realm, RegistryObject<Item>>(Realm.class);
-        for (Realm realm : Realm.values()) {
+        for (Realm realm : RealmTopology.selectionOrder()) {
             id = "spawn_egg_cultivator_" + realm.id();
             int[] colors = ModItems.realmEggColors(realm);
             int bg = colors[0];

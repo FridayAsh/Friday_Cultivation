@@ -19,6 +19,7 @@ import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.Physique;
 import com.friday.cultivation.cultivation.QiElement;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.spell.Spell;
 import com.friday.cultivation.cultivation.spell.SpellElement;
 import com.friday.cultivation.cultivation.technique.Technique;
@@ -366,14 +367,14 @@ public final class PhysiqueBonusHelper {
         if (player == null) {
             return false;
         }
-        return CultivationCapability.get(player).map(data -> data.getPhysique() == Physique.FIVE_ELEMENT_CHAOS_BODY && data.getRealm().ordinal() >= Realm.NASCENT_SOUL.ordinal() && data.getLearnedTechniques().contains(Technique.FIVE_ELEMENT_CHAOS_ART.id()) && Technique.FIVE_ELEMENT_CHAOS_ART.id().equals(data.getEquippedTechniqueId())).orElse(false);
+        return CultivationCapability.get(player).map(data -> data.getPhysique() == Physique.FIVE_ELEMENT_CHAOS_BODY && RealmTopology.isAtLeast(data.getRealm(), Realm.NASCENT_SOUL) && data.getLearnedTechniques().contains(Technique.FIVE_ELEMENT_CHAOS_ART.id()) && Technique.FIVE_ELEMENT_CHAOS_ART.id().equals(data.getEquippedTechniqueId())).orElse(false);
     }
 
     public static boolean hasFiveElementChaosBodyCombo(WanderingCultivatorEntity npc) {
         if (npc == null) {
             return false;
         }
-        return npc.getPhysique() == Physique.FIVE_ELEMENT_CHAOS_BODY && npc.getRealm().ordinal() >= Realm.NASCENT_SOUL.ordinal() && Technique.FIVE_ELEMENT_CHAOS_ART.id().equals(npc.getTechniqueId());
+        return npc.getPhysique() == Physique.FIVE_ELEMENT_CHAOS_BODY && RealmTopology.isAtLeast(npc.getRealm(), Realm.NASCENT_SOUL) && Technique.FIVE_ELEMENT_CHAOS_ART.id().equals(npc.getTechniqueId());
     }
 
     private static boolean isBasicFiveElementSpell(Spell spell) {

@@ -22,6 +22,7 @@ package com.friday.cultivation.event;
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.spell.Spell;
 import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.event.NascentSoulOutOfBodyHandler;
@@ -128,7 +129,7 @@ public final class VoidStepHandler {
     }
 
     private static boolean canUseVoidStep(CultivationData data) {
-        if (data.getRealm().ordinal() < Realm.VOID_REFINING.ordinal()) {
+        if (RealmTopology.isBefore(data.getRealm(), Realm.VOID_REFINING)) {
             return false;
         }
         return data.isSpellEnabled(Spell.VOID_STEP);

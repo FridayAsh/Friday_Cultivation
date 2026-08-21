@@ -17,6 +17,7 @@ package com.friday.cultivation.client.screen;
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.alchemy.AlchemyRank;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.realm.SubStage;
 import com.friday.cultivation.cultivation.refining.RefiningRank;
 import com.friday.cultivation.network.EditPlayerStatsPacket;
@@ -62,7 +63,7 @@ extends Screen {
 
     private static int enumMax(int j) {
         return switch (j) {
-            case 0 -> Realm.values().length - 1;
+            case 0 -> RealmTopology.selectionOrder().size() - 1;
             case 1 -> 20;
             case 2 -> RefiningRank.values().length - 1;
             default -> AlchemyRank.values().length - 1;
@@ -71,7 +72,7 @@ extends Screen {
 
     private Component enumValue(int j) {
         return switch (j) {
-            case 0 -> Realm.values()[this.enumIdx[0]].displayName();
+            case 0 -> RealmTopology.selectionOrder().get(this.enumIdx[0]).displayName();
             case 1 -> this.enumSubStageValue();
             case 2 -> RefiningRank.values()[this.enumIdx[2]].displayName();
             default -> AlchemyRank.values()[this.enumIdx[3]].displayName();
@@ -79,7 +80,8 @@ extends Screen {
     }
 
     private Component enumSubStageValue() {
-        Realm realm = this.enumIdx[0] >= 0 && this.enumIdx[0] < Realm.values().length ? Realm.values()[this.enumIdx[0]] : Realm.MORTAL;
+        Realm realm = this.enumIdx[0] >= 0 && this.enumIdx[0] < RealmTopology.selectionOrder().size()
+                ? RealmTopology.selectionOrder().get(this.enumIdx[0]) : Realm.MORTAL;
         SubStage sub = realm.subStageAt(this.enumIdx[1]);
         return sub != null ? sub.displayName() : Component.literal("?");
     }
@@ -96,7 +98,7 @@ extends Screen {
                 this.intVals[3] = d.getAttrSpellPower();
                 this.intVals[4] = d.getAttrQiSea();
                 this.intVals[5] = d.getDefense();
-                this.enumIdx[0] = StatEditorScreen.clamp(d.getRealm().ordinal(), 0, StatEditorScreen.enumMax(0));
+                this.enumIdx[0] = Math.max(0, RealmTopology.selectionOrder().indexOf(d.getRealm()));
                 this.enumIdx[1] = StatEditorScreen.clamp(d.getSubStage().level(), 0, StatEditorScreen.enumMax(1));
                 this.enumIdx[2] = StatEditorScreen.clamp(d.getRefining(), 0, StatEditorScreen.enumMax(2));
                 this.enumIdx[3] = StatEditorScreen.clamp(d.getAlchemy(), 0, StatEditorScreen.enumMax(3));
@@ -152,7 +154,8 @@ extends Screen {
 
     private void apply() {
         this.boneAgeYears = this.parseBoneAge();
-        ModNetwork.CHANNEL.sendToServer((Object)new EditPlayerStatsPacket(this.intVals[0], this.intVals[1], this.intVals[2], this.intVals[3], this.intVals[4], this.intVals[5], this.enumIdx[0], this.enumIdx[1], this.enumIdx[2], this.enumIdx[3], this.boneAgeYears));
+        String realmId = RealmTopology.selectionOrder().get(StatEditorScreen.clamp(this.enumIdx[0], 0, StatEditorScreen.enumMax(0))).id();
+        ModNetwork.CHANNEL.sendToServer((Object)new EditPlayerStatsPacket(this.intVals[0], this.intVals[1], this.intVals[2], this.intVals[3], this.intVals[4], this.intVals[5], realmId, this.enumIdx[1], this.enumIdx[2], this.enumIdx[3], this.boneAgeYears));
         this.onClose();
     }
 

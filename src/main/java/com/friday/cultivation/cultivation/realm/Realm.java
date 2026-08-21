@@ -160,39 +160,13 @@ public enum Realm {
         return this.subStageAt(this.usesNumericLevels() ? n : n - 1);
     }
 
-    /** 逻辑顺序（显式链表，用于进度显示）：散仙在真仙之前，新 4 境界插在真仙与半圣之间 */
-    private static final List<Realm> LOGICAL_ORDER = List.of(
-        MORTAL, BODY_TEMPERING, QI_REFINING, FOUNDATION_BUILDING, GOLDEN_CORE,
-        NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, BODY_INTEGRATION, MAHAYANA,
-        TRIBULATION_TRANSCENDENCE, LOOSE_IMMORTAL,
-        TRUE_IMMORTAL, MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING,
-        HALF_SAGE, SAGE, HALF_EMPEROR, GREAT_EMPEROR);
-
     /** 突破链逻辑顺序（供境界选择等 UI 排序使用） */
     public static List<Realm> logicalOrder() {
-        return Realm.LOGICAL_ORDER;
+        return RealmTopology.selectionOrder();
     }
 
     public int progressIndex(SubStage subStage) {
-        if (this == MORTAL) {
-            return 0;
-        }
-        int acc = 0;
-        for (Realm r : Realm.LOGICAL_ORDER) {
-            if (r == this) {
-                break;
-            }
-            if (r == MORTAL || r == LOOSE_IMMORTAL) {
-                acc += 1;
-            } else {
-                acc += r.subStageCount();
-            }
-        }
-        int idx = subStage == null ? 0 : subStage.level();
-        if (this.usesNumericLevels()) {
-            idx = Math.max(0, idx - 1);
-        }
-        return 1 + acc + idx;
+        return RealmTopology.progressionIndex(this, subStage);
     }
 
     public int maxQi(SubStage subStage) {
@@ -332,7 +306,7 @@ public enum Realm {
     }
 
     public String npcCategoryTranslationKey() {
-        String category = this == MORTAL ? "mortal" : (this == GREAT_EMPEROR ? "great_emperor" : ((this == HALF_SAGE || this == SAGE || this == HALF_EMPEROR) ? "sage" : (this.ordinal() >= TRUE_IMMORTAL.ordinal() ? "immortal" : "cultivator")));
+        String category = this == MORTAL ? "mortal" : (this == GREAT_EMPEROR ? "great_emperor" : ((this == HALF_SAGE || this == SAGE || this == HALF_EMPEROR) ? "sage" : (RealmTopology.isAtLeast(this, TRUE_IMMORTAL) ? "immortal" : "cultivator")));
         return "npc_category.friday_cultivation." + category;
     }
 
@@ -432,70 +406,16 @@ public enum Realm {
     }
 
     public Realm next() {
-        // 主链路：凡人→锻体→…→渡劫→真仙→玄仙→仙君→仙尊→仙王→半圣→圣人→半帝→大帝（大帝为终点）
-        // 散仙（LOOSE_IMMORTAL）是渡劫失败独立旁支，不参与主链路进阶
-        if (this == GREAT_EMPEROR || this == LOOSE_IMMORTAL) {
-            return this;
-        }
-        if (this == TRUE_IMMORTAL) {
-            return MYSTIC_IMMORTAL;
-        }
-        if (this == MYSTIC_IMMORTAL) {
-            return IMMORTAL_LORD;
-        }
-        if (this == IMMORTAL_LORD) {
-            return IMMORTAL_VENERABLE;
-        }
-        if (this == IMMORTAL_VENERABLE) {
-            return IMMORTAL_KING;
-        }
-        if (this == IMMORTAL_KING) {
-            return HALF_SAGE;
-        }
-        int idx = this.ordinal() + 1;
-        while (idx < Realm.values().length) {
-            Realm r = Realm.values()[idx];
-            if (r != LOOSE_IMMORTAL) {
-                return r;
-            }
-            ++idx;
-        }
-        return this;
+        return RealmTopology.nextMain(this).orElse(this);
     }
 
     public Realm prev() {
-        if (this == MORTAL) {
-            return this;
-        }
-        if (this == MYSTIC_IMMORTAL) {
-            return TRUE_IMMORTAL;
-        }
-        if (this == IMMORTAL_LORD) {
-            return MYSTIC_IMMORTAL;
-        }
-        if (this == IMMORTAL_VENERABLE) {
-            return IMMORTAL_LORD;
-        }
-        if (this == IMMORTAL_KING) {
-            return IMMORTAL_VENERABLE;
-        }
-        if (this == HALF_SAGE) {
-            return IMMORTAL_KING;
-        }
-        int idx = this.ordinal() - 1;
-        while (idx >= 0) {
-            Realm r = Realm.values()[idx];
-            if (r != LOOSE_IMMORTAL) {
-                return r;
-            }
-            --idx;
-        }
-        return this;
+        return RealmTopology.previousMain(this).orElse(this);
     }
 
     public int tribulationCount(SubStage stage) {
         // 炼虚之前（凡人~化神）：仅大境界突破（当前子阶段为巅峰）才渡劫
-        if (this.ordinal() < Realm.VOID_REFINING.ordinal()) {
+        if (RealmTopology.isBefore(this, Realm.VOID_REFINING)) {
             if (stage == null || !stage.isPeakFor(this)) {
                 return 0;
             }
@@ -641,11 +561,7 @@ public enum Realm {
     }
 
     public static Realm byId(String id) {
-        for (Realm r : Realm.values()) {
-            if (!r.id.equals(id)) continue;
-            return r;
-        }
-        return MORTAL;
+        return RealmTopology.find(id).orElse(MORTAL);
     }
 
     private static final java.util.Map<Realm, Integer> MAX_QI_PREV_PEAK = java.util.Map.ofEntries(

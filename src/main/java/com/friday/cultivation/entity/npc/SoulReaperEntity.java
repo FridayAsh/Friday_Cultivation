@@ -34,6 +34,7 @@ package com.friday.cultivation.entity.npc;
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.event.SoulHookHandler;
 import com.friday.cultivation.event.SoulStateHandler;
@@ -96,8 +97,10 @@ extends PathfinderMob {
 
     /** 勾魂使者境界随击杀数提升；上限为主链路的半帝（不生成大帝级勾魂使者） */
     public static Realm realmForKills(int kills) {
-        int idx = Math.min(Realm.HALF_EMPEROR.ordinal(), Realm.QI_REFINING.ordinal() + Math.max(0, kills));
-        Realm r = Realm.values()[idx];
+        int start = RealmTopology.progressionIndex(Realm.QI_REFINING);
+        int end = RealmTopology.progressionIndex(Realm.HALF_EMPEROR);
+        int idx = Math.min(end, start + Math.max(0, kills));
+        Realm r = RealmTopology.mainChain().get(Math.max(0, idx));
         return r == Realm.BODY_TEMPERING ? Realm.QI_REFINING : r;
     }
 

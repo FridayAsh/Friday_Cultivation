@@ -69,6 +69,7 @@ import com.friday.cultivation.cultivation.alchemy.AlchemyRank;
 import com.friday.cultivation.cultivation.qi.PlayerQiAbsorptionHelper;
 import com.friday.cultivation.cultivation.qi.consumer.PlayerQiConsumer;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.realm.SubStage;
 import com.friday.cultivation.cultivation.refining.RefiningRank;
 import com.friday.cultivation.cultivation.sect.SectRole;
@@ -455,7 +456,7 @@ extends Screen {
         this.bonusToggleRowRects.clear();
         this.hoveredBonusCategory = null;
         this.normalizeBreakthroughSelection(data, player);
-        if (this.currentTab != Tab.BREAKTHROUGH || data.getRealm().ordinal() < Realm.GOLDEN_CORE.ordinal()) {
+        if (this.currentTab != Tab.BREAKTHROUGH || RealmTopology.isBefore(data.getRealm(), Realm.GOLDEN_CORE)) {
             this.breakthroughHistoryPopupOpen = false;
         }
         if (this.currentTab != Tab.ATTRIBUTES) {
@@ -1081,7 +1082,7 @@ extends Screen {
         Realm realm = data.getRealm();
         boolean soul = data.isSoulState();
         MutableComponent race = Component.translatable((String)(soul ? "race.friday_cultivation.ghost" : "race.friday_cultivation.human"));
-        String subKey = realm == Realm.MORTAL ? (soul ? "race_sub.friday_cultivation.ghost_mortal" : "race_sub.friday_cultivation.mortal") : (realm == Realm.GREAT_EMPEROR ? (soul ? "race_sub.friday_cultivation.ghost_great_emperor" : "race_sub.friday_cultivation.great_emperor") : (realm.ordinal() >= Realm.TRUE_IMMORTAL.ordinal() ? (soul ? "race_sub.friday_cultivation.ghost_immortal" : "race_sub.friday_cultivation.immortal") : (soul ? "race_sub.friday_cultivation.ghost_cultivator" : "race_sub.friday_cultivation.cultivator")));
+        String subKey = realm == Realm.MORTAL ? (soul ? "race_sub.friday_cultivation.ghost_mortal" : "race_sub.friday_cultivation.mortal") : (realm == Realm.GREAT_EMPEROR ? (soul ? "race_sub.friday_cultivation.ghost_great_emperor" : "race_sub.friday_cultivation.great_emperor") : (RealmTopology.isAtLeast(realm, Realm.TRUE_IMMORTAL) ? (soul ? "race_sub.friday_cultivation.ghost_immortal" : "race_sub.friday_cultivation.immortal") : (soul ? "race_sub.friday_cultivation.ghost_cultivator" : "race_sub.friday_cultivation.cultivator")));
         return Component.translatable((String)"screen.friday_cultivation.attr.id.race_value", (Object[])new Object[]{race, Component.translatable((String)subKey)});
     }
 
@@ -1223,7 +1224,7 @@ extends Screen {
             if (!killedEmperor || !hasArt || !artEquipped) {
                 y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_locked_stage"), cx, y, width - 8, -9807288) + 4;
             }
-        } else if (realm.ordinal() >= Realm.GOLDEN_CORE.ordinal()) {
+        } else if (RealmTopology.isAtLeast(realm, Realm.GOLDEN_CORE)) {
             y = this.renderBreakthroughHistoryButton(gfx, x, rightX, y, data, mouseX, mouseY);
             y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_waiting"), cx, y, width - 8, -9807288) + 4;
         }

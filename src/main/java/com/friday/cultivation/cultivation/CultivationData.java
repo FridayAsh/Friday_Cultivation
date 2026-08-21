@@ -27,6 +27,7 @@ import com.friday.cultivation.cultivation.SpiritRoot;
 import com.friday.cultivation.cultivation.ZhenyuanBonusHelper;
 import com.friday.cultivation.cultivation.alchemy.AlchemyRank;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.realm.SubStage;
 import com.friday.cultivation.cultivation.refining.RefiningRank;
 import com.friday.cultivation.cultivation.spell.Spell;
@@ -193,7 +194,7 @@ implements INBTSerializable<CompoundTag> {
     public void setRealm(Realm realm) {
         Realm realm2 = this.realm = realm == null ? Realm.MORTAL : realm;
         // 境界切换（如令牌）低于渡劫奖励最低境界时：清除低于境界的加成
-        this.tribulationBonusEntries.removeIf(e -> this.realm.ordinal() < e[1]);
+        this.tribulationBonusEntries.removeIf(e -> CultivationData.isLegacyTribulationEntryBelow(this.realm, e));
         if (this.realm == Realm.LOOSE_IMMORTAL) {
             if (this.looseImmortalTribulations <= 0) {
                 this.looseImmortalTribulations = 1;
@@ -348,7 +349,7 @@ implements INBTSerializable<CompoundTag> {
      */
     private static long deterministicCultivationRequirement(Realm realm, SubStage sub) {
         long[] bases = new long[]{60L, 150L, 800L, 2500L, 5000L, 10000L, 20000L, 40000L, 80000L, 160000L, 320000L, 700000L, 1000000L};
-        int ord = realm == null ? 0 : Math.max(0, realm.ordinal());
+        int ord = realm == null ? 0 : Math.max(0, RealmTopology.progressionIndex(realm));
         long base = ord < bases.length ? bases[ord] : (long)Math.round(1000000.0 * Math.pow(1.5, (double)(ord - (bases.length - 1))));
         int count = realm == null ? 1 : Math.max(1, realm.subStageCount());
         int level = sub == null ? 0 : Math.max(0, sub.level());
@@ -654,7 +655,7 @@ implements INBTSerializable<CompoundTag> {
     }
 
     public boolean canUseTimeAcceleration() {
-        return this.realm.ordinal() >= Realm.FOUNDATION_BUILDING.ordinal();
+        return RealmTopology.isAtLeast(this.realm, Realm.FOUNDATION_BUILDING);
     }
 
     public boolean isTimeAccelerationActive() {
@@ -784,10 +785,10 @@ implements INBTSerializable<CompoundTag> {
         if (percent <= 0.0) {
             return;
         }
-        int ord = minRealm == null ? -1 : minRealm.ordinal();
+        int ord = RealmTopology.legacyEnumOrdinal(minRealm);
         // 境界跌落（低于已记录的最低境界）：清空全部（重修重得）
         for (double[] e : new ArrayList<>(this.tribulationBonusEntries)) {
-            if (this.realm.ordinal() < e[1]) {
+            if (CultivationData.isLegacyTribulationEntryBelow(this.realm, e)) {
                 this.tribulationBonusEntries.remove(e);
             }
         }
@@ -798,7 +799,7 @@ implements INBTSerializable<CompoundTag> {
     public double activeTribulationMultiplier() {
         double mult = 1.0;
         for (double[] e : this.tribulationBonusEntries) {
-            if (e[1] < 0 || this.realm.ordinal() >= e[1]) {
+            if (e[1] < 0 || !CultivationData.isLegacyTribulationEntryBelow(this.realm, e)) {
                 mult *= (1.0 + e[0]);
             }
         }
@@ -808,6 +809,15 @@ implements INBTSerializable<CompoundTag> {
     /** 境界跌落时清空全部渡劫隐藏加成（支持重修重得更高数值） */
     public void clearTribulationBonus() {
         this.tribulationBonusEntries.clear();
+    }
+
+    private static boolean isLegacyTribulationEntryBelow(Realm actual, double[] entry) {
+        if (actual == null || entry == null || entry.length < 2 || entry[1] < 0) {
+            return false;
+        }
+        return RealmTopology.fromLegacyEnumOrdinal((int)entry[1])
+                .map(required -> RealmTopology.isBefore(actual, required))
+                .orElse(true);
     }
 
     /** 渡劫隐藏加成总数（用于展示，返回百分比总和近似） */
@@ -1914,7 +1924,8 @@ implements INBTSerializable<CompoundTag> {
      */
     private static long deterministicWuDaoRequirement(Realm realm, SubStage sub) {
         long[] bases = new long[]{40000L, 100000L, 300000L, 900000L};
-        int idx = realm == null ? -1 : realm.ordinal() - Realm.HALF_SAGE.ordinal();
+        int idx = realm == null ? -1 : RealmTopology.progressionIndex(realm)
+                - RealmTopology.progressionIndex(Realm.HALF_SAGE);
         if (realm == null || idx < 0 || idx >= bases.length) {
             return 0L;
         }
@@ -2102,7 +2113,7 @@ implements INBTSerializable<CompoundTag> {
     }
 
     public void ensureSpellsForRealm() {
-        if (this.realm.ordinal() >= Realm.QI_REFINING.ordinal()) {
+        if (RealmTopology.isAtLeast(this.realm, Realm.QI_REFINING)) {
             this.learnedSpells.add(Spell.SPIRIT_VISION.id());
             this.learnedSpells.add(Spell.QI_TRANSFER.id());
             this.learnedSpells.add(Spell.QI_SHIELD.id());
@@ -2111,27 +2122,28 @@ implements INBTSerializable<CompoundTag> {
                 this.learnedSpells.add(Spell.SWORD_AURA.id());
             }
         }
-        if (this.realm.ordinal() >= Realm.FOUNDATION_BUILDING.ordinal()) {
+        if (RealmTopology.isAtLeast(this.realm, Realm.FOUNDATION_BUILDING)) {
             this.learnedSpells.add(Spell.SWORD_FLIGHT.id());
             this.learnedSpells.add(Spell.BIGU.id());
         }
-        if (this.realm.ordinal() >= Realm.GOLDEN_CORE.ordinal()) {
+        if (RealmTopology.isAtLeast(this.realm, Realm.GOLDEN_CORE)) {
             this.learnedSpells.add(Spell.CORE_SELF_DESTRUCT.id());
         }
-        if (this.realm.ordinal() >= Realm.NASCENT_SOUL.ordinal()) {
+        if (RealmTopology.isAtLeast(this.realm, Realm.NASCENT_SOUL)) {
             this.learnedSpells.add(Spell.NASCENT_SOUL_OUT_OF_BODY.id());
         }
-        if (this.realm.ordinal() >= Realm.SOUL_FORMATION.ordinal()) {
+        if (RealmTopology.isAtLeast(this.realm, Realm.SOUL_FORMATION)) {
             this.learnedSpells.add(Spell.DIVINE_SENSE.id());
         }
-        if (this.realm.ordinal() >= Realm.VOID_REFINING.ordinal()) {
+        if (RealmTopology.isAtLeast(this.realm, Realm.VOID_REFINING)) {
             this.learnedSpells.add(Spell.VOID_STEP.id());
             this.learnedSpells.add(Spell.VOID_ESCAPE.id());
         }
-        if (this.realm.ordinal() >= Realm.BODY_INTEGRATION.ordinal()) {
+        if (RealmTopology.isAtLeast(this.realm, Realm.BODY_INTEGRATION)) {
             this.learnedSpells.add(Spell.DHARMA_BODY_MANIFESTATION.id());
         }
-        if (this.realm.ordinal() >= Realm.TRUE_IMMORTAL.ordinal() || this.realm == Realm.LOOSE_IMMORTAL) {
+        if (RealmTopology.isAtLeast(this.realm, Realm.TRUE_IMMORTAL)
+                || this.realm == Realm.LOOSE_IMMORTAL) {
             this.learnedSpells.add(Spell.QI_FLIGHT.id());
         }
     }
@@ -2264,9 +2276,9 @@ implements INBTSerializable<CompoundTag> {
             targetSub = targetRealm.lastSubStage();
         }
         // 大境界突破：每次 +5（凡人→锻体不发，故扣除 1 次）
-        int majorCount = Math.max(0, targetRealm.ordinal() - 1);
+        int majorCount = Math.max(0, RealmTopology.progressionIndex(targetRealm) - 1);
         int minorCount = 0;
-        for (Realm r : Realm.values()) {
+        for (Realm r : RealmTopology.mainChain()) {
             if (r == targetRealm) {
                 break;
             }
@@ -2293,9 +2305,9 @@ implements INBTSerializable<CompoundTag> {
             targetRealm = Realm.TRIBULATION_TRANSCENDENCE;
             targetSub = targetRealm.lastSubStage();
         }
-        int majorCount = Math.max(0, targetRealm.ordinal() - 1);
+        int majorCount = Math.max(0, RealmTopology.progressionIndex(targetRealm) - 1);
         int minorCount = 0;
-        for (Realm r : Realm.values()) {
+        for (Realm r : RealmTopology.mainChain()) {
             if (r == targetRealm) {
                 break;
             }
@@ -2318,9 +2330,9 @@ implements INBTSerializable<CompoundTag> {
         if (targetRealm == Realm.MORTAL) {
             return 0;
         }
-        int majorCount = targetRealm.ordinal();
+        int majorCount = Math.max(0, RealmTopology.progressionIndex(targetRealm));
         int minorCount = 0;
-        for (Realm r : Realm.values()) {
+        for (Realm r : RealmTopology.mainChain()) {
             if (r == targetRealm) {
                 break;
             }
@@ -2804,7 +2816,8 @@ implements INBTSerializable<CompoundTag> {
         this.zhujiSecretUsed = tag.getBoolean("zhujiSecretUsed");
         this.pendingFoundationDao = FoundationDao.byId(tag.getString("pendingFoundationDao"));
         this.goldenCoreDao = GoldenCoreDao.byId(tag.getString("goldenCoreDao"));
-        if (this.realm.ordinal() >= Realm.GOLDEN_CORE.ordinal() && this.goldenCoreDao == GoldenCoreDao.NONE) {
+        if (RealmTopology.isAtLeast(this.realm, Realm.GOLDEN_CORE)
+                && this.goldenCoreDao == GoldenCoreDao.NONE) {
             this.goldenCoreDao = GoldenCoreDao.HUMAN;
         }
         this.jiedanPillUsed = tag.getInt("jiedanPillUsed");

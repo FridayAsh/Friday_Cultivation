@@ -13,6 +13,7 @@ package com.friday.cultivation.network;
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.alchemy.AlchemyRank;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.realm.SubStage;
 import com.friday.cultivation.cultivation.refining.RefiningRank;
 import com.friday.cultivation.event.CapabilityEvents;
@@ -32,20 +33,20 @@ public class EditPlayerStatsPacket {
     private final int spellPower;
     private final int qiSea;
     private final int defense;
-    private final int realmOrd;
+    private final String realmId;
     private final int subOrd;
     private final int refining;
     private final int alchemy;
     private final int boneAgeYears;
 
-    public EditPlayerStatsPacket(int constitution, int physique, int agility, int spellPower, int qiSea, int defense, int realmOrd, int subOrd, int refining, int alchemy, int boneAgeYears) {
+    public EditPlayerStatsPacket(int constitution, int physique, int agility, int spellPower, int qiSea, int defense, String realmId, int subOrd, int refining, int alchemy, int boneAgeYears) {
         this.constitution = constitution;
         this.physique = physique;
         this.agility = agility;
         this.spellPower = spellPower;
         this.qiSea = qiSea;
         this.defense = defense;
-        this.realmOrd = realmOrd;
+        this.realmId = realmId == null ? Realm.MORTAL.id() : realmId;
         this.subOrd = subOrd;
         this.refining = refining;
         this.alchemy = alchemy;
@@ -59,7 +60,7 @@ public class EditPlayerStatsPacket {
         b.writeVarInt(m.spellPower);
         b.writeVarInt(m.qiSea);
         b.writeVarInt(m.defense);
-        b.writeVarInt(m.realmOrd);
+        b.writeUtf(m.realmId);
         b.writeVarInt(m.subOrd);
         b.writeVarInt(m.refining);
         b.writeVarInt(m.alchemy);
@@ -67,7 +68,7 @@ public class EditPlayerStatsPacket {
     }
 
     public static EditPlayerStatsPacket decode(FriendlyByteBuf b) {
-        return new EditPlayerStatsPacket(b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt());
+        return new EditPlayerStatsPacket(b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readUtf(64), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt());
     }
 
     private static int clamp(int v, int lo, int hi) {
@@ -92,8 +93,7 @@ public class EditPlayerStatsPacket {
                 data.setAttrSpellPower(EditPlayerStatsPacket.clamp(m.spellPower, 0, 9999));
                 data.setAttrQiSea(EditPlayerStatsPacket.clamp(m.qiSea, 0, 9999));
                 data.setDefense(EditPlayerStatsPacket.clamp(m.defense, 0, 9999));
-                Realm[] realms = Realm.values();
-                Realm newRealm = realms[EditPlayerStatsPacket.clamp(m.realmOrd, 0, realms.length - 1)];
+                Realm newRealm = RealmTopology.find(m.realmId).orElse(Realm.MORTAL);
                 SubStage newSub = newRealm.subStageAt(m.subOrd);
                 if (newSub == null) {
                     newSub = newRealm.firstSubStage();
