@@ -104,4 +104,20 @@ class CultivationDataPersistenceTest {
         assertEquals(0.0, data.getTribulationDamageRatio(), 0.000001);
         assertSame(TribulationType.LIGHTNING, data.getTribulationType());
     }
+
+    @Test
+    void legacyMortalDataCannotRevivePermanentBreakthroughBonus() {
+        CompoundTag legacy = new CultivationData().serializeNBT();
+        legacy.putString("realm", Realm.MORTAL.id());
+        legacy.remove("breakthroughBonusTargetRealm");
+        legacy.putLong("breakthroughHpBonus", 999L);
+        legacy.putLong("breakthroughQiBonus", 9999L);
+
+        CultivationData loaded = new CultivationData();
+        loaded.deserializeNBT(legacy);
+
+        assertEquals(0L, loaded.getBreakthroughHpBonus());
+        assertEquals(0L, loaded.getBreakthroughQiBonus());
+        assertEquals(0L, loaded.getMaxQi());
+    }
 }

@@ -47,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class CultivationData
 implements INBTSerializable<CompoundTag> {
-    public static final int CURRENT_DATA_VERSION = 2;
+    public static final int CURRENT_DATA_VERSION = 3;
     public static final int MAX_TIME_ACCELERATION_MULTIPLIER = 10000;
     private static final int[] TIME_ACCELERATION_MULTIPLIERS = new int[]{2, 5, 10, 100, 1000, 10000};
     private int dataVersion = CURRENT_DATA_VERSION;
@@ -122,10 +122,12 @@ implements INBTSerializable<CompoundTag> {
     private int attrAgility = 0;
     private int attrSpellPower = 0;
     private int attrQiSea = 0;
-    /** 突破累计生命加成（标准生命值×5%，大境界 1.0 倍、小境界 0.35 倍；无随机、无额外封顶） */
+    /** 突破累计生命加成原始值（按最新突破里程碑统一启停）。 */
     private long breakthroughHpBonus = 0L;
-    /** 突破累计灵气加成（每次突破累加，约为生命加成的 5 倍） */
+    /** 突破累计灵气加成原始值（按最新突破里程碑统一启停）。 */
     private long breakthroughQiBonus = 0L;
+    /** 普通突破加成的最新目标境界；低于该境界时原始值保留但不生效。 */
+    private String breakthroughBonusTargetRealmId = "";
     private boolean zhenyuanMajorAutoRebalanceApplied = false;
     private boolean bodyDefenseEnabled = true;
     private final Set<String> disabledBonusCategories = new LinkedHashSet<String>();
@@ -253,6 +255,11 @@ implements INBTSerializable<CompoundTag> {
     }
 
     public long getMaxQi() {
+        // 凡人没有可用灵气池；必须在所有加成计算之前短路，避免旧档突破/渡劫加成
+        // 让凡人重新获得灵气并触发灵气护盾。
+        if (this.realm == Realm.MORTAL) {
+            return 0L;
+        }
         if (this.realm == Realm.BODY_TEMPERING) {
             return 100L;
         }
@@ -271,9 +278,10 @@ implements INBTSerializable<CompoundTag> {
             }
         }
         max = this.applyQiRefiningEnhancements(max);
-        // 突破累计灵气加成（每次大/小境界突破累加）
-        if (this.breakthroughQiBonus > 0L) {
-            max = CultivationData.saturatedAddLong(max, this.breakthroughQiBonus);
+        // 突破累计灵气加成：低于最新突破目标境界时保持快照但不生效。
+        long breakthroughQi = this.getBreakthroughQiBonus();
+        if (breakthroughQi > 0L) {
+            max = CultivationData.saturatedAddLong(max, breakthroughQi);
         }
         max = CultivationData.saturatedAddLong(max, this.getTribulationMaxQiBonus());
         return max;
@@ -528,17 +536,19 @@ implements INBTSerializable<CompoundTag> {
     }
 
     public long getBreakthroughHpBonus() {
-        return this.breakthroughHpBonus;
+        return this.isBreakthroughBonusActive() ? this.breakthroughHpBonus : 0L;
     }
 
     public long getBreakthroughQiBonus() {
-        return this.breakthroughQiBonus;
+        return this.isBreakthroughBonusActive() ? this.breakthroughQiBonus : 0L;
     }
 
     /**
      * 突破加成算法（锻体后的所有境界，无论大/小境界突破都累加）：
      * - 百分比化：每次突破 + 标准生命值(当前境界) × 5%，大境界 ×1.0、小境界 ×0.35
      * - 灵气加成约为生命加成的 5 倍
+     * - 加成绑定到本次突破后的目标境界；降到目标境界以下时只停用，不删除快照，
+     *   重新达到目标境界后恢复。这样普通突破与渡劫固定快照使用同一条失效语义。
      */
     public void applyBreakthroughBonus(boolean majorBreakthrough) {
         if (this.realm == null || this.realm == Realm.MORTAL || this.realm == Realm.BODY_TEMPERING || this.realm == Realm.LOOSE_IMMORTAL) {
@@ -550,6 +560,15 @@ implements INBTSerializable<CompoundTag> {
         long qiGain = hpGain * 5L;
         this.breakthroughHpBonus += hpGain;
         this.breakthroughQiBonus += qiGain;
+        this.breakthroughBonusTargetRealmId = this.realm.id();
+    }
+
+    private boolean isBreakthroughBonusActive() {
+        if (this.breakthroughHpBonus <= 0L && this.breakthroughQiBonus <= 0L) {
+            return false;
+        }
+        Realm target = RealmTopology.find(this.breakthroughBonusTargetRealmId).orElse(null);
+        return target != null && !RealmTopology.isBefore(this.realm, target);
     }
 
     public void addAllZhenyuanAttributes(int delta) {
@@ -2486,6 +2505,7 @@ implements INBTSerializable<CompoundTag> {
         this.attrQiSea = other.attrQiSea;
         this.breakthroughHpBonus = other.breakthroughHpBonus;
         this.breakthroughQiBonus = other.breakthroughQiBonus;
+        this.breakthroughBonusTargetRealmId = other.breakthroughBonusTargetRealmId;
         this.zhenyuanMajorAutoRebalanceApplied = other.zhenyuanMajorAutoRebalanceApplied;
         this.bodyDefenseEnabled = other.bodyDefenseEnabled;
         this.disabledBonusCategories.clear();
@@ -2626,6 +2646,7 @@ implements INBTSerializable<CompoundTag> {
         tag.putInt("attrQiSea", this.attrQiSea);
         tag.putLong("breakthroughHpBonus", this.breakthroughHpBonus);
         tag.putLong("breakthroughQiBonus", this.breakthroughQiBonus);
+        tag.putString("breakthroughBonusTargetRealm", this.breakthroughBonusTargetRealmId == null ? "" : this.breakthroughBonusTargetRealmId);
         tag.putBoolean("zhenyuanMajorAutoRebalanceApplied", this.zhenyuanMajorAutoRebalanceApplied);
         tag.putBoolean("bodyDefenseEnabled", this.bodyDefenseEnabled);
         ListTag disabledBonusList = new ListTag();
@@ -2833,6 +2854,17 @@ implements INBTSerializable<CompoundTag> {
         }
         this.breakthroughHpBonus = tag.contains("breakthroughHpBonus", 4) ? tag.getLong("breakthroughHpBonus") : 0L;
         this.breakthroughQiBonus = tag.contains("breakthroughQiBonus", 4) ? tag.getLong("breakthroughQiBonus") : 0L;
+        if (tag.contains("breakthroughBonusTargetRealm", 8)) {
+            this.breakthroughBonusTargetRealmId = tag.getString("breakthroughBonusTargetRealm");
+        } else {
+            // 旧档没有目标境界字段：把已有累计值绑定到读档时的境界；凡人旧档直接
+            // 视为已失效，避免旧的永久生命/灵气加成再次复活。
+            this.breakthroughBonusTargetRealmId = this.realm == Realm.MORTAL ? "" : this.realm.id();
+        }
+        if (this.breakthroughBonusTargetRealmId.isBlank()) {
+            this.breakthroughHpBonus = 0L;
+            this.breakthroughQiBonus = 0L;
+        }
         this.zhenyuanMajorAutoRebalanceApplied = tag.contains("zhenyuanMajorAutoRebalanceApplied", 1) && tag.getBoolean("zhenyuanMajorAutoRebalanceApplied");
         this.bodyDefenseEnabled = !tag.contains("bodyDefenseEnabled", 1) || tag.getBoolean("bodyDefenseEnabled");
         this.disabledBonusCategories.clear();

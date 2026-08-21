@@ -226,7 +226,12 @@ public final class QiShieldHandler {
     }
 
     private static boolean canUsePlayerQiShield(ServerPlayer player, CultivationData data) {
-        return data != null && !SpiritLockHandler.isEntityLocked((Entity)player) && data.isSpellEnabled(Spell.QI_SHIELD) && data.getCurrentQi() > 0L;
+        return data != null
+                && data.getRealm() != Realm.MORTAL
+                && data.getMaxQi() > 0L
+                && !SpiritLockHandler.isEntityLocked((Entity)player)
+                && data.isSpellEnabled(Spell.QI_SHIELD)
+                && data.getCurrentQi() > 0L;
     }
 
     private static float maxAbsorbableDamage(float incoming, Realm realm) {
@@ -401,4 +406,3 @@ public final class QiShieldHandler {
         sl.sendParticles((ParticleOptions)ParticleTypes.ENCHANTED_HIT, npc.getX(), npc.getY() + (double)npc.getBbHeight() * 0.5, npc.getZ(), 4, 0.3, 0.3, 0.3, 0.1);
     }
 }
-

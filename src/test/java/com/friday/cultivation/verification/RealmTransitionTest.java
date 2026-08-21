@@ -66,4 +66,33 @@ class RealmTransitionTest {
                 Realm.FOUNDATION_BUILDING, Realm.FOUNDATION_BUILDING.firstSubStage()));
         assertTrue(data.getTribulationHealthBonus() > 0.0);
     }
+
+    @Test
+    void demotionToMortalDisablesTribulationAndOrdinaryBreakthroughBonuses() {
+        CultivationData data = new CultivationData();
+        RealmTransition.apply(data, RealmTransition.Request.adminEdit(
+                Realm.GOLDEN_CORE, Realm.GOLDEN_CORE.firstSubStage()));
+        data.applyBreakthroughBonus(true);
+        data.recordTribulationBonus(new com.friday.cultivation.cultivation.TribulationBonusSnapshot(
+                "realm:golden_core:early", Realm.GOLDEN_CORE.id(),
+                0.50, 100.0, 50L, 5, 5, 5, 5, 5));
+
+        assertTrue(data.getBreakthroughHpBonus() > 0L);
+        assertTrue(data.getTribulationHealthBonus() > 0.0);
+
+        RealmTransition.apply(data, RealmTransition.Request.realmToken(
+                Realm.MORTAL, Realm.MORTAL.firstSubStage(), 0, 200L));
+
+        assertEquals(0L, data.getBreakthroughHpBonus());
+        assertEquals(0L, data.getBreakthroughQiBonus());
+        assertEquals(0.0, data.getTribulationHealthBonus(), 0.000001);
+        assertEquals(0L, data.getMaxQi());
+        assertEquals(0L, data.getCurrentQi());
+
+        RealmTransition.apply(data, RealmTransition.Request.realmToken(
+                Realm.GOLDEN_CORE, Realm.GOLDEN_CORE.firstSubStage(), 0, 300L));
+        assertTrue(data.getBreakthroughHpBonus() > 0L);
+        assertTrue(data.getBreakthroughQiBonus() > 0L);
+        assertTrue(data.getTribulationHealthBonus() > 0.0);
+    }
 }
