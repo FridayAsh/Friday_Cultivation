@@ -51,8 +51,43 @@ class StageOnePolicyTest {
         assertTrue(flight.contains("data.incrementFlightTicks()"));
     }
 
+    @Test
+    void daoRoutePreviewAndStartMessageUseTheSameTianjiaoScaledSpecAsRuntime() throws IOException {
+        String screen = read("com/friday/cultivation/client/screen/CultivationScreen.java");
+        String hint = between(screen,
+                "private Component breakthroughHint",
+                "private void drawBreakthroughCentered");
+        String foundationRoute = between(hint,
+                "if (realm == Realm.QI_REFINING",
+                "if (realm == Realm.FOUNDATION_BUILDING");
+        String goldenCoreRoute = between(hint,
+                "if (realm == Realm.FOUNDATION_BUILDING",
+                "int strikes = realm.tribulationCount");
+
+        assertTrue(foundationRoute.contains("TribulationScalingHelper.scaleSpec("),
+                "筑基道预览必须读取天骄缩放后的最终劫谱");
+        assertTrue(goldenCoreRoute.contains("TribulationScalingHelper.scaleSpec("),
+                "金丹道预览必须读取天骄缩放后的最终劫谱");
+
+        String packet = read("com/friday/cultivation/network/RequestBreakthroughPacket.java");
+        assertTrue(packet.contains("TribulationSpec finalSpec = TribulationScalingHelper.scaleSpec("),
+                "服务端必须为路线突破建立唯一的天骄缩放最终劫谱");
+        assertTrue(packet.contains("Realm.formatTribulationCount(finalSpec.waves(), finalSpec.boltsPerWave())"),
+                "开始提示必须读取最终劫谱雷数，不能继续显示缩放前基础值");
+        assertTrue(packet.contains("finalSpec.strikeDamage()"),
+                "开始提示必须读取最终劫谱伤害，不能继续显示缩放前基础值");
+    }
+
     private static String read(String relativePath) throws IOException {
         return Files.readString(SOURCE_ROOT.resolve(relativePath), StandardCharsets.UTF_8);
+    }
+
+    private static String between(String text, String start, String end) {
+        int from = text.indexOf(start);
+        int to = from < 0 ? -1 : text.indexOf(end, from + start.length());
+        assertTrue(from >= 0 && to > from,
+                () -> "找不到源码片段：" + start + " ... " + end);
+        return text.substring(from, to);
     }
 
     private static int count(String text, String needle) {

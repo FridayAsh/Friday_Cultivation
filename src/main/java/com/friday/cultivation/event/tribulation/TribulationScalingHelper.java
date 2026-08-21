@@ -81,10 +81,17 @@ public final class TribulationScalingHelper {
      * 该转换只在启动前执行一次，Session 建立后不再重新缩放。
      */
     public static TribulationSpec scaleSpec(Player player, CultivationData data, TribulationSpec base) {
+        return scaleSpec(tier(player, data), base);
+    }
+
+    /**
+     * 纯计算入口：客户端预览、服务端 Session 与测试都通过同一档位缩放算法。
+     */
+    public static TribulationSpec scaleSpec(TribulationTier tier, TribulationSpec base) {
         if (base == null) {
             return TribulationSpec.of(0, 1, 0);
         }
-        double mult = difficultyMult(player, data);
+        double mult = (tier == null ? TribulationTier.MORTAL_DUST : tier).difficultyMult();
         int bolts = Math.max(1, base.boltsPerWave());
         int totalBolts = Math.max(1, (int)Math.round((double)base.waves() * bolts * mult));
         int waves = Math.max(1, (int)Math.ceil((double)totalBolts / (double)bolts));

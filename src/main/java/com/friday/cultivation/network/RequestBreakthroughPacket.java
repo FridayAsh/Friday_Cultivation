@@ -122,10 +122,12 @@ public class RequestBreakthroughPacket {
                     TribulationHandler.completeBreakthroughWithoutTribulation(player, data);
                     return;
                 }
-                TribulationHandler.beginTribulation(player, data,
-                        TribulationScalingHelper.scaleSpec(player, data,
-                                new TribulationSpec(waves, boltsPerWave, damage, 0.0, 0, data.getTribulationType())));
-                player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.tribulation.start", (Object[])new Object[]{Realm.formatTribulationCount(waves, boltsPerWave), damage}), false);
+                TribulationSpec finalSpec = TribulationScalingHelper.scaleSpec(player, data,
+                        new TribulationSpec(waves, boltsPerWave, damage, 0.0, 0, data.getTribulationType()));
+                TribulationHandler.beginTribulation(player, data, finalSpec);
+                player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.tribulation.start",
+                        (Object[])new Object[]{Realm.formatTribulationCount(finalSpec.waves(), finalSpec.boltsPerWave()),
+                                finalSpec.strikeDamage()}), false);
             });
         });
         ctx.setPacketHandled(true);

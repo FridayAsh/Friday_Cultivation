@@ -81,6 +81,9 @@ import com.friday.cultivation.cultivation.technique.Technique;
 import com.friday.cultivation.cultivation.technique.TechniqueBonusHelper;
 import com.friday.cultivation.entity.SeatEntity;
 import com.friday.cultivation.event.SoulStateHandler;
+import com.friday.cultivation.event.tribulation.TribulationScalingHelper;
+import com.friday.cultivation.event.tribulation.TribulationSpec;
+import com.friday.cultivation.event.tribulation.TribulationTier;
 import com.friday.cultivation.network.CreateImperialArtPacket;
 import com.friday.cultivation.network.CycleGenderPacket;
 import com.friday.cultivation.network.EquipSpellPacket;
@@ -1749,14 +1752,29 @@ extends Screen {
             int waves = this.foundationTribulationWaves(this.selectedFoundationDao);
             int damage = waves > 0 ? Realm.QI_REFINING.tribulationStrikeDamage() : 0;
             if (waves > 0) {
-                return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_foundation", (Object[])new Object[]{Component.translatable((String)this.selectedFoundationDao.translationKey()), Realm.formatTribulationCount(waves, 1), damage});
+                TribulationTier tier = TribulationScalingHelper.tier(Minecraft.getInstance().player, data);
+                TribulationSpec finalSpec = TribulationScalingHelper.scaleSpec(Minecraft.getInstance().player, data,
+                        new TribulationSpec(waves, 1, damage, 0.0, 0, data.getTribulationType()));
+                return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_foundation",
+                        (Object[])new Object[]{Component.translatable((String)this.selectedFoundationDao.translationKey()),
+                                Component.translatable(tier.translationKey()),
+                                Realm.formatTribulationCount(finalSpec.waves(), finalSpec.boltsPerWave()),
+                                finalSpec.strikeDamage()});
             }
             return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_normal");
         }
         if (realm == Realm.FOUNDATION_BUILDING && sub.isPeakFor(realm)) {
             int gcWaves = this.selectedGoldenCoreDao.tribulationStrikes();
             if (gcWaves > 0) {
-                return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_golden_core", (Object[])new Object[]{Component.translatable((String)this.selectedGoldenCoreDao.translationKey()), Realm.formatTribulationCount(gcWaves, 1), this.selectedGoldenCoreDao.tribulationDamage()});
+                TribulationTier tier = TribulationScalingHelper.tier(Minecraft.getInstance().player, data);
+                TribulationSpec finalSpec = TribulationScalingHelper.scaleSpec(Minecraft.getInstance().player, data,
+                        new TribulationSpec(gcWaves, 1, this.selectedGoldenCoreDao.tribulationDamage(),
+                                0.0, 0, data.getTribulationType()));
+                return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_golden_core",
+                        (Object[])new Object[]{Component.translatable((String)this.selectedGoldenCoreDao.translationKey()),
+                                Component.translatable(tier.translationKey()),
+                                Realm.formatTribulationCount(finalSpec.waves(), finalSpec.boltsPerWave()),
+                                finalSpec.strikeDamage()});
             }
             return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_normal");
         }
@@ -1765,15 +1783,14 @@ extends Screen {
         int damage = realm.tribulationStrikeDamage();
         if (strikes > 0) {
             // 综合评判：按天资档位修正渡劫难度（道数/伤害）并显示档位名
-            com.friday.cultivation.event.tribulation.TribulationTier tier = com.friday.cultivation.event.tribulation.TribulationScalingHelper.tier(net.minecraft.client.Minecraft.getInstance().player, data);
-            double mult = tier.difficultyMult();
-            int scaledBolts = Math.max(1, (int) Math.round(strikes * boltsPerWave * mult));
-            int scaledDamage = Math.max(1, (int) Math.round(damage * mult));
-            if (mult > 1.01) {
+            TribulationTier tier = TribulationScalingHelper.tier(Minecraft.getInstance().player, data);
+            TribulationSpec finalSpec = TribulationScalingHelper.scaleSpec(tier,
+                    new TribulationSpec(strikes, boltsPerWave, damage, 0.0, 0, data.getTribulationType()));
+            if (tier.difficultyMult() > 1.01) {
                 return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_tribulation_tier",
                         Component.translatable(tier.translationKey()),
-                        Realm.formatTribulationCount(Math.max(1, (int) Math.ceil((double) scaledBolts / Math.max(1, boltsPerWave))), boltsPerWave),
-                        scaledDamage);
+                        Realm.formatTribulationCount(finalSpec.waves(), finalSpec.boltsPerWave()),
+                        finalSpec.strikeDamage());
             }
             return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_tribulation", (Object[])new Object[]{Realm.formatTribulationCount(strikes, boltsPerWave), damage});
         }

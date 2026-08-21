@@ -3,7 +3,7 @@ package com.friday.cultivation.event.tribulation;
 /**
  * 渡劫天骄档位：综合评判系数（灵根+体质+功法）决定档位。
  * 每档对应渡劫难度倍率（道数/伤害）与奖励百分比（作用于当前五维点数）。
- * 最高档「君临万道」奖励 10%。
+ * 最高档「君临万道」奖励 50%。
  */
 public enum TribulationTier {
     MORTAL_DUST("tribulation_tier.friday_cultivation.mortal_dust", 0.0, 0.2, 1.0, 0.00, 0xA0A0A0),                    // 凡尘 灰
@@ -53,7 +53,7 @@ public enum TribulationTier {
         return difficultyMult;
     }
 
-    /** 奖励百分比（作用于当前五维点数，0.00~0.10） */
+    /** 奖励百分比（作用于当前五维点数，0.00~0.50） */
     public double rewardPercent() {
         return rewardPercent;
     }
