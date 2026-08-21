@@ -78,6 +78,21 @@ class StageOnePolicyTest {
                 "开始提示必须读取最终劫谱伤害，不能继续显示缩放前基础值");
     }
 
+    @Test
+    void hudUsesProjectExperienceTextureAndStableEntityHealthAnchor() throws IOException {
+        String hud = read("com/friday/cultivation/client/CultivationHud.java");
+        assertTrue(hud.contains("VanillaGuiOverlay.EXPERIENCE_BAR.type()"));
+        assertTrue(hud.contains("renderExperienceBar(graphics, screenWidth, screenHeight)"));
+        assertTrue(hud.contains("BLOOD_EMPTY, BLOOD_FILL"));
+
+        String entityHud = read("com/friday/cultivation/client/EntityStatusHudRenderer.java");
+        assertTrue(entityHud.contains("HEAD_ANCHOR_OFFSET"));
+        assertTrue(entityHud.contains("SCREEN_BAR_OFFSET_Y"));
+        assertTrue(entityHud.contains("healthBarAnchor(living, partial)"));
+        assertTrue(entityHud.contains("HURT_SHOW_TICKS"));
+        assertTrue(entityHud.contains("LAST_HURT"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return Files.readString(SOURCE_ROOT.resolve(relativePath), StandardCharsets.UTF_8);
     }

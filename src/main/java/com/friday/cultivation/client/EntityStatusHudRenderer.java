@@ -75,6 +75,10 @@ public class EntityStatusHudRenderer {
             this.firstSeenTick = firstSeenTick;
         }
     }
+    /** 世界空间中头顶锚点相对碰撞箱顶部的固定距离。 */
+    private static final double HEAD_ANCHOR_OFFSET = 0.6;
+    /** 屏幕空间中血条相对头顶投影点的固定上移量。 */
+    private static final float SCREEN_BAR_OFFSET_Y = 12.0f;
 
     private EntityStatusHudRenderer() {
     }
@@ -128,7 +132,7 @@ public class EntityStatusHudRenderer {
             if (!isVisibleToPlayer(player, living, partial)) {
                 continue;
             }
-            Vec3 head = living.getPosition(partial).add(0.0, living.getBbHeight() + 0.6, 0.0);
+            Vec3 head = healthBarAnchor(living, partial);
             Vec2 proj = projectToScreen(mc, head, partial);
             if (proj == null) {
                 continue;
@@ -177,6 +181,11 @@ public class EntityStatusHudRenderer {
 
     private static boolean canShowStatus(Entity e) {
         return e instanceof LivingEntity && e.isAlive();
+    }
+
+    /** 固定头顶锚点：所有实体都使用同一“碰撞箱顶部 + 0.6 格”规则。 */
+    private static Vec3 healthBarAnchor(LivingEntity living, float partial) {
+        return living.getPosition(partial).add(0.0, living.getBbHeight() + HEAD_ANCHOR_OFFSET, 0.0);
     }
 
     /**
@@ -242,7 +251,7 @@ public class EntityStatusHudRenderer {
         }
 
         float bx = (float) sx - barW / 2.0f;
-        float by = (float) sy - 12.0f;
+        float by = (float) sy - SCREEN_BAR_OFFSET_Y;
 
         // 与玩家血条 renderTextureBar 完全一致的三层贴图结构（GuiGraphics.blit）：
         // ① 底条：blood_empty 整张贴图等比缩放（白色 tint）

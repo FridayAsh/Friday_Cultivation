@@ -27,7 +27,10 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = "friday_cultivation", value = Dist.CLIENT)
 public class CultivationHud {
-    public static final IGuiOverlay OVERLAY = (gui, graphics, partialTick, screenWidth, screenHeight) -> CultivationHud.render(graphics, screenWidth);
+    public static final IGuiOverlay OVERLAY = (gui, graphics, partialTick, screenWidth, screenHeight) -> {
+        CultivationHud.renderExperienceBar(graphics, screenWidth, screenHeight);
+        CultivationHud.render(graphics, screenWidth);
+    };
 
     private static final ResourceLocation BLOOD_EMPTY = new ResourceLocation("friday_cultivation", "textures/gui/blood_empty.png");
     private static final ResourceLocation BLOOD_FILL = new ResourceLocation("friday_cultivation", "textures/gui/blood_fill.png");
@@ -87,6 +90,11 @@ public class CultivationHud {
 
     @SubscribeEvent
     public static void onRenderOverlay(RenderGuiOverlayEvent.Pre event) {
+        if (event.getOverlay() == VanillaGuiOverlay.EXPERIENCE_BAR.type()) {
+            // 原版经验条由本项目 HUD 在 OVERLAY 中使用项目条带贴图重绘。
+            event.setCanceled(true);
+            return;
+        }
         if (event.getOverlay() != VanillaGuiOverlay.PLAYER_HEALTH.type()
                 && event.getOverlay() != VanillaGuiOverlay.ARMOR_LEVEL.type()
                 && event.getOverlay() != VanillaGuiOverlay.FOOD_LEVEL.type()
@@ -103,6 +111,26 @@ public class CultivationHud {
             return;
         }
         event.setCanceled(true);
+    }
+
+    /**
+     * 使用项目 HUD 的血条贴图重绘原版经验条，保留原版底部居中锚点。
+     * 经验等级数字仍由 VanillaGuiOverlay.EXPERIENCE_LEVEL 负责绘制。
+     */
+    private static void renderExperienceBar(GuiGraphics graphics, int screenWidth, int screenHeight) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null || mc.options.hideGui || player.isSpectator()
+                || player.getXpNeededForNextLevel() <= 0) {
+            return;
+        }
+        int width = 182;
+        int height = 6;
+        int x = screenWidth / 2 - width / 2;
+        int y = screenHeight - 29;
+        double progress = Math.max(0.0, Math.min(1.0, player.experienceProgress));
+        renderTextureBar(graphics, mc, x, y, width, height, progress,
+                BLOOD_EMPTY, BLOOD_FILL, 96, 6, CULT_TOP, CULT_BOTTOM, null, -1);
     }
 
     private static void render(GuiGraphics graphics, int screenWidth) {
