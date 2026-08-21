@@ -115,6 +115,8 @@ public final class TechniqueEffectHandler {
     private static final UUID UUID_BREAKTHROUGH_HP = UUID.nameUUIDFromBytes("xiaoxiang.breakthrough.hp".getBytes());
     /** 渡劫固定快照生命加成（只作为一次 ADDITION 应用） */
     private static final UUID UUID_TRIBULATION_HP_SNAPSHOT = UUID.nameUUIDFromBytes("xiaoxiang.tribulation.hpSnapshot".getBytes());
+    /** 旧版渡劫倍率修饰符；玩家属性 NBT 可能在升级后仍携带，必须显式清除。 */
+    private static final UUID UUID_LEGACY_TRIBULATION_HP_MULT = UUID.nameUUIDFromBytes("xiaoxiang.tribulation.hpMult".getBytes());
     /** 境界标准生命基础（把原版基础 20 补到 standardMaxHealth） */
     private static final UUID UUID_REALM_BASE_HP = UUID.nameUUIDFromBytes("xiaoxiang.realm.baseHp".getBytes());
     /** 全局生命倍率（×4，含所有加成）：境界标准生命整体放大 */
@@ -133,6 +135,7 @@ public final class TechniqueEffectHandler {
             return;
         }
         ServerPlayer sp = (ServerPlayer)player;
+        TechniqueEffectHandler.clearLegacyTribulationHealthModifier(sp.getAttribute(Attributes.MAX_HEALTH));
         CultivationData data = CultivationCapability.get((Player)sp).orElse(null);
         Technique t = TechniqueBonusHelper.equippedOf((Player)sp);
         Technique.Bonus bonus = t == null ? Technique.Bonus.NONE : t.bonus();
@@ -315,6 +318,7 @@ public final class TechniqueEffectHandler {
         if (sp == null) {
             return;
         }
+        TechniqueEffectHandler.clearLegacyTribulationHealthModifier(sp.getAttribute(Attributes.MAX_HEALTH));
         CultivationData data = CultivationCapability.get((Player)sp).orElse(null);
         if (data == null) {
             return;
@@ -407,6 +411,12 @@ public final class TechniqueEffectHandler {
             inst.removeModifier(uuid);
         }
         inst.addPermanentModifier(new AttributeModifier(uuid, name, value, op));
+    }
+
+    static void clearLegacyTribulationHealthModifier(AttributeInstance instance) {
+        if (instance != null) {
+            instance.removeModifier(UUID_LEGACY_TRIBULATION_HP_MULT);
+        }
     }
 
     @SubscribeEvent(priority=EventPriority.HIGH)
