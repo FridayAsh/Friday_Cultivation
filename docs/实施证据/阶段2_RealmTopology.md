@@ -50,7 +50,7 @@ gradlew.bat test
 
 ## 5. 尚未完成
 
-- `CultivationData` 的渡劫奖励仍是旧 `List<double[]>` 过渡格式，阶段 6 将替换为固定快照账本；
+- `CultivationData` 的渡劫奖励在后续阶段已迁移为固定快照账本；
 - `RealmTransition` 尚未成为唯一境界写入口；
 - NPC 旧 `realmOrd` 的迁移统计和自动迁移版本字段将在阶段 3 数据契约中补齐；
 - 境界比较以外的其他枚举协议（如属性、阵旗等级）不属于本阶段。

@@ -41,6 +41,7 @@ package com.friday.cultivation.event;
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.PhysiqueBonusHelper;
+import com.friday.cultivation.cultivation.TribulationBonusSnapshot;
 import com.friday.cultivation.cultivation.SpiritRoot;
 import com.friday.cultivation.cultivation.realm.Realm;
 import com.friday.cultivation.cultivation.realm.SubStage;
@@ -124,37 +125,29 @@ public final class TribulationHandler {
         event.setCanceled(true);
     }
 
-    public static void beginTribulation(ServerPlayer player, CultivationData data, int strikes) {
-        TribulationHandler.beginTribulation(player, data, strikes, 0);
+    /** 普通路线唯一启动入口：调用者必须先构造完整且已校验的劫谱。 */
+    public static void beginTribulation(ServerPlayer player, CultivationData data, TribulationSpec spec) {
+        TribulationHandler.beginTribulationInternal(player, data, spec, false);
     }
 
-    public static void beginTribulation(ServerPlayer player, CultivationData data, int strikes, int strikeDamageOverride) {
-        TribulationHandler.beginTribulation(player, data, strikes, 1, strikeDamageOverride);
+    /** 散仙路线唯一启动入口：调用者必须先按散仙劫波等级构造完整劫谱。 */
+    public static void beginLooseImmortalTribulation(ServerPlayer player, CultivationData data, TribulationSpec spec) {
+        TribulationHandler.beginTribulationInternal(player, data, spec, true);
     }
 
-    public static void beginTribulation(ServerPlayer player, CultivationData data, int strikes, int boltsPerWave, int strikeDamageOverride) {
-        // 综合评判：灵根/体质/功法品质越好 → 渡劫道数与伤害越高（天骄遭天妒）
-        double mult = TribulationScalingHelper.difficultyMult(player, data);
-        int scaled = Math.max(1, (int) Math.round(strikes * boltsPerWave * mult));
-        int scaledWaves = Math.max(1, (int) Math.ceil((double) scaled / Math.max(1, boltsPerWave)));
-        int scaledDamage = Math.max(1, (int) Math.round(strikeDamageOverride * mult));
-        TribulationHandler.beginTribulationInternal(player, data, scaledWaves, boltsPerWave, scaledDamage, false);
-    }
-
-    public static void beginLooseImmortalTribulation(ServerPlayer player, CultivationData data, int strikes, int boltsPerWave, int strikeDamageOverride) {
-        TribulationHandler.beginTribulationInternal(player, data, strikes, boltsPerWave, strikeDamageOverride, true);
-    }
-
-    private static void beginTribulationInternal(ServerPlayer player, CultivationData data, int strikes, int boltsPerWave, int strikeDamageOverride, boolean looseImmortal) {
+    private static void beginTribulationInternal(ServerPlayer player, CultivationData data, TribulationSpec spec, boolean looseImmortal) {
         TribulationHandler.anchorTribulationRuntimeState(player, data);
         data.clearCharging();
-        if (looseImmortal) {
-            data.startLooseImmortalTribulation(strikes, strikeDamageOverride, boltsPerWave);
-        } else {
-            data.startTribulation(strikes, strikeDamageOverride, boltsPerWave);
-        }
+        Realm sourceRealm = data.getRealm();
+        SubStage sourceSubStage = data.getSubStage();
+        Realm targetRealm = looseImmortal ? sourceRealm : TribulationHandler.nextBreakthroughRealm(sourceRealm, sourceSubStage);
+        SubStage targetSubStage = looseImmortal
+                ? sourceSubStage
+                : TribulationHandler.nextBreakthroughSubStage(sourceRealm, sourceSubStage, targetRealm);
+        String tierId = looseImmortal ? "" : TribulationScalingHelper.tier(player, data).name();
+        data.startTribulation(spec, looseImmortal, targetRealm, targetSubStage, tierId);
         CapabilityEvents.syncToClient(player);
-        TribulationHandler.sendTribulationCloud(player, TribulationHandler.estimateCloudDurationTicks(strikes, boltsPerWave));
+        TribulationHandler.sendTribulationCloud(player, TribulationHandler.estimateCloudDurationTicks(spec.waves(), spec.boltsPerWave()));
         ServerLevel level = player.serverLevel();
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS, TribulationConstants.CLOUD_SOUND_VOLUME, TribulationConstants.CLOUD_SOUND_PITCH);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, TribulationConstants.THUNDER_SOUND_VOLUME, TribulationConstants.THUNDER_SOUND_PITCH);
@@ -237,19 +230,15 @@ public final class TribulationHandler {
         return Math.max(0, data.getCurrentTribulationStrikeDamage());
     }
 
-    /** 当前渡劫劫谱（由 Realm 提供或按伤害/道数构造简易 spec；散仙劫用简易 spec） */
+    /** 当前活动劫谱：只读取固定 Session，绝不从当前 Realm 重新构造。 */
     private static TribulationSpec currentSpec(CultivationData data) {
         if (data == null) {
             return TribulationSpec.of(1, 1, 0);
         }
-        // 优先使用 Realm 数据驱动劫谱（真实波数/道数/伤害）
-        if (!data.isLooseImmortalTribulationActive()) {
-            TribulationSpec spec = data.getRealm().tribulationSpec(data.getSubStage());
-            if (spec != null) {
-                return spec;
-            }
+        if (data.getTribulationSession() != null) {
+            return data.getTribulationSession().spec();
         }
-        // 散仙劫/临时：按运行时值构造
+        // 仅兼容未迁移的旧内存状态；新活动必须在 startTribulation 建立 Session。
         int damage = Math.max(0, data.getCurrentTribulationStrikeDamage());
         int waves = Math.max(1, data.getTribulationStrikesRemaining() <= 0 ? 1 : data.getTribulationStrikesRemaining() + 1);
         int bolts = data.getTribulationBoltsPerWave();
@@ -334,19 +323,22 @@ public final class TribulationHandler {
 
     private static void completeBreakthrough(ServerPlayer player, CultivationData data, Realm before, SubStage beforeStage, boolean fromTribulation) {
         boolean minorBreakthrough;
+        double rewardPercent = fromTribulation ? TribulationScalingHelper.rewardPercent(player, data) : 0.0;
+        Realm rewardRealm = nextBreakthroughRealm(before, beforeStage);
+        SubStage rewardSubStage = nextBreakthroughSubStage(before, beforeStage, rewardRealm);
+        TribulationBonusSnapshot rewardSnapshot = fromTribulation
+                ? data.captureTribulationBonus(player, rewardPercent, rewardRealm, rewardSubStage) : null;
         data.advanceOnSuccess();
         data.clearTribulation();
-        // 渡劫成功后按综合评判档位记录隐藏加成百分比（作用于玩家总属性，复利；不显示在雷达图）
-        if (fromTribulation) {
-            double percent = TribulationScalingHelper.rewardPercent(player, data);
-            if (percent > 0.0) {
-                data.addTribulationBonus(percent, data.getRealm());
-                player.displayClientMessage(Component.translatable("message.friday_cultivation.tribulation.tier_reward",
-                        Component.translatable(TribulationScalingHelper.tierTranslationKey(player, data)),
-                        Math.round(percent * 100.0)), false);
-            }
+        // 渡劫成功后写入渡劫前属性计算出的固定快照；同一里程碑覆盖旧记录。
+        if (rewardSnapshot != null) {
+            data.recordTribulationBonus(rewardSnapshot);
+            player.displayClientMessage(Component.translatable("message.friday_cultivation.tribulation.tier_reward",
+                    Component.translatable(TribulationScalingHelper.tierTranslationKey(player, data)),
+                    Math.round(rewardPercent * 100.0)), false);
         }
         // 突破后生命值、灵气值直接设为上限（灵气在 advanceOnSuccess 内已设满）
+        TechniqueEffectHandler.refreshMaxHealth(player);
         player.setHealth(player.getMaxHealth());
         boolean bl = minorBreakthrough = before == data.getRealm() && beforeStage != data.getSubStage();
         if (minorBreakthrough) {
@@ -369,6 +361,23 @@ public final class TribulationHandler {
         if (before != data.getRealm()) {
             TribulationHandler.grantRealmAdvancement(player, data.getRealm());
         }
+    }
+
+    private static Realm nextBreakthroughRealm(Realm before, SubStage beforeStage) {
+        if (before == null || before == Realm.MORTAL) {
+            return Realm.BODY_TEMPERING;
+        }
+        return beforeStage != null && beforeStage.isPeakFor(before) ? before.next() : before;
+    }
+
+    private static SubStage nextBreakthroughSubStage(Realm before, SubStage beforeStage, Realm targetRealm) {
+        if (targetRealm == null) {
+            return Realm.MORTAL.firstSubStage();
+        }
+        if (targetRealm != before) {
+            return targetRealm.firstSubStage();
+        }
+        return beforeStage == null ? targetRealm.firstSubStage() : beforeStage.nextFor(targetRealm);
     }
 
     private static void spawnTribulationCloudParticles(ServerLevel level, ServerPlayer player, CultivationData data) {

@@ -42,7 +42,7 @@
 
 ## 二、渡劫系统（Tribulation System）
 
-**特色**：数据驱动劫谱、劫种抽象、防御链、事件钩子、天骄档位综合评判、复利隐藏加成。
+**特色**：数据驱动劫谱、劫种抽象、防御链、事件钩子、天骄档位综合评判、按里程碑保存的固定快照奖励。
 
 **核心文件**（`event/tribulation/`）：
 - `TribulationSpec.java`：数据驱动劫谱（波数/道数/伤害/间隔/劫种）
@@ -53,10 +53,12 @@
 - `TribulationScalingHelper.java`：综合评判（灵根/体质/功法品质 → 档位）
 - `TribulationQuality.java`：可扩展品阶接口（新增枚举自动接入）
 - `TribulationConstants.java`：全部硬编码常量集中
+- `TribulationSession.java`：一次渡劫的唯一运行态与存档恢复
+- `TribulationBonusSnapshot.java`：按目标境界固定数值的奖励账本；降境界时停用，恢复境界时重新生效
 
 **主处理**：`event/TribulationHandler.java`（渡劫主循环、雷击、成功/失败、突破奖励）
 
-**调用 API**：`MinecraftForge.EVENT_BUS.post()`（事件）、`TribulationDefense.applyAll()`（防御）、`TribulationScalingHelper.tier()`（档位）、`CultivationData.activeTribulationMultiplier()`（隐藏加成）
+**调用 API**：`MinecraftForge.EVENT_BUS.post()`（事件）、`TribulationDefense.applyAll()`（防御）、`TribulationScalingHelper.tier()`（档位）、`CultivationData.getTribulationBonusSnapshots()`（固定快照账本）
 
 ---
 
@@ -65,7 +67,7 @@
 **特色**：灵气吸收、修为/悟道、真元五维、突破奖励。
 
 **核心文件**：
-- `cultivation/CultivationData.java`：玩家核心数据（境界/修为/灵气/真元/悟道/突破加成/渡劫隐藏加成），Capability 存储
+- `cultivation/CultivationData.java`：玩家核心数据（境界/修为/灵气/真元/悟道/突破加成/渡劫固定快照账本），Capability 存储
 - `cultivation/CultivationCapability.java`：Capability 注册与获取
 - `cultivation/ZhenyuanBonusHelper.java`：真元五维加成（体质→生命/盔甲/韧性、筋骨→攻击/挖掘、身法→移速/跳跃、法伤→法术伤害、气海→灵气上限/回复）
 - `cultivation/qi/`：灵气生态（`QiEcosystem`、`PlayerQiAbsorptionHelper`、`ChunkQiPool`、`BlockQiSpec`）

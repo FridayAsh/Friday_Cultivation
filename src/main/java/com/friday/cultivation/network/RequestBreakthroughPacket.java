@@ -19,6 +19,8 @@ import com.friday.cultivation.cultivation.LifespanHelper;
 import com.friday.cultivation.cultivation.realm.Realm;
 import com.friday.cultivation.cultivation.realm.SubStage;
 import com.friday.cultivation.event.TribulationHandler;
+import com.friday.cultivation.event.tribulation.TribulationSpec;
+import com.friday.cultivation.event.tribulation.TribulationScalingHelper;
 import com.friday.cultivation.registry.ModItems;
 import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
@@ -120,7 +122,9 @@ public class RequestBreakthroughPacket {
                     TribulationHandler.completeBreakthroughWithoutTribulation(player, data);
                     return;
                 }
-                TribulationHandler.beginTribulation(player, data, waves, boltsPerWave, damage);
+                TribulationHandler.beginTribulation(player, data,
+                        TribulationScalingHelper.scaleSpec(player, data,
+                                new TribulationSpec(waves, boltsPerWave, damage, 0.0, 0, data.getTribulationType())));
                 player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.tribulation.start", (Object[])new Object[]{Realm.formatTribulationCount(waves, boltsPerWave), damage}), false);
             });
         });
@@ -153,4 +157,3 @@ public class RequestBreakthroughPacket {
         return dao == null ? 0 : dao.tribulationWaves();
     }
 }
-

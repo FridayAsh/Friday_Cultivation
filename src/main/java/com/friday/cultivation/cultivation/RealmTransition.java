@@ -170,7 +170,6 @@ public final class RealmTransition {
     public static Result applyFailure(CultivationData data, Realm targetRealm, SubStage targetSub) {
         Result result = apply(data, new Request(targetRealm, targetSub, Reason.TRIBULATION_FAILURE,
                 ResourcePolicy.PRESERVE, RewardPolicy.NONE, false, true, true, 0, 0L));
-        data.clearTribulationBonus();
         data.setCurrentQi(0L);
         return result;
     }

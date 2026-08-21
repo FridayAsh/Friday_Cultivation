@@ -29,7 +29,6 @@ import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
-import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,10 +45,6 @@ public final class ChunkQiCapability {
             return Optional.empty();
         }
         return chunk.getCapability(CAPABILITY).resolve();
-    }
-
-    public static void register(RegisterCapabilitiesEvent event) {
-        event.register(ChunkQiPool.class);
     }
 
     public static ICapabilityProvider createProvider() {
@@ -81,4 +76,3 @@ public final class ChunkQiCapability {
         }
     }
 }
-

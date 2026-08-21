@@ -100,7 +100,7 @@ public class FridayCultivationMod {
         modEventBus.addListener(FridayCultivationMod::onEntityAttributeCreation);
         modEventBus.addListener(FridayCultivationMod::onSpawnPlacementRegister);
         MinecraftForge.EVENT_BUS.register((Object)this);
-        LOGGER.info("[{}] \u5c0f\u7fd4\u7684\u4fee\u4ed9\u4e16\u754c \u5df2\u521d\u59cb\u5316\u5b8c\u6210", (Object)MOD_ID);
+        LOGGER.info("[{}] Friday Cultivation 已初始化完成", (Object)MOD_ID);
     }
 
     private void onCommonSetup(FMLCommonSetupEvent event) {

@@ -11,13 +11,12 @@
  */
 package com.friday.cultivation.network;
 
-import com.friday.cultivation.inventory.WanderingCultivatorMenu;
+import com.friday.cultivation.client.ClientCultivatorSyncHooks;
 import java.util.function.Supplier;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.trading.MerchantOffers;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 public class SyncCultivatorOffersPacket {
@@ -42,18 +41,8 @@ public class SyncCultivatorOffersPacket {
 
     public static void handle(SyncCultivatorOffersPacket msg, Supplier<NetworkEvent.Context> ctxSup) {
         NetworkEvent.Context ctx = ctxSup.get();
-        ctx.enqueueWork(() -> {
-            AbstractContainerMenu patt1818$temp;
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (player == null) {
-                return;
-            }
-            if (player.containerMenu.containerId == msg.containerId && (patt1818$temp = player.containerMenu) instanceof WanderingCultivatorMenu) {
-                WanderingCultivatorMenu menu = (WanderingCultivatorMenu)patt1818$temp;
-                menu.setOffers(msg.offers);
-            }
-        });
+        ctx.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                () -> () -> ClientCultivatorSyncHooks.applyOffers(msg.containerId, msg.offers)));
         ctx.setPacketHandled(true);
     }
 }
-

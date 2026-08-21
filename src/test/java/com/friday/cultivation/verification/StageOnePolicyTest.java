@@ -41,6 +41,16 @@ class StageOnePolicyTest {
         assertTrue(flight.contains("cd.getSwordFlightStack().copy()"));
     }
 
+    @Test
+    void flightHandlerHasNoStaticPlayerAuthorityMaps() throws IOException {
+        String flight = read("com/friday/cultivation/flight/CultivationFlightHandler.java");
+
+        assertTrue(!flight.contains("SWORD_FLIGHT ="));
+        assertTrue(!flight.contains("SWORD_FLIGHT_SLOT ="));
+        assertTrue(!flight.contains("FLIGHT_TICKS ="));
+        assertTrue(flight.contains("data.incrementFlightTicks()"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return Files.readString(SOURCE_ROOT.resolve(relativePath), StandardCharsets.UTF_8);
     }

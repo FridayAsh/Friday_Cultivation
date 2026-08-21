@@ -44,14 +44,8 @@ public final class TribulationConstants {
     public static final int LIGHTNING_ROOT_DIVISOR = 2;
 
     // ---- 综合评判权重（灵根/体质/功法品质）----
-    public static final double SPIRIT_ROOT_WEIGHT = 0.5;
-    public static final double PHYSIQUE_WEIGHT = 0.3;
-    public static final double TECHNIQUE_WEIGHT = 0.2;
-
-    // ---- 伤害比例（占标准生命值百分比，当 spec 未指定固定伤害时）----
-    public static final double DEFAULT_DAMAGE_RATIO = 0.10;
-
-    // ---- 渡劫总伤害倍数（基准，不修正）----
-    public static final double MIN_TOTAL_DAMAGE_MULT = 1.6;
-    public static final double MAX_TOTAL_DAMAGE_MULT = 15.0;
+    // 这是唯一权重来源；TribulationScalingHelper 只负责读取，不再复制一套常量。
+    public static final double SPIRIT_ROOT_WEIGHT = 1.2;
+    public static final double PHYSIQUE_WEIGHT = 0.5;
+    public static final double TECHNIQUE_WEIGHT = 0.3;
 }

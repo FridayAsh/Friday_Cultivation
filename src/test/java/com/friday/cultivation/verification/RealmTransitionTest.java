@@ -53,12 +53,17 @@ class RealmTransitionTest {
         CultivationData data = new CultivationData();
         RealmTransition.apply(data, RealmTransition.Request.adminEdit(
                 Realm.FOUNDATION_BUILDING, Realm.FOUNDATION_BUILDING.firstSubStage()));
-        data.addTribulationBonus(0.50, Realm.FOUNDATION_BUILDING);
-        assertTrue(data.activeTribulationMultiplier() > 1.0);
+        data.recordTribulationBonus(data.captureTribulationBonus(null, 0.50,
+                Realm.FOUNDATION_BUILDING, Realm.FOUNDATION_BUILDING.firstSubStage()));
+        assertTrue(data.getTribulationHealthBonus() > 0.0);
 
         RealmTransition.apply(data, RealmTransition.Request.adminEdit(
                 Realm.QI_REFINING, Realm.QI_REFINING.firstSubStage()));
 
-        assertEquals(1.0, data.activeTribulationMultiplier(), 0.000001);
+        assertEquals(0.0, data.getTribulationHealthBonus(), 0.000001);
+
+        RealmTransition.apply(data, RealmTransition.Request.adminEdit(
+                Realm.FOUNDATION_BUILDING, Realm.FOUNDATION_BUILDING.firstSubStage()));
+        assertTrue(data.getTribulationHealthBonus() > 0.0);
     }
 }

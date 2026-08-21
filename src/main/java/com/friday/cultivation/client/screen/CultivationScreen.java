@@ -2685,29 +2685,6 @@ extends Screen {
         return String.format(Locale.ROOT, "%.1f", value);
     }
 
-    @Deprecated
-    private void renderElementPercents(GuiGraphics gfx, int x, int rightX, int y, CultivationData data) {
-        QiElement dominant = data.getDominantElement();
-        MutableComponent header = Component.translatable((String)"screen.friday_cultivation.attr.element_section", (Object[])new Object[]{Component.translatable((String)("element.friday_cultivation." + dominant.id()))});
-        this.drawSectionLabel(gfx, (Component)header, x, y += 4, rightX);
-        y += 11;
-        for (QiElement el : QiElement.values()) {
-            long count = data.getElementCount(el);
-            double pct = data.getElementPercent(el);
-            int bonus = data.getElementDamageBonus(el);
-            MutableComponent name = Component.translatable((String)("element.friday_cultivation." + el.id()));
-            String countStr = CompactNumberFormat.format(count);
-            MutableComponent mainPart = Component.translatable((String)"screen.friday_cultivation.attr.element_row_main", (Object[])new Object[]{name, countStr});
-            MutableComponent suffixPart = Component.translatable((String)"screen.friday_cultivation.attr.element_row_suffix", (Object[])new Object[]{String.format("%.1f", pct), bonus});
-            int mainColor = el == dominant ? -3562934 : -12766422;
-            int suffixColor = -7702176;
-            this.drawAttrSmall(gfx, (Component)mainPart, x, y, mainColor);
-            int mainW = (int)((float)this.font.width((FormattedText)mainPart) * this.attrTabScale());
-            this.drawAttrTinyInline(gfx, (Component)suffixPart, x + mainW + 4, y + 1, suffixColor);
-            y += 9;
-        }
-    }
-
     private void drawAttrTinyInline(GuiGraphics gfx, Component text, int x, int y, int color) {
         float scale = 0.63f;
         gfx.pose().pushPose();

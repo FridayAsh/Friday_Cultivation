@@ -22,11 +22,6 @@ public final class TribulationScalingHelper {
     private TribulationScalingHelper() {
     }
 
-    // ---- 维度权重（灵根 1.2 / 体质 0.5 / 功法 0.3，合计 2.0）----
-    private static final double SPIRIT_ROOT_WEIGHT = 1.2;
-    private static final double PHYSIQUE_WEIGHT = 0.5;
-    private static final double TECHNIQUE_WEIGHT = 0.3;
-
     /** 灵根品阶分组表（新增灵根在此加一行即可接入） */
     private static final Map<SpiritRoot, Double> SPIRIT_ROOT_SCALE = Map.ofEntries(
             Map.entry(SpiritRoot.NONE, 0.0),
@@ -81,6 +76,25 @@ public final class TribulationScalingHelper {
         return tier(player, data).rewardPercent();
     }
 
+    /**
+     * 将基础劫谱按当前天骄档位转换成一次性运行劫谱。
+     * 该转换只在启动前执行一次，Session 建立后不再重新缩放。
+     */
+    public static TribulationSpec scaleSpec(Player player, CultivationData data, TribulationSpec base) {
+        if (base == null) {
+            return TribulationSpec.of(0, 1, 0);
+        }
+        double mult = difficultyMult(player, data);
+        int bolts = Math.max(1, base.boltsPerWave());
+        int totalBolts = Math.max(1, (int)Math.round((double)base.waves() * bolts * mult));
+        int waves = Math.max(1, (int)Math.ceil((double)totalBolts / (double)bolts));
+        int damage = base.strikeDamage() <= 0
+                ? 0
+                : Math.max(1, (int)Math.round((double)base.strikeDamage() * mult));
+        return new TribulationSpec(waves, bolts, damage, base.damageRatio(),
+                base.boltIntervalTicks(), base.type());
+    }
+
     /** 灵根系数（0~1.2） */
     private static double spiritRootScore(CultivationData data) {
         if (data == null) {
@@ -93,9 +107,10 @@ public final class TribulationScalingHelper {
         Double scale = SPIRIT_ROOT_SCALE.get(root);
         if (scale == null) {
             // 未在表中的灵根：默认按枚举顺序比例（新增自动接入）
-            return SPIRIT_ROOT_WEIGHT * ((double) root.ordinal() / (double) SpiritRoot.values().length);
+            return TribulationConstants.SPIRIT_ROOT_WEIGHT
+                    * ((double) root.ordinal() / (double) SpiritRoot.values().length);
         }
-        return SPIRIT_ROOT_WEIGHT * scale;
+        return TribulationConstants.SPIRIT_ROOT_WEIGHT * scale;
     }
 
     /** 体质系数（0~0.5）：Physique.Rarity 实现 TribulationQuality 自动归一 */
@@ -107,7 +122,7 @@ public final class TribulationScalingHelper {
         if (physique == null) {
             return 0.0;
         }
-        return PHYSIQUE_WEIGHT * qualityOf(physique.rarity());
+        return TribulationConstants.PHYSIQUE_WEIGHT * qualityOf(physique.rarity());
     }
 
     /** 功法系数（0~0.3）：ItemTier 实现 TribulationQuality 自动归一 */
@@ -120,7 +135,7 @@ public final class TribulationScalingHelper {
         if (tier == null) {
             return 0.0;
         }
-        return TECHNIQUE_WEIGHT * qualityOf(tier);
+        return TribulationConstants.TECHNIQUE_WEIGHT * qualityOf(tier);
     }
 
     /** 品阶归一化：实现 TribulationQuality 的枚举按 ordinal 比例（0~1） */

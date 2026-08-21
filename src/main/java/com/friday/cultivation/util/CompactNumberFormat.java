@@ -6,7 +6,9 @@
  */
 package com.friday.cultivation.util;
 
-import net.minecraft.client.Minecraft;
+import com.friday.cultivation.client.ClientLanguageHooks;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 
 public final class CompactNumberFormat {
     private CompactNumberFormat() {
@@ -60,11 +62,12 @@ public final class CompactNumberFormat {
 
     private static String currentLanguageCode() {
         try {
-            return Minecraft.getInstance().getLanguageManager().getSelected();
+            final String[] language = new String[]{"en_us"};
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> language[0] = ClientLanguageHooks.selectedLanguage());
+            return language[0];
         }
         catch (Throwable ignored) {
             return "en_us";
         }
     }
 }
-

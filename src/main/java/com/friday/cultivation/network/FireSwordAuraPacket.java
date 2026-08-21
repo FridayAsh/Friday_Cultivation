@@ -21,6 +21,7 @@ import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.PhysiqueBonusHelper;
 import com.friday.cultivation.cultivation.QiElement;
 import com.friday.cultivation.cultivation.spell.Spell;
+import com.friday.cultivation.cultivation.technique.Technique;
 import com.friday.cultivation.cultivation.technique.TechniqueBonusHelper;
 import com.friday.cultivation.entity.SwordAuraEntity;
 import com.friday.cultivation.event.CapabilityEvents;
@@ -91,7 +92,8 @@ public class FireSwordAuraPacket {
                 }
                 data.setCurrentQi(data.getCurrentQi() - cost);
                 CapabilityEvents.syncToClient(player);
-                QiElement el = data.getDominantElement();
+                Technique technique = TechniqueBonusHelper.equippedOf(player);
+                QiElement el = technique == null ? QiElement.PURE : technique.primaryElement();
                 Vec3 eye = player.getEyePosition();
                 Vec3 dir = player.getLookAngle().normalize();
                 Vec3 spawnPos = eye.add(dir.scale(0.8));
@@ -105,4 +107,3 @@ public class FireSwordAuraPacket {
         ctx.setPacketHandled(true);
     }
 }
-

@@ -165,10 +165,6 @@ public enum Realm {
         return RealmTopology.selectionOrder();
     }
 
-    public int progressIndex(SubStage subStage) {
-        return RealmTopology.progressionIndex(this, subStage);
-    }
-
     public int maxQi(SubStage subStage) {
         if (this == MORTAL) {
             return 100 * 2;
@@ -435,7 +431,9 @@ public enum Realm {
             case BODY_INTEGRATION -> 6;
             case MAHAYANA -> 6;
             case TRIBULATION_TRANSCENDENCE -> 6;
-            case LOOSE_IMMORTAL -> 6;
+            // 散仙劫必须包含劫波等级，唯一配置在 LooseImmortalBonusHelper；
+            // Realm 不再提供一套无法表达等级的伪配置。
+            case LOOSE_IMMORTAL -> 0;
             // 真仙/玄仙：每 3 重天渡劫（3/6/9 波）
             case TRUE_IMMORTAL, MYSTIC_IMMORTAL -> {
                 if (stage != null && stage.level() == 3) {
@@ -499,8 +497,8 @@ public enum Realm {
             case MAHAYANA -> 9;
             // 渡劫→真仙：每波 10 道
             case TRIBULATION_TRANSCENDENCE -> 10;
-            // 散仙劫波：每波 10 道
-            case LOOSE_IMMORTAL -> 10;
+            // 散仙劫波由 LooseImmortalBonusHelper 按等级提供。
+            case LOOSE_IMMORTAL -> 0;
             // 真仙/玄仙/仙君/仙尊/仙王：每波 9 道
             case TRUE_IMMORTAL, MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING -> 9;
             // 半圣/圣人/半帝/大帝：每波 9 道
@@ -533,7 +531,8 @@ public enum Realm {
             case SAGE -> 710;
             case HALF_EMPEROR -> 745;
             case GREAT_EMPEROR -> 785;
-            case LOOSE_IMMORTAL -> 255;
+            // 散仙劫波由 LooseImmortalBonusHelper 按等级提供。
+            case LOOSE_IMMORTAL -> 0;
         };
     }
 

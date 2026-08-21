@@ -29,7 +29,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.LevelEvent;
@@ -84,6 +83,7 @@ public final class CapabilityEvents {
         if (player instanceof ServerPlayer) {
             ServerPlayer player2 = (ServerPlayer)player;
             CultivationCapability.get((Player)player2).ifPresent(CapabilityEvents::applySpellTerrainRuleSnapshot);
+            CultivationFlightHandler.restoreAfterLogin(player2);
             CapabilityEvents.syncToClient(player2);
         }
     }
@@ -94,6 +94,7 @@ public final class CapabilityEvents {
         if (player instanceof ServerPlayer) {
             ServerPlayer player2 = (ServerPlayer)player;
             CultivationCapability.get((Player)player2).ifPresent(CapabilityEvents::applySpellTerrainRuleSnapshot);
+            CultivationFlightHandler.restoreAfterLogin(player2);
             CapabilityEvents.syncToClient(player2);
         }
     }
@@ -140,8 +141,5 @@ public final class CapabilityEvents {
         });
     }
 
-    public static void registerCapability(RegisterCapabilitiesEvent event) {
-        event.register(CultivationData.class);
-    }
 }
 

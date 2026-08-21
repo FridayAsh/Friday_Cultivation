@@ -113,8 +113,8 @@ public final class TechniqueEffectHandler {
     private static final UUID UUID_BODY_TEMPERING_HP = UUID.nameUUIDFromBytes("xiaoxiang.bodyTempering.hp".getBytes());
     /** 突破累计生命加成（每次大/小境界突破累加） */
     private static final UUID UUID_BREAKTHROUGH_HP = UUID.nameUUIDFromBytes("xiaoxiang.breakthrough.hp".getBytes());
-    /** 渡劫隐藏加成生命倍率（作用总 MAX_HEALTH） */
-    private static final UUID UUID_TRIBULATION_HP_MULT = UUID.nameUUIDFromBytes("xiaoxiang.tribulation.hpMult".getBytes());
+    /** 渡劫固定快照生命加成（只作为一次 ADDITION 应用） */
+    private static final UUID UUID_TRIBULATION_HP_SNAPSHOT = UUID.nameUUIDFromBytes("xiaoxiang.tribulation.hpSnapshot".getBytes());
     /** 境界标准生命基础（把原版基础 20 补到 standardMaxHealth） */
     private static final UUID UUID_REALM_BASE_HP = UUID.nameUUIDFromBytes("xiaoxiang.realm.baseHp".getBytes());
     /** 全局生命倍率（×4，含所有加成）：境界标准生命整体放大 */
@@ -170,8 +170,9 @@ public final class TechniqueEffectHandler {
         // 突破累计生命加成（每次大/小境界突破累加；data 可能为 null，如死亡/复活瞬间 capability 未附加）
         double breakthroughHp = data == null ? 0.0 : (double)data.getBreakthroughHpBonus();
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BREAKTHROUGH_HP, "xiaoxiang_breakthrough_hp", breakthroughHp, AttributeModifier.Operation.ADDITION);
-        // 渡劫隐藏加成生命倍率（作用总 MAX_HEALTH）
-        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_TRIBULATION_HP_MULT, "xiaoxiang_tribulation_hp_mult", data == null ? 0.0 : data.activeTribulationMultiplier() - 1.0, AttributeModifier.Operation.MULTIPLY_TOTAL);
+        // 渡劫固定快照生命加成：只通过这一条 ADDITION 应用，禁止再次乘算。
+        double tribulationHp = data == null ? 0.0 : data.getTribulationHealthBonus();
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_TRIBULATION_HP_SNAPSHOT, "xiaoxiang_tribulation_hp_snapshot", tribulationHp, AttributeModifier.Operation.ADDITION);
         double zhenyuanSpeed = movementBonusEnabled ? ZhenyuanBonusHelper.agilityMoveSpeedMult((Player)sp) : 0.0;
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MOVEMENT_SPEED, UUID_ZHENYUAN_SPEED, "xiaoxiang_zhenyuan_speed", zhenyuanSpeed, AttributeModifier.Operation.MULTIPLY_BASE);
         TechniqueEffectHandler.syncInfiniteEffect(sp, MobEffects.NIGHT_VISION, bonus.nightVision);
@@ -303,7 +304,7 @@ public final class TechniqueEffectHandler {
         }
     }
 
-    private static final String TAG_MAX_BODY_TEMPERING_LEVEL = "friday_cultivation_max_body_tempering_level";
+    private static final String TAG_LEGACY_MAX_BODY_TEMPERING_LEVEL = "friday_cultivation_max_body_tempering_level";
 
     /**
      * 生命值上限检测/强制重算：按当前境界与真元设定重算全部 MAX_HEALTH 加成，
@@ -344,8 +345,9 @@ public final class TechniqueEffectHandler {
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_REALM_BASE_HP, "xiaoxiang_realm_base_hp", realmBaseHp, AttributeModifier.Operation.ADDITION);
         // 突破累计生命加成（每次大/小境界突破累加）
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BREAKTHROUGH_HP, "xiaoxiang_breakthrough_hp", (double)data.getBreakthroughHpBonus(), AttributeModifier.Operation.ADDITION);
-        // 渡劫隐藏加成生命倍率（作用总 MAX_HEALTH）
-        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_TRIBULATION_HP_MULT, "xiaoxiang_tribulation_hp_mult", data == null ? 0.0 : data.activeTribulationMultiplier() - 1.0, AttributeModifier.Operation.MULTIPLY_TOTAL);
+        // 渡劫固定快照生命加成：只通过这一条 ADDITION 应用，禁止再次乘算。
+        double tribulationHp = data == null ? 0.0 : data.getTribulationHealthBonus();
+        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_TRIBULATION_HP_SNAPSHOT, "xiaoxiang_tribulation_hp_snapshot", tribulationHp, AttributeModifier.Operation.ADDITION);
         // clamp 当前生命值到新上限
         if (sp.getHealth() > sp.getMaxHealth()) {
             sp.setHealth(sp.getMaxHealth());
@@ -357,7 +359,8 @@ public final class TechniqueEffectHandler {
      */
     public static void clearBodyTemperingHpBonus(ServerPlayer sp) {
         if (sp != null) {
-            sp.getPersistentData().remove(TAG_MAX_BODY_TEMPERING_LEVEL);
+            // 仅清理一次性旧档迁移键；新逻辑不再读写 PersistentData。
+            sp.getPersistentData().remove(TAG_LEGACY_MAX_BODY_TEMPERING_LEVEL);
         }
     }
 
@@ -374,18 +377,15 @@ public final class TechniqueEffectHandler {
         if (data.getRealm() == Realm.MORTAL) {
             return 0.0;
         }
-        int currentLevel = data.getRealm() == Realm.BODY_TEMPERING ? data.getSubStage().level() : 0;
-        int stored = sp.getPersistentData().getInt(TAG_MAX_BODY_TEMPERING_LEVEL);
-        if (currentLevel > stored) {
-            stored = currentLevel;
-            sp.getPersistentData().putInt(TAG_MAX_BODY_TEMPERING_LEVEL, stored);
+        // 旧 PersistentData 只在首次遇到旧键时迁移一次，随后立即删除。
+        if (data.getBodyTemperingHpInherited() <= 0.0) {
+            int legacyLevel = sp.getPersistentData().getInt(TAG_LEGACY_MAX_BODY_TEMPERING_LEVEL);
+            if (legacyLevel > 0) {
+                data.setBodyTemperingHpInherited(150.0 * CultivationData.bodyTemperingPercent(legacyLevel));
+            }
         }
-        int effective = data.getRealm() == Realm.BODY_TEMPERING ? currentLevel : stored;
-        if (effective <= 0) {
-            return 0.0;
-        }
-        // 按标准生命值 150 × 锻体百分比计算
-        return 150.0 * CultivationData.bodyTemperingPercent(effective);
+        sp.getPersistentData().remove(TAG_LEGACY_MAX_BODY_TEMPERING_LEVEL);
+        return data.getBodyTemperingHpInherited();
     }
 
     private static void applyAttributeModifier(Player p, Attribute attr, UUID uuid, String name, double value, AttributeModifier.Operation op) {

@@ -9,14 +9,14 @@
 
 ## 2. 数据契约变更
 
-`CultivationData` 新增 `CURRENT_DATA_VERSION = 1` 和 `dataVersion`。新写入的 NBT 固定包含版本号，旧存档缺失版本号时按 `0` 读取，完成当前迁移后写回当前版本。
+`CultivationData` 新增 `CURRENT_DATA_VERSION = 2` 和 `dataVersion`。新写入的 NBT 固定包含版本号，旧存档缺失版本号时按 `0` 读取，完成当前迁移后写回当前版本。
 
 本阶段补齐并验证以下此前在 Clone/NBT 之间漂移的字段：
 
 - `breakthroughHpBonus`；
 - `breakthroughQiBonus`；
-- `daoFruitTotalEaten`；
-- `tribulationBonusEntries`（深复制，避免 Clone 共享可变数组）；
+- 道基果累计极境字段已在阶段 8 决定取消并完整删除，避免留下未实现状态；
+- `tribulationBonusLedger`（固定快照对象按 rewardKey 深复制）；
 - `tribulationType`（稳定 ID）；
 - `tribulationDamageRatio`。
 
@@ -49,6 +49,6 @@ gradlew.bat test
 
 ## 5. 尚未完成
 
-- 固定快照渡劫奖励账本仍需在阶段 6 替换旧 `List<double[]>`；
+- 固定快照账本已在阶段 6 工作区完成，等待本批次构建交付；
 - `RealmTransition` 尚未成为唯一境界写入口；
 - 完整字段矩阵文档、转世清理矩阵和统一 Snapshot 类型将在后续阶段继续收敛。

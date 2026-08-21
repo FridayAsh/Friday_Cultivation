@@ -12,8 +12,8 @@
 package com.friday.cultivation.cultivation;
 
 import com.friday.cultivation.event.tribulation.TribulationSpec;
+import com.friday.cultivation.event.tribulation.TribulationSession;
 import com.friday.cultivation.event.tribulation.TribulationType;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.friday.cultivation.cultivation.CultivationBonusCategory;
@@ -33,18 +33,21 @@ import com.friday.cultivation.cultivation.refining.RefiningRank;
 import com.friday.cultivation.cultivation.spell.Spell;
 import com.friday.cultivation.cultivation.technique.Technique;
 import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.util.INBTSerializable;
 import org.jetbrains.annotations.Nullable;
 
 public class CultivationData
 implements INBTSerializable<CompoundTag> {
-    public static final int CURRENT_DATA_VERSION = 1;
+    public static final int CURRENT_DATA_VERSION = 2;
     public static final int MAX_TIME_ACCELERATION_MULTIPLIER = 10000;
     private static final int[] TIME_ACCELERATION_MULTIPLIERS = new int[]{2, 5, 10, 100, 1000, 10000};
     private int dataVersion = CURRENT_DATA_VERSION;
@@ -104,6 +107,8 @@ implements INBTSerializable<CompoundTag> {
     private String pendingWuDaoBonusName = null;
     private long pendingWuDaoBonusValue = 0L;
     private int swordFlightOriginalSlot = -1;
+    /** 服务端飞行消耗计时，随 FlightState 一起持久化，避免第二套静态权威状态。 */
+    private int flightTicks = 0;
     private boolean voidEscapeActive = false;
     private int voidEscapeStability = 0;
     private QiElement inverseFiveElementMark = QiElement.PURE;
@@ -117,7 +122,7 @@ implements INBTSerializable<CompoundTag> {
     private int attrAgility = 0;
     private int attrSpellPower = 0;
     private int attrQiSea = 0;
-    /** 突破累计生命加成（每次大/小境界突破累加，含确定性随机，大帝封顶 2000/次） */
+    /** 突破累计生命加成（标准生命值×5%，大境界 1.0 倍、小境界 0.35 倍；无随机、无额外封顶） */
     private long breakthroughHpBonus = 0L;
     /** 突破累计灵气加成（每次突破累加，约为生命加成的 5 倍） */
     private long breakthroughQiBonus = 0L;
@@ -133,7 +138,6 @@ implements INBTSerializable<CompoundTag> {
     private int zhujiDanEaten = 0;
     private int bloodPillEaten = 0;
     private int daoFruitEaten = 0;
-    private int daoFruitTotalEaten = 0;
     private boolean zhujiSecretUsed = false;
     private FoundationDao pendingFoundationDao = FoundationDao.NONE;
     private GoldenCoreDao goldenCoreDao = GoldenCoreDao.NONE;
@@ -150,8 +154,11 @@ implements INBTSerializable<CompoundTag> {
     private TribulationType tribulationType = TribulationType.LIGHTNING;
     /** 当前渡劫伤害比例（strikeDamage<=0 时用标准生命×比例） */
     private double tribulationDamageRatio = 0.0;
-    /** 渡劫隐藏加成（不显示在雷达图）：每次渡劫记录 [百分比, 最低境界ordinal]，各自按境界生效 */
-    private final List<double[]> tribulationBonusEntries = new ArrayList<>();    private boolean soulState = false;
+    /** 当前活动渡劫的固定计划快照；活动期间禁止从 Realm 重新构造。 */
+    private TribulationSession tribulationSession;
+    /** 固定快照渡劫奖励账本：同一里程碑 rewardKey 只保留一条记录。 */
+    private final Map<String, TribulationBonusSnapshot> tribulationBonusLedger = new LinkedHashMap<>();
+    private boolean soulState = false;
     private int soulTicks = 0;
     private boolean reincarnationPending = false;
     private boolean reincarnationReady = false;
@@ -199,8 +206,6 @@ implements INBTSerializable<CompoundTag> {
 
     void setRealm(Realm realm) {
         Realm realm2 = this.realm = realm == null ? Realm.MORTAL : realm;
-        // 境界切换（如令牌）低于渡劫奖励最低境界时：清除低于境界的加成
-        this.tribulationBonusEntries.removeIf(e -> CultivationData.isLegacyTribulationEntryBelow(this.realm, e));
         if (this.realm == Realm.LOOSE_IMMORTAL) {
             if (this.looseImmortalTribulations <= 0) {
                 this.looseImmortalTribulations = 1;
@@ -238,30 +243,7 @@ implements INBTSerializable<CompoundTag> {
         return this.subStage.isPeakFor(this.realm);
     }
 
-    /** 练气极境 gate：练气 9 层且道基果累计服用 27 颗可触发隐藏第 10 层 */
-    public boolean canEnterQiExtreme() {
-        return this.realm == Realm.QI_REFINING && this.subStage.level() >= 9 && this.daoFruitTotalEaten >= 27;
-    }
-
-    /** TODO：进入练气第 10 层极境（预留接口，效果后续实现） */
-    public void advanceToQiExtreme() {
-        // TODO: 练气极境效果（隐藏第 10 层，后续实现）
-    }
-
-    /** 道基果累计服用 +1（极境 gate 计数） */
-    public void incrementDaoFruitTotalEaten() {
-        if (this.daoFruitTotalEaten < Integer.MAX_VALUE) {
-            ++this.daoFruitTotalEaten;
-        }
-    }
-
-    public int getDaoFruitTotalEaten() {
-        return this.daoFruitTotalEaten;
-    }
-
-    /** TODO：练气特殊物品强化灵气（增加法术伤害/灵气量/护盾免伤，后续实现） */
     private long applyQiRefiningEnhancements(long baseMax) {
-        // TODO: 练气特殊物品强化灵气数值
         return baseMax;
     }
 
@@ -293,6 +275,7 @@ implements INBTSerializable<CompoundTag> {
         if (this.breakthroughQiBonus > 0L) {
             max = CultivationData.saturatedAddLong(max, this.breakthroughQiBonus);
         }
+        max = CultivationData.saturatedAddLong(max, this.getTribulationMaxQiBonus());
         return max;
     }
 
@@ -725,7 +708,9 @@ implements INBTSerializable<CompoundTag> {
     }
 
     public int getTribulationBoltsPerWave() {
-        return Math.max(1, this.tribulationBoltsPerWave);
+        return this.tribulationSession == null
+                ? Math.max(1, this.tribulationBoltsPerWave)
+                : this.tribulationSession.spec().boltsPerWave();
     }
 
     public boolean hasPendingTribulationBolts() {
@@ -752,113 +737,163 @@ implements INBTSerializable<CompoundTag> {
         return this.tribulationStrikesRemaining > 0;
     }
 
-    public void startTribulation(int strikes) {
-        this.startTribulation(strikes, 0);
-    }
-
-    public void startTribulation(int strikes, int strikeDamageOverride) {
-        this.startTribulation(strikes, strikeDamageOverride, 1);
-    }
-
-    public void startTribulation(int strikes, int strikeDamageOverride, int boltsPerWave) {
-        this.tribulationStrikesRemaining = Math.max(0, strikes);
+    /** 唯一活动渡劫启动入口：先固定完整 Spec 与来源/目标上下文。 */
+    public void startTribulation(TribulationSpec spec, boolean looseImmortal,
+                                 Realm targetRealm, SubStage targetSubStage, String tierId) {
+        TribulationSpec safe = spec == null ? TribulationSpec.of(0, 1, 0) : spec;
+        this.tribulationSession = TribulationSession.create(safe, looseImmortal,
+                this.realm, this.subStage, targetRealm, targetSubStage, tierId);
+        this.tribulationStrikesRemaining = this.tribulationSession.spec().waves();
         this.tribulationCooldown = 60;
-        this.tribulationStrikeDamageOverride = Math.max(0, strikeDamageOverride);
-        this.tribulationBoltsPerWave = Math.max(1, boltsPerWave);
-        this.looseImmortalTribulationActive = false;
+        this.tribulationStrikeDamageOverride = this.tribulationSession.spec().strikeDamage();
+        this.tribulationBoltsPerWave = this.tribulationSession.spec().boltsPerWave();
+        this.tribulationType = this.tribulationSession.spec().type();
+        this.tribulationDamageRatio = this.tribulationSession.spec().damageRatio();
+        this.looseImmortalTribulationActive = looseImmortal;
         this.clearPendingTribulationWave();
     }
 
-    /** 按劫谱开始渡劫（数据驱动） */
-    public void startTribulation(TribulationSpec spec) {
-        this.tribulationStrikesRemaining = spec == null ? 0 : Math.max(0, spec.waves());
-        this.tribulationCooldown = 60;
-        this.tribulationStrikeDamageOverride = spec == null ? 0 : Math.max(0, spec.strikeDamage());
-        this.tribulationBoltsPerWave = spec == null ? 1 : Math.max(1, spec.boltsPerWave());
-        this.tribulationType = spec == null ? TribulationType.LIGHTNING : spec.type();
-        this.tribulationDamageRatio = spec == null ? 0.0 : Math.max(0.0, spec.damageRatio());
-        this.looseImmortalTribulationActive = false;
-        this.clearPendingTribulationWave();
+    public TribulationSession getTribulationSession() {
+        return this.tribulationSession;
+    }
+
+    public boolean hasTribulationSession() {
+        return this.tribulationSession != null;
     }
 
     /** 当前渡劫伤害比例（0 = 用固定伤害） */
     public double getTribulationDamageRatio() {
-        return this.tribulationDamageRatio;
+        return this.tribulationSession == null
+                ? this.tribulationDamageRatio : this.tribulationSession.spec().damageRatio();
     }
 
-    /** 记录渡劫隐藏加成（百分比作用于玩家总属性值，复利；每次渡劫独立 entry） */
-    public void addTribulationBonus(double percent, Realm minRealm) {
-        if (percent <= 0.0) {
-            return;
+    /** 捕获渡劫前最终有效属性，生成不可重算的固定奖励快照。 */
+    public TribulationBonusSnapshot captureTribulationBonus(Player player, double percent, Realm targetRealm, SubStage targetSub) {
+        if (percent <= 0.0 || targetRealm == null) {
+            return null;
         }
-        int ord = RealmTopology.legacyEnumOrdinal(minRealm);
-        // 境界跌落（低于已记录的最低境界）：清空全部（重修重得）
-        for (double[] e : new ArrayList<>(this.tribulationBonusEntries)) {
-            if (CultivationData.isLegacyTribulationEntryBelow(this.realm, e)) {
-                this.tribulationBonusEntries.remove(e);
-            }
+        String subId = targetSub == null ? targetRealm.firstSubStage().id() : targetSub.id();
+        String rewardKey = "realm:" + targetRealm.id() + ":" + subId;
+        double sourceHealth = player == null ? this.getRealm().standardMaxHealth() : Math.max(0.0, player.getMaxHealth());
+        long sourceQi = Math.max(0L, this.getMaxQi());
+        return new TribulationBonusSnapshot(
+                rewardKey,
+                targetRealm.id(),
+                percent,
+                Math.max(0.0, Math.round(sourceHealth * percent)),
+                CultivationData.saturatedMultiplyLong(sourceQi, percent),
+                CultivationData.saturatedRoundInt((double)this.attrConstitution * percent),
+                CultivationData.saturatedRoundInt((double)this.attrPhysique * percent),
+                CultivationData.saturatedRoundInt((double)this.attrAgility * percent),
+                CultivationData.saturatedRoundInt((double)this.attrSpellPower * percent),
+                CultivationData.saturatedRoundInt((double)this.attrQiSea * percent));
+    }
+
+    /** 唯一账本写入口；同一里程碑会替换旧记录，不会重复叠加。 */
+    public void recordTribulationBonus(TribulationBonusSnapshot snapshot) {
+        if (snapshot != null) {
+            this.tribulationBonusLedger.put(snapshot.rewardKey(), snapshot);
         }
-        this.tribulationBonusEntries.add(new double[]{percent, ord});
     }
 
-    /** 当前生效的隐藏加成乘数（所有 realm>=minRealm 的 entry 连乘 (1+percent)） */
-    public double activeTribulationMultiplier() {
-        double mult = 1.0;
-        for (double[] e : this.tribulationBonusEntries) {
-            if (e[1] < 0 || !CultivationData.isLegacyTribulationEntryBelow(this.realm, e)) {
-                mult *= (1.0 + e[0]);
-            }
+    public java.util.Collection<TribulationBonusSnapshot> getTribulationBonusSnapshots() {
+        return java.util.Collections.unmodifiableCollection(this.tribulationBonusLedger.values());
+    }
+
+    private boolean isTribulationBonusActive(TribulationBonusSnapshot snapshot) {
+        return snapshot != null && snapshot.isActive(this.realm);
+    }
+
+    public double getTribulationHealthBonus() {
+        double total = 0.0;
+        for (TribulationBonusSnapshot snapshot : this.tribulationBonusLedger.values()) {
+            if (this.isTribulationBonusActive(snapshot)) total += snapshot.healthBonus();
         }
-        return mult;
+        return total;
     }
 
-    /** 境界跌落时清空全部渡劫隐藏加成（支持重修重得更高数值） */
-    public void clearTribulationBonus() {
-        this.tribulationBonusEntries.clear();
-    }
-
-    private static boolean isLegacyTribulationEntryBelow(Realm actual, double[] entry) {
-        if (actual == null || entry == null || entry.length < 2 || entry[1] < 0) {
-            return false;
+    public long getTribulationMaxQiBonus() {
+        long total = 0L;
+        for (TribulationBonusSnapshot snapshot : this.tribulationBonusLedger.values()) {
+            if (this.isTribulationBonusActive(snapshot)) total = CultivationData.saturatedAddLong(total, snapshot.maxQiBonus());
         }
-        return RealmTopology.fromLegacyEnumOrdinal((int)entry[1])
-                .map(required -> RealmTopology.isBefore(actual, required))
-                .orElse(true);
+        return total;
     }
 
-    /** 渡劫隐藏加成总数（用于展示，返回百分比总和近似） */
+    public int getTribulationConstitutionBonus() {
+        return this.activeTribulationAttributeBonus(0);
+    }
+
+    public int getTribulationPhysiqueBonus() {
+        return this.activeTribulationAttributeBonus(1);
+    }
+
+    public int getTribulationAgilityBonus() {
+        return this.activeTribulationAttributeBonus(2);
+    }
+
+    public int getTribulationSpellPowerBonus() {
+        return this.activeTribulationAttributeBonus(3);
+    }
+
+    public int getTribulationQiSeaBonus() {
+        return this.activeTribulationAttributeBonus(4);
+    }
+
+    private int activeTribulationAttributeBonus(int dimension) {
+        int total = 0;
+        for (TribulationBonusSnapshot snapshot : this.tribulationBonusLedger.values()) {
+            if (!this.isTribulationBonusActive(snapshot)) continue;
+            int value = switch (dimension) {
+                case 0 -> snapshot.constitutionBonus();
+                case 1 -> snapshot.physiqueBonus();
+                case 2 -> snapshot.agilityBonus();
+                case 3 -> snapshot.spellPowerBonus();
+                case 4 -> snapshot.qiSeaBonus();
+                default -> 0;
+            };
+            total = CultivationData.saturatedAddInt(total, value);
+        }
+        return total;
+    }
+
+    /** 显示当前生效快照的奖励比例总和。 */
     public double getTribulationBonusPercent() {
         double sum = 0.0;
-        for (double[] e : this.tribulationBonusEntries) {
-            sum += e[0];
+        for (TribulationBonusSnapshot snapshot : this.tribulationBonusLedger.values()) {
+            if (this.isTribulationBonusActive(snapshot)) sum += snapshot.sourcePercent();
         }
         return sum;
     }
 
+    /** 仅用于转世/明确重置；境界跌落只停用，不删除账本。 */
+    public void clearTribulationBonus() {
+        this.tribulationBonusLedger.clear();
+    }
+
     /** 当前渡劫劫种 */
     public TribulationType getTribulationType() {
+        if (this.tribulationSession != null) {
+            return this.tribulationSession.spec().type();
+        }
         return this.tribulationType == null ? TribulationType.LIGHTNING : this.tribulationType;
     }
 
-    /** 每波实际雷击间隔（tick，由劫谱或自动计算） */
-    public int tribulationBoltInterval() {
-        return 0; // 兼容旧调用：由 TribulationHandler 按 spec 计算
-    }
-
-    public void startLooseImmortalTribulation(int strikes, int strikeDamageOverride, int boltsPerWave) {
-        this.startTribulation(strikes, strikeDamageOverride, boltsPerWave);
-        this.looseImmortalTribulationActive = true;
-    }
-
     public int getCurrentTribulationStrikeDamage() {
+        if (this.tribulationSession != null) {
+            return this.tribulationSession.spec().strikeDamage();
+        }
         return this.tribulationStrikeDamageOverride > 0 ? this.tribulationStrikeDamageOverride : this.realm.tribulationStrikeDamage();
     }
 
     public void clearTribulation() {
+        this.tribulationSession = null;
         this.tribulationStrikesRemaining = 0;
         this.tribulationCooldown = 0;
         this.tribulationStrikeDamageOverride = 0;
         this.tribulationBoltsPerWave = 1;
+        this.tribulationType = TribulationType.LIGHTNING;
+        this.tribulationDamageRatio = 0.0;
         this.looseImmortalTribulationActive = false;
         this.clearPendingTribulationWave();
     }
@@ -2037,11 +2072,26 @@ implements INBTSerializable<CompoundTag> {
     public void startSwordFlight(ItemStack stack, int originalSlot) {
         this.swordFlightStack = stack == null ? ItemStack.EMPTY : stack.copy();
         this.swordFlightOriginalSlot = originalSlot;
+        this.flightTicks = 0;
     }
 
     public void clearSwordFlight() {
         this.swordFlightStack = ItemStack.EMPTY;
         this.swordFlightOriginalSlot = -1;
+        this.flightTicks = 0;
+    }
+
+    public int getFlightTicks() {
+        return Math.max(0, this.flightTicks);
+    }
+
+    public int incrementFlightTicks() {
+        this.flightTicks = Math.min(20, this.flightTicks + 1);
+        return this.flightTicks;
+    }
+
+    public void clearFlightTicks() {
+        this.flightTicks = 0;
     }
 
     public boolean isVoidEscapeActive() {
@@ -2083,36 +2133,6 @@ implements INBTSerializable<CompoundTag> {
             return "";
         }
         return this.getEquippedSpellAt(this.selectedSpellSlot);
-    }
-
-    @Deprecated
-    public long getElementCount(QiElement el) {
-        return 0L;
-    }
-
-    @Deprecated
-    public long getTotalElementQi() {
-        return 0L;
-    }
-
-    @Deprecated
-    public double getElementPercent(QiElement el) {
-        return 0.0;
-    }
-
-    @Deprecated
-    public int getElementDamageBonus(QiElement el) {
-        return 0;
-    }
-
-    @Deprecated
-    public int getElementPowerPercent(QiElement el) {
-        return 0;
-    }
-
-    @Deprecated
-    public QiElement getDominantElement() {
-        return QiElement.PURE;
     }
 
     public void ensureSpellsForRealm() {
@@ -2341,6 +2361,21 @@ implements INBTSerializable<CompoundTag> {
         return value > Long.MAX_VALUE - delta ? Long.MAX_VALUE : value + delta;
     }
 
+    private static int saturatedRoundInt(double value) {
+        if (!(value > 0.0)) {
+            return 0;
+        }
+        return value >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)Math.round(value);
+    }
+
+    private static long saturatedMultiplyLong(long value, double multiplier) {
+        if (value <= 0L || !(multiplier > 0.0)) {
+            return 0L;
+        }
+        double result = (double)value * multiplier;
+        return result >= Long.MAX_VALUE ? Long.MAX_VALUE : Math.max(0L, Math.round(result));
+    }
+
     public void demoteOnFailure() {
         if (this.isLooseImmortal()) {
             this.currentQi = 0L;
@@ -2404,6 +2439,7 @@ implements INBTSerializable<CompoundTag> {
         this.tribulationBoltIndexInWave = other.tribulationBoltIndexInWave;
         this.tribulationType = other.tribulationType;
         this.tribulationDamageRatio = other.tribulationDamageRatio;
+        this.tribulationSession = other.tribulationSession;
         this.attack = other.attack;
         this.defense = other.defense;
         this.critRate = other.critRate;
@@ -2432,6 +2468,7 @@ implements INBTSerializable<CompoundTag> {
         this.chargingEntityId = -1;
         this.swordFlightStack = other.swordFlightStack.copy();
         this.swordFlightOriginalSlot = other.swordFlightOriginalSlot;
+        this.flightTicks = other.flightTicks;
         this.qiFlightToggled = other.qiFlightToggled;
         this.wuDaoProgress = other.wuDaoProgress;
         this.voidEscapeActive = other.voidEscapeActive;
@@ -2462,7 +2499,6 @@ implements INBTSerializable<CompoundTag> {
         this.zhujiDanEaten = other.zhujiDanEaten;
         this.bloodPillEaten = other.bloodPillEaten;
         this.daoFruitEaten = other.daoFruitEaten;
-        this.daoFruitTotalEaten = other.daoFruitTotalEaten;
         this.zhujiSecretUsed = other.zhujiSecretUsed;
         this.pendingFoundationDao = other.pendingFoundationDao;
         this.goldenCoreDao = other.goldenCoreDao;
@@ -2474,10 +2510,8 @@ implements INBTSerializable<CompoundTag> {
         this.creationFruitEaten = other.creationFruitEaten;
         this.pendingGoldenCoreDao = other.pendingGoldenCoreDao;
         this.tribulationStrikeDamageOverride = other.tribulationStrikeDamageOverride;
-        this.tribulationBonusEntries.clear();
-        for (double[] entry : other.tribulationBonusEntries) {
-            this.tribulationBonusEntries.add(entry.clone());
-        }
+        this.tribulationBonusLedger.clear();
+        this.tribulationBonusLedger.putAll(other.tribulationBonusLedger);
         this.soulState = other.soulState;
         this.soulTicks = other.soulTicks;
         this.reincarnationPending = other.reincarnationPending;
@@ -2567,6 +2601,7 @@ implements INBTSerializable<CompoundTag> {
             tag.put("swordFlightStack", (Tag)this.swordFlightStack.save(new CompoundTag()));
         }
         tag.putInt("swordFlightOriginalSlot", this.swordFlightOriginalSlot);
+        tag.putInt("flightTicks", this.flightTicks);
         tag.putBoolean("qiFlightToggled", this.qiFlightToggled);
         tag.putLong("wuDaoProgress", this.wuDaoProgress);
         tag.putDouble("bodyTemperingHpInherited", this.bodyTemperingHpInherited);
@@ -2609,7 +2644,6 @@ implements INBTSerializable<CompoundTag> {
         tag.putInt("zhujiDanEaten", this.zhujiDanEaten);
         tag.putInt("bloodPillEaten", this.bloodPillEaten);
         tag.putInt("daoFruitEaten", this.daoFruitEaten);
-        tag.putInt("daoFruitTotalEaten", this.daoFruitTotalEaten);
         tag.putBoolean("zhujiSecretUsed", this.zhujiSecretUsed);
         tag.putString("pendingFoundationDao", this.pendingFoundationDao.id());
         tag.putString("goldenCoreDao", this.goldenCoreDao.id());
@@ -2623,6 +2657,9 @@ implements INBTSerializable<CompoundTag> {
         tag.putInt("tribulationStrikeDamageOverride", this.tribulationStrikeDamageOverride);
         tag.putString("tribulationType", this.getTribulationType().id());
         tag.putDouble("tribulationDamageRatio", this.tribulationDamageRatio);
+        if (this.tribulationSession != null) {
+            tag.put("tribulationSession", this.tribulationSession.toTag());
+        }
         tag.putBoolean("soulState", this.soulState);
         tag.putInt("soulTicks", this.soulTicks);
         tag.putBoolean("reincarnationPending", this.reincarnationPending);
@@ -2642,36 +2679,25 @@ implements INBTSerializable<CompoundTag> {
         tag.putLong("nextLooseImmortalTribulationTick", this.nextLooseImmortalTribulationTick);
         tag.putBoolean("looseImmortalChoicePending", this.looseImmortalChoicePending);
         tag.putBoolean("looseImmortalTribulationActive", this.looseImmortalTribulationActive);
-        // 渡劫隐藏加成持久化：[[percent, minRealm], ...]
-        net.minecraft.nbt.ListTag tribList = new net.minecraft.nbt.ListTag();
-        for (double[] e : this.tribulationBonusEntries) {
-            net.minecraft.nbt.CompoundTag entry = new net.minecraft.nbt.CompoundTag();
-            entry.putDouble("p", e[0]);
-            entry.putInt("r", (int) e[1]);
-            tribList.add(entry);
+        ListTag tribLedger = new ListTag();
+        for (TribulationBonusSnapshot snapshot : this.tribulationBonusLedger.values()) {
+            tribLedger.add(snapshot.toTag());
         }
-        tag.put("tribulationBonus", tribList);
+        tag.put("tribulationBonusLedger", tribLedger);
         return tag;
     }
 
     public void deserializeNBT(CompoundTag tag) {
         int storedVersion = tag.contains("dataVersion", 3) ? tag.getInt("dataVersion") : 0;
         this.dataVersion = Math.max(0, Math.min(CURRENT_DATA_VERSION, storedVersion));
+        this.tribulationSession = null;
         if (tag.contains("realm", 8)) {
             this.realm = Realm.byId(tag.getString("realm"));
         }
         if (tag.contains("subStage", 8)) {
             this.subStage = SubStage.byId(tag.getString("subStage"), this.realm);
         }
-        // 渡劫隐藏加成加载
-        this.tribulationBonusEntries.clear();
-        if (tag.contains("tribulationBonus", 9)) {
-            net.minecraft.nbt.ListTag tribList = tag.getList("tribulationBonus", 10);
-            for (int ti = 0; ti < tribList.size(); ti++) {
-                net.minecraft.nbt.CompoundTag entry = tribList.getCompound(ti);
-                this.tribulationBonusEntries.add(new double[]{entry.getDouble("p"), entry.getInt("r")});
-            }
-        }
+        this.tribulationBonusLedger.clear();
         this.currentQi = tag.getLong("currentQi");
         this.cultivationProgress = tag.contains("cultivationProgress", 4) ? tag.getLong("cultivationProgress") : this.currentQi;
         this.totalQiAbsorbed = tag.getLong("totalQiAbsorbed");
@@ -2752,6 +2778,7 @@ implements INBTSerializable<CompoundTag> {
         this.chargingEntityId = tag.contains("chargingEntityId", 3) ? tag.getInt("chargingEntityId") : -1;
         this.swordFlightStack = tag.contains("swordFlightStack", 10) ? ItemStack.of((CompoundTag)tag.getCompound("swordFlightStack")) : ItemStack.EMPTY;
         this.swordFlightOriginalSlot = tag.contains("swordFlightOriginalSlot", 3) ? tag.getInt("swordFlightOriginalSlot") : -1;
+        this.flightTicks = tag.contains("flightTicks", 3) ? Math.min(20, Math.max(0, tag.getInt("flightTicks"))) : 0;
         this.qiFlightToggled = tag.getBoolean("qiFlightToggled");
         this.wuDaoProgress = tag.contains("wuDaoProgress", 4) ? Math.max(0L, tag.getLong("wuDaoProgress")) : 0L;
         this.bodyTemperingHpInherited = tag.contains("bodyTemperingHpInherited", 6) ? tag.getDouble("bodyTemperingHpInherited") : 0.0;
@@ -2779,6 +2806,31 @@ implements INBTSerializable<CompoundTag> {
         this.attrAgility = tag.contains("attrAgility", 3) ? tag.getInt("attrAgility") : 0;
         this.attrSpellPower = tag.contains("attrSpellPower", 3) ? tag.getInt("attrSpellPower") : 0;
         this.attrQiSea = tag.contains("attrQiSea", 3) ? tag.getInt("attrQiSea") : 0;
+        if (tag.contains("tribulationBonusLedger", 9)) {
+            ListTag ledger = tag.getList("tribulationBonusLedger", 10);
+            for (int i = 0; i < ledger.size(); ++i) {
+                this.recordTribulationBonus(TribulationBonusSnapshot.fromTag(ledger.getCompound(i)));
+            }
+        } else if (tag.contains("tribulationBonus", 9)) {
+            // 一次性迁移旧 [percent, enum ordinal]：新档只写固定值，不再写旧列表。
+            ListTag legacy = tag.getList("tribulationBonus", 10);
+            for (int i = 0; i < legacy.size(); ++i) {
+                CompoundTag entry = legacy.getCompound(i);
+                double percent = Math.max(0.0, entry.getDouble("p"));
+                Realm target = RealmTopology.fromLegacyEnumOrdinal(entry.getInt("r")).orElse(null);
+                if (target == null || percent <= 0.0) continue;
+                String key = "legacy:" + i;
+                this.recordTribulationBonus(new TribulationBonusSnapshot(
+                        key, target.id(), percent,
+                        Math.max(0.0, Math.round(this.realm.standardMaxHealth() * percent)),
+                        CultivationData.saturatedMultiplyLong(this.getMaxQi(), percent),
+                        CultivationData.saturatedRoundInt((double)this.attrConstitution * percent),
+                        CultivationData.saturatedRoundInt((double)this.attrPhysique * percent),
+                        CultivationData.saturatedRoundInt((double)this.attrAgility * percent),
+                        CultivationData.saturatedRoundInt((double)this.attrSpellPower * percent),
+                        CultivationData.saturatedRoundInt((double)this.attrQiSea * percent)));
+            }
+        }
         this.breakthroughHpBonus = tag.contains("breakthroughHpBonus", 4) ? tag.getLong("breakthroughHpBonus") : 0L;
         this.breakthroughQiBonus = tag.contains("breakthroughQiBonus", 4) ? tag.getLong("breakthroughQiBonus") : 0L;
         this.zhenyuanMajorAutoRebalanceApplied = tag.contains("zhenyuanMajorAutoRebalanceApplied", 1) && tag.getBoolean("zhenyuanMajorAutoRebalanceApplied");
@@ -2805,7 +2857,6 @@ implements INBTSerializable<CompoundTag> {
         this.zhujiDanEaten = tag.getInt("zhujiDanEaten");
         this.bloodPillEaten = tag.getInt("bloodPillEaten");
         this.daoFruitEaten = tag.getInt("daoFruitEaten");
-        this.daoFruitTotalEaten = tag.contains("daoFruitTotalEaten", 3) ? tag.getInt("daoFruitTotalEaten") : 0;
         this.zhujiSecretUsed = tag.getBoolean("zhujiSecretUsed");
         this.pendingFoundationDao = FoundationDao.byId(tag.getString("pendingFoundationDao"));
         this.goldenCoreDao = GoldenCoreDao.byId(tag.getString("goldenCoreDao"));
@@ -2824,6 +2875,9 @@ implements INBTSerializable<CompoundTag> {
         this.tribulationType = TribulationType.byId(tag.getString("tribulationType"));
         this.tribulationDamageRatio = tag.contains("tribulationDamageRatio", 6)
                 ? Math.max(0.0, tag.getDouble("tribulationDamageRatio")) : 0.0;
+        if (tag.contains("tribulationSession", 10)) {
+            this.tribulationSession = TribulationSession.fromTag(tag.getCompound("tribulationSession"));
+        }
         boolean wasSoul = this.soulState;
         this.soulState = tag.getBoolean("soulState");
         this.soulTicks = tag.getInt("soulTicks");
@@ -2852,6 +2906,20 @@ implements INBTSerializable<CompoundTag> {
         this.nextLooseImmortalTribulationTick = tag.contains("nextLooseImmortalTribulationTick", 4) ? tag.getLong("nextLooseImmortalTribulationTick") : -1L;
         this.looseImmortalChoicePending = tag.getBoolean("looseImmortalChoicePending");
         this.looseImmortalTribulationActive = tag.getBoolean("looseImmortalTribulationActive");
+        if (this.tribulationSession != null) {
+            this.looseImmortalTribulationActive = this.tribulationSession.looseImmortal();
+        }
+        if (this.tribulationSession == null && this.tribulationStrikesRemaining > 0) {
+            TribulationSpec migratedSpec = new TribulationSpec(
+                    this.tribulationStrikesRemaining,
+                    this.tribulationBoltsPerWave,
+                    this.tribulationStrikeDamageOverride,
+                    this.tribulationDamageRatio,
+                    0,
+                    this.tribulationType);
+            this.tribulationSession = TribulationSession.create(migratedSpec, this.looseImmortalTribulationActive,
+                    this.realm, this.subStage, this.realm, this.subStage, "");
+        }
         if (this.realm != Realm.LOOSE_IMMORTAL) {
             this.looseImmortalTribulations = 0;
             this.looseImmortalRewardLevel = 0;
