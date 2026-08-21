@@ -60,11 +60,8 @@ public class CultivationHud {
     private static final int EXPERIENCE_GROUP_WIDTH = 182;
     /** 提高项目经验贴图的渲染高度，让中央经验值完整落在条带内部。 */
     private static final int EXPERIENCE_BAR_HEIGHT = 8;
-    /** 中文等级文本实际占用区域；缩小该区域后可给经验贴图更多长度。 */
-    private static final int EXPERIENCE_LEVEL_LABEL_WIDTH = 34;
+    private static final float EXPERIENCE_LEVEL_TEXT_SCALE = 0.6f;
     private static final int EXPERIENCE_LEVEL_GAP = 2;
-    private static final int EXPERIENCE_BAR_WIDTH = EXPERIENCE_GROUP_WIDTH
-            - EXPERIENCE_LEVEL_LABEL_WIDTH - EXPERIENCE_LEVEL_GAP;
     /** 原版经验等级文字颜色（Gui 中的 0x80FF20）。 */
     private static final int EXPERIENCE_LEVEL_TEXT_COLOR = 0x80FF20;
 
@@ -139,9 +136,13 @@ public class CultivationHud {
             return;
         }
         int groupX = screenWidth / 2 - EXPERIENCE_GROUP_WIDTH / 2;
-        int width = EXPERIENCE_BAR_WIDTH;
         int height = EXPERIENCE_BAR_HEIGHT;
-        int x = groupX + EXPERIENCE_LEVEL_LABEL_WIDTH + EXPERIENCE_LEVEL_GAP;
+        Component level = Component.literal("等级:" + Math.max(0, player.experienceLevel));
+        int rawLevelWidth = mc.font.width((FormattedText)level);
+        int levelWidth = Math.max(1, Math.min(EXPERIENCE_GROUP_WIDTH - EXPERIENCE_LEVEL_GAP - 1,
+                (int)Math.ceil((double)rawLevelWidth * (double)EXPERIENCE_LEVEL_TEXT_SCALE)));
+        int width = EXPERIENCE_GROUP_WIDTH - levelWidth - EXPERIENCE_LEVEL_GAP;
+        int x = groupX + levelWidth + EXPERIENCE_LEVEL_GAP;
         // 保留原版经验 HUD 的底部锚点；仅缩短贴图渲染高度，不改变整组位置。
         int y = screenHeight - 29;
         double progress = Math.max(0.0, Math.min(1.0, player.experienceProgress));
@@ -149,10 +150,9 @@ public class CultivationHud {
                 BLOOD_EMPTY, BLOOD_FILL, 96, 6, EXPERIENCE_TOP, EXPERIENCE_BOTTOM,
                 Component.literal(String.valueOf(Math.max(0, player.totalExperience))), -1);
 
-        // 等级标签放在经验条左侧，使用同一缩放体系并垂直居中。
-        Component level = Component.literal("等级:" + Math.max(0, player.experienceLevel));
+        // 等级标签左对齐；经验条紧接实际文字宽度，自动使用剩余长度。
         drawLeftScaledInRect(graphics, mc, level, groupX, y,
-                EXPERIENCE_LEVEL_LABEL_WIDTH, height, 0.6f, EXPERIENCE_LEVEL_TEXT_COLOR, true);
+                levelWidth, height, EXPERIENCE_LEVEL_TEXT_SCALE, EXPERIENCE_LEVEL_TEXT_COLOR, true);
     }
 
     private static void render(GuiGraphics graphics, int screenWidth) {
