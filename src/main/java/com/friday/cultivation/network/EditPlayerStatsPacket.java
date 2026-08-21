@@ -11,6 +11,7 @@
 package com.friday.cultivation.network;
 
 import com.friday.cultivation.cultivation.CultivationCapability;
+import com.friday.cultivation.cultivation.RealmTransition;
 import com.friday.cultivation.cultivation.alchemy.AlchemyRank;
 import com.friday.cultivation.cultivation.realm.Realm;
 import com.friday.cultivation.cultivation.realm.RealmTopology;
@@ -98,16 +99,10 @@ public class EditPlayerStatsPacket {
                 if (newSub == null) {
                     newSub = newRealm.firstSubStage();
                 }
-                boolean realmChanged = data.getRealm() != newRealm || data.getSubStage() != newSub;
-                data.setRealm(newRealm);
-                data.setSubStage(newSub);
+                RealmTransition.apply(data, RealmTransition.Request.adminEdit(newRealm, newSub));
                 data.setRefining(EditPlayerStatsPacket.clamp(m.refining, 0, RefiningRank.values().length - 1));
                 data.setAlchemy(EditPlayerStatsPacket.clamp(m.alchemy, 0, AlchemyRank.values().length - 1));
                 data.setBoneAge(EditPlayerStatsPacket.clamp(m.boneAgeYears, 0, 1000000));
-                if (realmChanged) {
-                    data.setCultivationProgress(0L);
-                    data.setCurrentQi(data.getMaxQi() / 2L);
-                }
                 data.setCurrentQi(data.getCurrentQi());
                 data.setCultivationProgress(data.getCultivationProgress());
                 CapabilityEvents.syncToClient(player);

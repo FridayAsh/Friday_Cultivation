@@ -21,15 +21,19 @@ import com.friday.cultivation.config.ModCommonConfig;
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.sect.SectSavedData;
+import com.friday.cultivation.cultivation.qi.field.QiFieldRegistry;
 import com.friday.cultivation.flight.CultivationFlightHandler;
 import com.friday.cultivation.network.ModNetwork;
 import com.friday.cultivation.network.SyncCultivationDataPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
@@ -92,6 +96,18 @@ public final class CapabilityEvents {
             CultivationCapability.get((Player)player2).ifPresent(CapabilityEvents::applySpellTerrainRuleSnapshot);
             CapabilityEvents.syncToClient(player2);
         }
+    }
+
+    @SubscribeEvent
+    public static void onLevelUnload(LevelEvent.Unload event) {
+        if (event.getLevel() instanceof ServerLevel serverLevel) {
+            QiFieldRegistry.clear(serverLevel);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        QiFieldRegistry.clearAll();
     }
 
     public static void syncToClient(ServerPlayer player) {

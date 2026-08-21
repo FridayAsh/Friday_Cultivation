@@ -23,6 +23,7 @@ import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.ItemTier;
 import com.friday.cultivation.cultivation.LooseImmortalBonusHelper;
+import com.friday.cultivation.cultivation.RealmTransition;
 import com.friday.cultivation.cultivation.QiElement;
 import com.friday.cultivation.cultivation.realm.Realm;
 import com.friday.cultivation.cultivation.realm.SubStage;
@@ -68,20 +69,10 @@ extends Item {
         if (!level.isClientSide && player instanceof ServerPlayer) {
             ServerPlayer sp = (ServerPlayer)player;
             CultivationCapability.get((Player)sp).ifPresent(data -> {
-                data.setRealm(this.realm);
-                data.setSubStage(this.realm.firstSubStage());
                 int looseLevel = this.targetLooseImmortalLevel();
-                if (looseLevel > 0) {
-                    data.setSoulState(false);
-                    data.setGhostCultivator(false);
-                    data.setReincarnationPending(false);
-                    data.setReincarnationReady(false);
-                    data.setLooseImmortalTribulations(looseLevel);
-                    data.setNextLooseImmortalTribulationTick(looseLevel >= 9 ? -1L : level.getGameTime() + 12000000L);
-                }
-                CultivationData.ZhenyuanBaselineResult zhenyuan = data.syncZhenyuanToRealmBaseline(this.realm, this.realm.firstSubStage());
-                data.setCurrentQi(data.getMaxQi() / 2L);
-                data.setCultivationProgress(0L);
+                RealmTransition.Result transition = RealmTransition.apply(data,
+                        RealmTransition.Request.realmToken(this.realm, this.realm.firstSubStage(), looseLevel, level.getGameTime()));
+                CultivationData.ZhenyuanBaselineResult zhenyuan = transition.zhenyuan();
                 com.friday.cultivation.event.TechniqueEffectHandler.refreshMaxHealth(sp);
                 CapabilityEvents.syncToClient(sp);
                 sp.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.realm_token.set_synced_zhenyuan", (Object[])new Object[]{this.targetDisplayName(), zhenyuan.automaticPerAttribute(), zhenyuan.unallocatedZhenyuan()}), false);

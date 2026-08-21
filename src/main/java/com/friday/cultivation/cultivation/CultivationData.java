@@ -44,8 +44,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class CultivationData
 implements INBTSerializable<CompoundTag> {
+    public static final int CURRENT_DATA_VERSION = 1;
     public static final int MAX_TIME_ACCELERATION_MULTIPLIER = 10000;
     private static final int[] TIME_ACCELERATION_MULTIPLIERS = new int[]{2, 5, 10, 100, 1000, 10000};
+    private int dataVersion = CURRENT_DATA_VERSION;
     private Realm realm = Realm.MORTAL;
     private SubStage subStage = SubStage.EARLY;
     private long currentQi = 0L;
@@ -191,7 +193,11 @@ implements INBTSerializable<CompoundTag> {
         return this.realm;
     }
 
-    public void setRealm(Realm realm) {
+    public int getDataVersion() {
+        return this.dataVersion;
+    }
+
+    void setRealm(Realm realm) {
         Realm realm2 = this.realm = realm == null ? Realm.MORTAL : realm;
         // 境界切换（如令牌）低于渡劫奖励最低境界时：清除低于境界的加成
         this.tribulationBonusEntries.removeIf(e -> CultivationData.isLegacyTribulationEntryBelow(this.realm, e));
@@ -218,7 +224,7 @@ implements INBTSerializable<CompoundTag> {
         return this.subStage;
     }
 
-    public void setSubStage(SubStage subStage) {
+    void setSubStage(SubStage subStage) {
         this.subStage = subStage != null ? subStage : this.realm.firstSubStage();
     }
 
@@ -608,7 +614,7 @@ implements INBTSerializable<CompoundTag> {
         return new ZhenyuanBaselineResult(this.unallocatedZhenyuan, autoPerAttr);
     }
 
-    private void syncAutomaticZhenyuanAfterRealmDemotion(Realm oldRealm, SubStage oldSub, Realm targetRealm, SubStage targetSub) {
+    void syncAutomaticZhenyuanAfterRealmDemotion(Realm oldRealm, SubStage oldSub, Realm targetRealm, SubStage targetSub) {
         Realm safeOldRealm = oldRealm == null ? Realm.MORTAL : oldRealm;
         SubStage safeOldSub = oldSub == null ? safeOldRealm.firstSubStage() : oldSub;
         Realm safeTargetRealm = targetRealm == null ? Realm.MORTAL : targetRealm;
@@ -1502,17 +1508,14 @@ implements INBTSerializable<CompoundTag> {
     }
 
     public void becomeLooseImmortal(long nextTribulationTick) {
-        this.realm = Realm.LOOSE_IMMORTAL;
-        this.subStage = this.realm.firstSubStage();
-        this.looseImmortalTribulations = 1;
+        RealmTransition.apply(this, new RealmTransition.Request(
+                Realm.LOOSE_IMMORTAL, Realm.LOOSE_IMMORTAL.firstSubStage(),
+                RealmTransition.Reason.TRIBULATION_FAILURE, RealmTransition.ResourcePolicy.HALF,
+                RealmTransition.RewardPolicy.NONE, false, true, true, 1, nextTribulationTick - 12000000L));
         this.looseImmortalRewardLevel = 1;
         this.nextLooseImmortalTribulationTick = nextTribulationTick;
         this.looseImmortalChoicePending = false;
         this.looseImmortalTribulationActive = false;
-        this.soulState = false;
-        this.ghostCultivator = false;
-        this.reincarnationPending = false;
-        this.reincarnationReady = false;
         this.soulTicks = 0;
         this.difuTicks = 0;
         this.currentQi = 0L;
@@ -2206,23 +2209,19 @@ implements INBTSerializable<CompoundTag> {
             this.setCurrentQi(this.getMaxQi());
             return;
         }
-        this.cultivationProgress = 0L;
         if (this.realm == Realm.MORTAL) {
-            this.realm = Realm.BODY_TEMPERING;
-            this.subStage = this.realm.firstSubStage();
-            this.currentQi = this.getMaxQi();
-            this.ensureSpellsForRealm();
+            RealmTransition.apply(this, RealmTransition.Request.breakthrough(
+                    Realm.BODY_TEMPERING, Realm.BODY_TEMPERING.firstSubStage(), RealmTransition.RewardPolicy.NONE));
             return;
         }
         if (this.subStage.isPeakFor(this.realm)) {
             if (this.realm == Realm.GREAT_EMPEROR) {
-                this.currentQi = this.getMaxQi();
+                this.setCurrentQi(this.getMaxQi());
                 return;
             }
             // 主链路进阶：真仙→半圣→圣人→半帝→大帝（next() 跳过散仙旁支）
             Realm n = this.realm.next();
             if (n != this.realm) {
-                this.realm = n;
                 if (n == Realm.FOUNDATION_BUILDING && this.pendingFoundationDao != FoundationDao.NONE) {
                     this.foundationDao = this.pendingFoundationDao;
                     this.resetFoundationProgress();
@@ -2233,31 +2232,16 @@ implements INBTSerializable<CompoundTag> {
                     this.resetGoldenCoreProgress();
                     this.pendingGoldenCoreDao = GoldenCoreDao.NONE;
                 }
-                this.subStage = n.firstSubStage();
-                this.currentQi = this.getMaxQi();
-                this.ensureSpellsForRealm();
-                this.addUnallocatedZhenyuan(5);
-                this.addAllZhenyuanAttributes(5);
-                // 大境界突破加成（生命+灵气，按新境界档次递增）
-                this.applyBreakthroughBonus(true);
+                RealmTransition.apply(this, RealmTransition.Request.breakthrough(
+                        n, n.firstSubStage(), RealmTransition.RewardPolicy.MAJOR_BREAKTHROUGH));
                 return;
             }
-            this.currentQi = this.getMaxQi();
+            this.setCurrentQi(this.getMaxQi());
             return;
         }
-        this.subStage = this.subStage.nextFor(this.realm);
-        this.currentQi = this.getMaxQi();
-        // 锻体境界小突破：按新层数重算锻体加成固定值（永久继承）
-        if (this.realm == Realm.BODY_TEMPERING) {
-            this.refreshBodyTemperingInheritedHp();
-        }
-        if (this.realm != Realm.BODY_TEMPERING) {
-            int reward = 1 + this.spiritRoot.bonus().extraZhenyuanPerSubLevel() + PhysiqueBonusHelper.extraZhenyuanPerMinor(this.physique);
-            this.addUnallocatedZhenyuan(reward);
-            this.addAllZhenyuanAttributes(1);
-            // 小境界突破加成（生命+灵气，比大境界少）
-            this.applyBreakthroughBonus(false);
-        }
+        SubStage next = this.subStage.nextFor(this.realm);
+        RealmTransition.apply(this, RealmTransition.Request.breakthrough(
+                this.realm, next, RealmTransition.RewardPolicy.MINOR_BREAKTHROUGH));
     }
 
     public int getTotalZhenyuanEarned() {
@@ -2374,7 +2358,7 @@ implements INBTSerializable<CompoundTag> {
         this.tribulationBoltsPerWave = 1;
         this.clearPendingTribulationWave();
         if (this.realm == Realm.MORTAL) {
-            this.syncAutomaticZhenyuanAfterRealmDemotion(oldRealm, oldSub, Realm.MORTAL, SubStage.EARLY);
+            RealmTransition.applyFailure(this, Realm.MORTAL, SubStage.EARLY);
             return;
         }
         Realm targetRealm = this.realm;
@@ -2392,17 +2376,12 @@ implements INBTSerializable<CompoundTag> {
         } else {
             targetSub = this.subStage.prevFor(this.realm);
         }
-        this.realm = targetRealm;
-        this.subStage = targetSub;
-        // 境界跌落：清空渡劫隐藏五维奖励（支持重修重得更高数值）
-        this.clearTribulationBonus();
-        this.syncAutomaticZhenyuanAfterRealmDemotion(oldRealm, oldSub, targetRealm, targetSub);
-        this.setCurrentQi(0L);
-        this.ensureSpellsForRealm();
+        RealmTransition.applyFailure(this, targetRealm, targetSub);
     }
 
     public void copyFrom(CultivationData other) {
         boolean wasSoul = this.soulState;
+        this.dataVersion = other.dataVersion;
         this.realm = other.realm;
         this.subStage = other.subStage;
         this.bodyTemperingHpInherited = other.bodyTemperingHpInherited;
@@ -2423,6 +2402,8 @@ implements INBTSerializable<CompoundTag> {
         this.tribulationBoltsRemainingInWave = other.tribulationBoltsRemainingInWave;
         this.tribulationBoltCooldown = other.tribulationBoltCooldown;
         this.tribulationBoltIndexInWave = other.tribulationBoltIndexInWave;
+        this.tribulationType = other.tribulationType;
+        this.tribulationDamageRatio = other.tribulationDamageRatio;
         this.attack = other.attack;
         this.defense = other.defense;
         this.critRate = other.critRate;
@@ -2466,6 +2447,8 @@ implements INBTSerializable<CompoundTag> {
         this.attrAgility = other.attrAgility;
         this.attrSpellPower = other.attrSpellPower;
         this.attrQiSea = other.attrQiSea;
+        this.breakthroughHpBonus = other.breakthroughHpBonus;
+        this.breakthroughQiBonus = other.breakthroughQiBonus;
         this.zhenyuanMajorAutoRebalanceApplied = other.zhenyuanMajorAutoRebalanceApplied;
         this.bodyDefenseEnabled = other.bodyDefenseEnabled;
         this.disabledBonusCategories.clear();
@@ -2479,6 +2462,7 @@ implements INBTSerializable<CompoundTag> {
         this.zhujiDanEaten = other.zhujiDanEaten;
         this.bloodPillEaten = other.bloodPillEaten;
         this.daoFruitEaten = other.daoFruitEaten;
+        this.daoFruitTotalEaten = other.daoFruitTotalEaten;
         this.zhujiSecretUsed = other.zhujiSecretUsed;
         this.pendingFoundationDao = other.pendingFoundationDao;
         this.goldenCoreDao = other.goldenCoreDao;
@@ -2490,6 +2474,10 @@ implements INBTSerializable<CompoundTag> {
         this.creationFruitEaten = other.creationFruitEaten;
         this.pendingGoldenCoreDao = other.pendingGoldenCoreDao;
         this.tribulationStrikeDamageOverride = other.tribulationStrikeDamageOverride;
+        this.tribulationBonusEntries.clear();
+        for (double[] entry : other.tribulationBonusEntries) {
+            this.tribulationBonusEntries.add(entry.clone());
+        }
         this.soulState = other.soulState;
         this.soulTicks = other.soulTicks;
         this.reincarnationPending = other.reincarnationPending;
@@ -2524,6 +2512,7 @@ implements INBTSerializable<CompoundTag> {
 
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
+        tag.putInt("dataVersion", CURRENT_DATA_VERSION);
         tag.putString("realm", this.realm.id());
         tag.putString("subStage", this.subStage.id());
         tag.putLong("currentQi", this.currentQi);
@@ -2632,6 +2621,8 @@ implements INBTSerializable<CompoundTag> {
         tag.putInt("creationFruitEaten", this.creationFruitEaten);
         tag.putString("pendingGoldenCoreDao", this.pendingGoldenCoreDao.id());
         tag.putInt("tribulationStrikeDamageOverride", this.tribulationStrikeDamageOverride);
+        tag.putString("tribulationType", this.getTribulationType().id());
+        tag.putDouble("tribulationDamageRatio", this.tribulationDamageRatio);
         tag.putBoolean("soulState", this.soulState);
         tag.putInt("soulTicks", this.soulTicks);
         tag.putBoolean("reincarnationPending", this.reincarnationPending);
@@ -2664,6 +2655,8 @@ implements INBTSerializable<CompoundTag> {
     }
 
     public void deserializeNBT(CompoundTag tag) {
+        int storedVersion = tag.contains("dataVersion", 3) ? tag.getInt("dataVersion") : 0;
+        this.dataVersion = Math.max(0, Math.min(CURRENT_DATA_VERSION, storedVersion));
         if (tag.contains("realm", 8)) {
             this.realm = Realm.byId(tag.getString("realm"));
         }
@@ -2828,6 +2821,9 @@ implements INBTSerializable<CompoundTag> {
         this.creationFruitEaten = tag.getInt("creationFruitEaten");
         this.pendingGoldenCoreDao = GoldenCoreDao.byId(tag.getString("pendingGoldenCoreDao"));
         this.tribulationStrikeDamageOverride = tag.getInt("tribulationStrikeDamageOverride");
+        this.tribulationType = TribulationType.byId(tag.getString("tribulationType"));
+        this.tribulationDamageRatio = tag.contains("tribulationDamageRatio", 6)
+                ? Math.max(0.0, tag.getDouble("tribulationDamageRatio")) : 0.0;
         boolean wasSoul = this.soulState;
         this.soulState = tag.getBoolean("soulState");
         this.soulTicks = tag.getInt("soulTicks");
@@ -2884,6 +2880,7 @@ implements INBTSerializable<CompoundTag> {
         this.setCurrentQi(this.currentQi);
         this.setCultivationProgress(this.cultivationProgress);
         this.ensureSpellsForRealm();
+        this.dataVersion = CURRENT_DATA_VERSION;
     }
 
     private void migrateLegacyImmortalIncantationSpell() {

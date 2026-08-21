@@ -20,6 +20,15 @@ import net.minecraft.world.phys.Vec3;
 public interface TribulationType {
     String id();
 
+    /**
+     * Resolves the persisted stable id. Unknown ids deliberately fall back to
+     * the only currently supported implementation instead of being converted
+     * through an enum ordinal or a random valid value.
+     */
+    static TribulationType byId(String id) {
+        return "lightning".equals(id) ? LIGHTNING : LIGHTNING;
+    }
+
     /** 生成劫的表现（闪电 / 火焰 / 黑雾 …） */
     void spawnEffect(ServerLevel level, ServerPlayer player, TribulationSpec spec, int strikeDamage);
 
