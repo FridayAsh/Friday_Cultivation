@@ -95,4 +95,23 @@ class RealmTransitionTest {
         assertTrue(data.getBreakthroughQiBonus() > 0L);
         assertTrue(data.getTribulationHealthBonus() > 0.0);
     }
+
+    @Test
+    void sameRealmSubstageDemotionDisablesLatestOrdinaryBreakthroughBonus() {
+        CultivationData data = new CultivationData();
+        RealmTransition.apply(data, RealmTransition.Request.adminEdit(
+                Realm.VOID_REFINING, Realm.VOID_REFINING.subStageAt(1)));
+        data.applyBreakthroughBonus(false);
+        assertTrue(data.getBreakthroughHpBonus() > 0L);
+
+        RealmTransition.apply(data, RealmTransition.Request.adminEdit(
+                Realm.VOID_REFINING, Realm.VOID_REFINING.firstSubStage()));
+        assertEquals(0L, data.getBreakthroughHpBonus());
+        assertEquals(0L, data.getBreakthroughQiBonus());
+
+        RealmTransition.apply(data, RealmTransition.Request.adminEdit(
+                Realm.VOID_REFINING, Realm.VOID_REFINING.subStageAt(1)));
+        assertTrue(data.getBreakthroughHpBonus() > 0L);
+        assertTrue(data.getBreakthroughQiBonus() > 0L);
+    }
 }

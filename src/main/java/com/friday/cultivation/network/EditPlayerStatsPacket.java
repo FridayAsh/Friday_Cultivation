@@ -18,6 +18,7 @@ import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.realm.SubStage;
 import com.friday.cultivation.cultivation.refining.RefiningRank;
 import com.friday.cultivation.event.CapabilityEvents;
+import com.friday.cultivation.event.TechniqueEffectHandler;
 import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -105,6 +106,7 @@ public class EditPlayerStatsPacket {
                 data.setBoneAge(EditPlayerStatsPacket.clamp(m.boneAgeYears, 0, 1000000));
                 data.setCurrentQi(data.getCurrentQi());
                 data.setCultivationProgress(data.getCultivationProgress());
+                TechniqueEffectHandler.refreshMaxHealth(player);
                 CapabilityEvents.syncToClient(player);
                 player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.stat_editor.applied"), true);
             });

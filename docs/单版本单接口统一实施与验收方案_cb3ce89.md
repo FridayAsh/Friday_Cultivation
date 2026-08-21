@@ -308,6 +308,7 @@ record TribulationRewardSnapshot(
     String rewardKey,
     String sourceRealmId,
     String unlockRealmId,
+    String unlockSubStageId,
     long healthBonus,
     long maxQiBonus,
     int constitutionBonus,
@@ -325,7 +326,7 @@ record TribulationRewardSnapshot(
 - 在境界变化和普通突破奖励应用前获取快照；
 - 按渡劫时属性计算固定增量；
 - 一项属性只能在一个结算层应用一次；
-- 当前境界低于 `unlockRealmId` 时停用，但不破坏历史记录；
+- 当前完整进度低于 `unlockRealmId + unlockSubStageId` 时停用，但不破坏历史记录；
 - 相同突破里程碑使用稳定 `rewardKey`，重新完成时替换该条记录，不重复叠加；
 - 是否包含某一维度必须在奖励维度表明确，禁止注释和 Implementation 不一致；
 - 禁止保存 Realm ordinal。
@@ -581,11 +582,13 @@ FlightState 唯一状态
 1. 玩家仍处于练气时读取渡劫前权威属性。
 2. 计算天骄档位和奖励比例。
 3. 把每个受支持维度计算成固定增量。例如渡劫前最终生命为 100、奖励比例 50%，则该条记录的固定生命增量为 50。
-4. 记录该奖励对应的目标境界稳定 ID（筑基）。
+4. 记录该奖励对应的目标境界和目标子阶段稳定 ID（筑基初期）。
 5. 执行 RealmTransition 进入筑基。
 6. 通过唯一奖励账本应用固定增量。
-7. 当前境界低于筑基时该条奖励停用；重新达到筑基时按账本规则恢复。
+7. 当前境界或同境界子阶段低于筑基初期时该条奖励停用；重新达到该完整进度时按账本规则恢复。
 8. 相同突破里程碑重修时替换该里程碑记录，禁止利用令牌反复叠加。
+
+普通突破累计生命/灵气奖励也必须保存最新目标子阶段，不能只保存目标境界；否则同境界中期降到初期时仍会错误生效。
 
 ### 奖励维度表
 
@@ -617,7 +620,7 @@ FlightState 唯一状态
 ### 测试
 
 - 100×50%=50 的固定生命示例；
-- 境界下降停用、回升恢复；
+- 境界或同境界子阶段下降时停用、回升时恢复；
 - 不同奖励条目只相加固定值，不连乘；
 - 同一里程碑重修不重复叠加；
 - 死亡、重登、重启后数值不变；
@@ -1307,7 +1310,7 @@ Gradle 输出：
 1. **RealmTopology**：唯一境界 id、主链位置、等级比较、前后境界、旁支关系。外部禁止 Realm ordinal 参与等级、持久化和协议。
 2. **RealmTransition**：唯一境界转换事务；内部一次完成境界、子阶段、真元、悟道、散仙状态、奖励生效、生命/灵气刷新和同步。
 3. **TribulationSession**：唯一运行 Spec；启动、存档、恢复、事件、显示、伤害都读取同一对象。
-4. **TribulationRewardSnapshot**：唯一固定快照奖励账本；使用稳定 realm id/链位置，不保存 ordinal，不再让 Attribute 与 Helper 重复套倍率。
+4. **TribulationRewardSnapshot**：唯一固定快照奖励账本；使用稳定 realm id、sub-stage id 与完整链位置，不保存 ordinal，不再让 Attribute 与 Helper 重复套倍率。
 5. **FlightState**：只存 Capability；静态 Map 不保存玩家权威状态，事件只注册一次，并明确登录/退出/死亡/重启物品归还。
 6. **PlayerProgressData**：所有需持久化/死亡继承的数据统一进入 CultivationData，并建立字段矩阵测试：字段必须明确属于 copy、NBT、同步中的哪些集合。
 7. **ServerAuthorization**：所有 C2S 开发/管理功能统一走服务端权限策略，UI 和持有物品不能替代服务端校验。

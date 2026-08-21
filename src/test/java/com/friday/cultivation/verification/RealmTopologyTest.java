@@ -49,6 +49,23 @@ class RealmTopologyTest {
     }
 
     @Test
+    void fullRealmAndSubstageProgressIsStrictlyOrdered() {
+        List<Realm> chain = RealmTopology.mainChain();
+        for (int i = 0; i < chain.size(); i++) {
+            Realm realm = chain.get(i);
+            assertTrue(RealmTopology.isAtLeast(realm, realm.lastSubStage(), realm, realm.firstSubStage()));
+            if (realm.subStageCount() > 1) {
+                assertFalse(RealmTopology.isAtLeast(realm, realm.firstSubStage(), realm, realm.lastSubStage()));
+            }
+            if (i + 1 < chain.size()) {
+                Realm next = chain.get(i + 1);
+                assertTrue(RealmTopology.isAtLeast(next, next.firstSubStage(), realm, realm.lastSubStage()));
+                assertFalse(RealmTopology.isAtLeast(realm, realm.lastSubStage(), next, next.firstSubStage()));
+            }
+        }
+    }
+
+    @Test
     void businessSourcesDoNotUseRealmOrdinal() throws Exception {
         long forbidden = Files.walk(Path.of("src", "main", "java"))
                 .filter(path -> path.toString().endsWith(".java"))

@@ -317,6 +317,7 @@ public final class TribulationHandler {
             }
             net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.Failed(player, before, beforeStage));
         }
+        TechniqueEffectHandler.refreshMaxHealth(player);
         CapabilityEvents.syncToClient(player);
         return wasInTribulation;
     }

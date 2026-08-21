@@ -47,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class CultivationData
 implements INBTSerializable<CompoundTag> {
-    public static final int CURRENT_DATA_VERSION = 3;
+    public static final int CURRENT_DATA_VERSION = 4;
     public static final int MAX_TIME_ACCELERATION_MULTIPLIER = 10000;
     private static final int[] TIME_ACCELERATION_MULTIPLIERS = new int[]{2, 5, 10, 100, 1000, 10000};
     private int dataVersion = CURRENT_DATA_VERSION;
@@ -128,6 +128,8 @@ implements INBTSerializable<CompoundTag> {
     private long breakthroughQiBonus = 0L;
     /** 普通突破加成的最新目标境界；低于该境界时原始值保留但不生效。 */
     private String breakthroughBonusTargetRealmId = "";
+    /** 普通突破加成的最新目标子阶段；与目标境界共同组成完整启用阈值。 */
+    private String breakthroughBonusTargetSubStageId = "";
     private boolean zhenyuanMajorAutoRebalanceApplied = false;
     private boolean bodyDefenseEnabled = true;
     private final Set<String> disabledBonusCategories = new LinkedHashSet<String>();
@@ -547,8 +549,8 @@ implements INBTSerializable<CompoundTag> {
      * 突破加成算法（锻体后的所有境界，无论大/小境界突破都累加）：
      * - 百分比化：每次突破 + 标准生命值(当前境界) × 5%，大境界 ×1.0、小境界 ×0.35
      * - 灵气加成约为生命加成的 5 倍
-     * - 加成绑定到本次突破后的目标境界；降到目标境界以下时只停用，不删除快照，
-     *   重新达到目标境界后恢复。这样普通突破与渡劫固定快照使用同一条失效语义。
+     * - 加成绑定到本次突破后的目标境界和子阶段；降到完整目标进度以下时只停用，
+     *   重新达到目标进度后恢复。这样普通突破与渡劫固定快照使用同一条失效语义。
      */
     public void applyBreakthroughBonus(boolean majorBreakthrough) {
         if (this.realm == null || this.realm == Realm.MORTAL || this.realm == Realm.BODY_TEMPERING || this.realm == Realm.LOOSE_IMMORTAL) {
@@ -561,6 +563,7 @@ implements INBTSerializable<CompoundTag> {
         this.breakthroughHpBonus += hpGain;
         this.breakthroughQiBonus += qiGain;
         this.breakthroughBonusTargetRealmId = this.realm.id();
+        this.breakthroughBonusTargetSubStageId = this.subStage.id();
     }
 
     private boolean isBreakthroughBonusActive() {
@@ -568,7 +571,25 @@ implements INBTSerializable<CompoundTag> {
             return false;
         }
         Realm target = RealmTopology.find(this.breakthroughBonusTargetRealmId).orElse(null);
-        return target != null && !RealmTopology.isBefore(this.realm, target);
+        if (target == null) {
+            return false;
+        }
+        SubStage targetSub = SubStage.byId(this.breakthroughBonusTargetSubStageId, target);
+        return RealmTopology.isAtLeast(this.realm, this.subStage, target, targetSub);
+    }
+
+    private SubStage inferLegacyBreakthroughTargetSubStage(Realm target) {
+        SubStage inferred = this.realm == target ? this.subStage : target.firstSubStage();
+        for (TribulationBonusSnapshot snapshot : this.tribulationBonusLedger.values()) {
+            if (!target.id().equals(snapshot.targetRealmId())) {
+                continue;
+            }
+            SubStage snapshotSub = SubStage.byId(snapshot.targetSubStageId(), target);
+            if (RealmTopology.isAtLeast(target, snapshotSub, target, inferred)) {
+                inferred = snapshotSub;
+            }
+        }
+        return inferred;
     }
 
     public void addAllZhenyuanAttributes(int delta) {
@@ -798,6 +819,7 @@ implements INBTSerializable<CompoundTag> {
         return new TribulationBonusSnapshot(
                 rewardKey,
                 targetRealm.id(),
+                subId,
                 percent,
                 Math.max(0.0, Math.round(sourceHealth * percent)),
                 CultivationData.saturatedMultiplyLong(sourceQi, percent),
@@ -820,7 +842,7 @@ implements INBTSerializable<CompoundTag> {
     }
 
     private boolean isTribulationBonusActive(TribulationBonusSnapshot snapshot) {
-        return snapshot != null && snapshot.isActive(this.realm);
+        return snapshot != null && snapshot.isActive(this.realm, this.subStage);
     }
 
     public double getTribulationHealthBonus() {
@@ -2506,6 +2528,7 @@ implements INBTSerializable<CompoundTag> {
         this.breakthroughHpBonus = other.breakthroughHpBonus;
         this.breakthroughQiBonus = other.breakthroughQiBonus;
         this.breakthroughBonusTargetRealmId = other.breakthroughBonusTargetRealmId;
+        this.breakthroughBonusTargetSubStageId = other.breakthroughBonusTargetSubStageId;
         this.zhenyuanMajorAutoRebalanceApplied = other.zhenyuanMajorAutoRebalanceApplied;
         this.bodyDefenseEnabled = other.bodyDefenseEnabled;
         this.disabledBonusCategories.clear();
@@ -2647,6 +2670,7 @@ implements INBTSerializable<CompoundTag> {
         tag.putLong("breakthroughHpBonus", this.breakthroughHpBonus);
         tag.putLong("breakthroughQiBonus", this.breakthroughQiBonus);
         tag.putString("breakthroughBonusTargetRealm", this.breakthroughBonusTargetRealmId == null ? "" : this.breakthroughBonusTargetRealmId);
+        tag.putString("breakthroughBonusTargetSubStage", this.breakthroughBonusTargetSubStageId == null ? "" : this.breakthroughBonusTargetSubStageId);
         tag.putBoolean("zhenyuanMajorAutoRebalanceApplied", this.zhenyuanMajorAutoRebalanceApplied);
         tag.putBoolean("bodyDefenseEnabled", this.bodyDefenseEnabled);
         ListTag disabledBonusList = new ListTag();
@@ -2864,6 +2888,21 @@ implements INBTSerializable<CompoundTag> {
         if (this.breakthroughBonusTargetRealmId.isBlank()) {
             this.breakthroughHpBonus = 0L;
             this.breakthroughQiBonus = 0L;
+            this.breakthroughBonusTargetSubStageId = "";
+        } else {
+            Realm breakthroughTarget = RealmTopology.find(this.breakthroughBonusTargetRealmId).orElse(null);
+            if (breakthroughTarget == null) {
+                this.breakthroughHpBonus = 0L;
+                this.breakthroughQiBonus = 0L;
+                this.breakthroughBonusTargetRealmId = "";
+                this.breakthroughBonusTargetSubStageId = "";
+            } else if (tag.contains("breakthroughBonusTargetSubStage", 8)) {
+                this.breakthroughBonusTargetSubStageId = SubStage.byId(
+                        tag.getString("breakthroughBonusTargetSubStage"), breakthroughTarget).id();
+            } else {
+                // v3 只有目标境界：优先结合当前进度与同境界渡劫 rewardKey 恢复最新子阶段。
+                this.breakthroughBonusTargetSubStageId = this.inferLegacyBreakthroughTargetSubStage(breakthroughTarget).id();
+            }
         }
         this.zhenyuanMajorAutoRebalanceApplied = tag.contains("zhenyuanMajorAutoRebalanceApplied", 1) && tag.getBoolean("zhenyuanMajorAutoRebalanceApplied");
         this.bodyDefenseEnabled = !tag.contains("bodyDefenseEnabled", 1) || tag.getBoolean("bodyDefenseEnabled");

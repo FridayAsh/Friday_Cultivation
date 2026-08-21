@@ -122,6 +122,7 @@ public final class LooseImmortalHandler {
                 LooseImmortalHandler.becomeLooseImmortal(player, data);
             } else {
                 data.demoteOnFailure();
+                TechniqueEffectHandler.refreshMaxHealth(player);
                 SoulStateHandler.enterSoulState(player, false, false);
                 SoulStateHandler.beginVoluntaryDifuTransfer(player);
                 CapabilityEvents.syncToClient(player);
@@ -133,6 +134,7 @@ public final class LooseImmortalHandler {
     public static void becomeLooseImmortal(ServerPlayer player, CultivationData data) {
         long next = player.serverLevel().getGameTime() + 12000000L;
         data.becomeLooseImmortal(next);
+        TechniqueEffectHandler.refreshMaxHealth(player);
         player.setHealth(Math.max(1.0f, Math.min(player.getHealth(), player.getMaxHealth())));
         LooseImmortalHandler.grantLooseImmortalAdvancement(player);
         CapabilityEvents.syncToClient(player);
@@ -149,6 +151,7 @@ public final class LooseImmortalHandler {
         int before = data.getLooseImmortalTribulations();
         long next = player.serverLevel().getGameTime() + 12000000L;
         CultivationData.LooseImmortalPromotionResult promotion = data.promoteLooseImmortal(next);
+        TechniqueEffectHandler.refreshMaxHealth(player);
         CapabilityEvents.syncToClient(player);
         if (!promotion.promoted()) {
             return;

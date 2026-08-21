@@ -9,6 +9,7 @@ import com.friday.cultivation.cultivation.realm.Realm;
 import com.friday.cultivation.event.tribulation.TribulationSpec;
 import com.friday.cultivation.event.tribulation.TribulationType;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.SharedConstants;
 import org.junit.jupiter.api.BeforeAll;
@@ -119,5 +120,37 @@ class CultivationDataPersistenceTest {
         assertEquals(0L, loaded.getBreakthroughHpBonus());
         assertEquals(0L, loaded.getBreakthroughQiBonus());
         assertEquals(0L, loaded.getMaxQi());
+    }
+
+    @Test
+    void versionOneLedgerMigratesSubstageAndDisablesItBelowMilestone() {
+        CompoundTag legacyPlayer = new CultivationData().serializeNBT();
+        legacyPlayer.putString("realm", Realm.VOID_REFINING.id());
+        legacyPlayer.putString("subStage", Realm.VOID_REFINING.firstSubStage().id());
+        legacyPlayer.putLong("breakthroughHpBonus", 124L);
+        legacyPlayer.putLong("breakthroughQiBonus", 620L);
+        legacyPlayer.putString("breakthroughBonusTargetRealm", Realm.VOID_REFINING.id());
+        legacyPlayer.remove("breakthroughBonusTargetSubStage");
+        CompoundTag legacySnapshot = new CompoundTag();
+        legacySnapshot.putInt("version", 1);
+        legacySnapshot.putString("rewardKey", "realm:void_refining:middle");
+        legacySnapshot.putString("targetRealmId", Realm.VOID_REFINING.id());
+        legacySnapshot.putDouble("sourcePercent", 0.30);
+        legacySnapshot.putDouble("healthBonus", 1314.0);
+        ListTag ledger = new ListTag();
+        ledger.add(legacySnapshot);
+        legacyPlayer.put("tribulationBonusLedger", ledger);
+
+        CultivationData loaded = new CultivationData();
+        loaded.deserializeNBT(legacyPlayer);
+
+        assertEquals(0.0, loaded.getTribulationHealthBonus(), 0.000001);
+        assertEquals(0L, loaded.getBreakthroughHpBonus());
+        CompoundTag migratedPlayer = loaded.serializeNBT();
+        assertEquals("middle", migratedPlayer.getString("breakthroughBonusTargetSubStage"));
+        CompoundTag migratedSnapshot = migratedPlayer
+                .getList("tribulationBonusLedger", 10).getCompound(0);
+        assertEquals(2, migratedSnapshot.getInt("version"));
+        assertEquals("middle", migratedSnapshot.getString("targetSubStageId"));
     }
 }

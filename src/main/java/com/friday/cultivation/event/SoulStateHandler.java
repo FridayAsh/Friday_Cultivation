@@ -918,6 +918,7 @@ public final class SoulStateHandler {
             if (!tribulationFailureApplied) {
                 data.demoteOnFailure();
             }
+            TechniqueEffectHandler.refreshMaxHealth(player);
             PENDING_VANILLA_DAMAGE_SOURCES.put(player.getUUID(), event.getSource());
             SoulStateHandler.enterSoulState(player, data);
         }

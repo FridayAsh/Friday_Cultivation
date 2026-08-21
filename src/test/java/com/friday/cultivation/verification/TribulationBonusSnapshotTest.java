@@ -10,6 +10,7 @@ import com.friday.cultivation.cultivation.TribulationBonusSnapshot;
 import com.friday.cultivation.cultivation.realm.Realm;
 import net.minecraft.SharedConstants;
 import net.minecraft.server.Bootstrap;
+import net.minecraft.nbt.CompoundTag;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -62,6 +63,44 @@ class TribulationBonusSnapshotTest {
         assertEquals(1, data.getTribulationBonusSnapshots().size());
         assertEquals(50.0, data.getTribulationHealthBonus(), 0.000001);
         assertTrue(data.getTribulationConstitutionBonus() == 2);
+    }
+
+    @Test
+    void sameRealmLowerSubstageDisablesFutureTribulationSnapshot() {
+        CultivationData data = new CultivationData();
+        RealmTransition.apply(data, RealmTransition.Request.adminEdit(
+                Realm.VOID_REFINING, Realm.VOID_REFINING.firstSubStage()));
+        data.recordTribulationBonus(new TribulationBonusSnapshot(
+                "realm:void_refining:middle", Realm.VOID_REFINING.id(),
+                0.30, 1314.0, 20676L, 17, 17, 17, 17, 17));
+
+        assertEquals(0.0, data.getTribulationHealthBonus(), 0.000001);
+        assertEquals(0L, data.getTribulationMaxQiBonus());
+        assertEquals(0, data.getTribulationConstitutionBonus());
+
+        RealmTransition.apply(data, RealmTransition.Request.adminEdit(
+                Realm.VOID_REFINING, Realm.VOID_REFINING.subStageAt(1)));
+        assertEquals(1314.0, data.getTribulationHealthBonus(), 0.000001);
+
+        RealmTransition.apply(data, RealmTransition.Request.adminEdit(
+                Realm.VOID_REFINING, Realm.VOID_REFINING.firstSubStage()));
+        assertEquals(0.0, data.getTribulationHealthBonus(), 0.000001);
+    }
+
+    @Test
+    void versionOneSnapshotMigratesTargetSubstageFromRewardKey() {
+        CompoundTag legacy = new CompoundTag();
+        legacy.putInt("version", 1);
+        legacy.putString("rewardKey", "realm:void_refining:middle");
+        legacy.putString("targetRealmId", Realm.VOID_REFINING.id());
+        legacy.putDouble("sourcePercent", 0.30);
+        legacy.putDouble("healthBonus", 1314.0);
+
+        TribulationBonusSnapshot migrated = TribulationBonusSnapshot.fromTag(legacy);
+
+        assertEquals("middle", migrated.targetSubStageId());
+        assertFalse(migrated.isActive(Realm.VOID_REFINING, Realm.VOID_REFINING.firstSubStage()));
+        assertTrue(migrated.isActive(Realm.VOID_REFINING, Realm.VOID_REFINING.subStageAt(1)));
     }
 
     @Test

@@ -207,6 +207,29 @@ public final class RealmTopology {
         return actual != null && required != null && !isAtLeast(actual, required);
     }
 
+    /**
+     * 比较包含子阶段的完整境界进度。不同境界先遵循主链/散仙旁支关系；
+     * 只有位于同一境界时，才继续比较该境界内的子阶段顺序。
+     */
+    public static boolean isAtLeast(Realm actualRealm, SubStage actualSubStage,
+                                    Realm requiredRealm, SubStage requiredSubStage) {
+        if (!isAtLeast(actualRealm, requiredRealm)) {
+            return false;
+        }
+        if (actualRealm != requiredRealm) {
+            return true;
+        }
+        SubStage safeActual = actualSubStage == null ? actualRealm.firstSubStage() : actualSubStage;
+        SubStage safeRequired = requiredSubStage == null ? requiredRealm.firstSubStage() : requiredSubStage;
+        return progressionIndex(actualRealm, safeActual) >= progressionIndex(requiredRealm, safeRequired);
+    }
+
+    public static boolean isBefore(Realm actualRealm, SubStage actualSubStage,
+                                   Realm requiredRealm, SubStage requiredSubStage) {
+        return actualRealm != null && requiredRealm != null
+                && !isAtLeast(actualRealm, actualSubStage, requiredRealm, requiredSubStage);
+    }
+
     public static boolean isKnown(Realm realm) {
         return realm != null && (MAIN_INDEX.containsKey(realm) || realm == Realm.LOOSE_IMMORTAL);
     }

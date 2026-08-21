@@ -135,7 +135,6 @@ public final class TechniqueEffectHandler {
             return;
         }
         ServerPlayer sp = (ServerPlayer)player;
-        TechniqueEffectHandler.clearLegacyTribulationHealthModifier(sp.getAttribute(Attributes.MAX_HEALTH));
         CultivationData data = CultivationCapability.get((Player)sp).orElse(null);
         Technique t = TechniqueBonusHelper.equippedOf((Player)sp);
         Technique.Bonus bonus = t == null ? Technique.Bonus.NONE : t.bonus();
@@ -173,9 +172,8 @@ public final class TechniqueEffectHandler {
         // 突破累计生命加成（每次大/小境界突破累加；data 可能为 null，如死亡/复活瞬间 capability 未附加）
         double breakthroughHp = data == null ? 0.0 : (double)data.getBreakthroughHpBonus();
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BREAKTHROUGH_HP, "xiaoxiang_breakthrough_hp", breakthroughHp, AttributeModifier.Operation.ADDITION);
-        // 渡劫固定快照生命加成：只通过这一条 ADDITION 应用，禁止再次乘算。
-        double tribulationHp = data == null ? 0.0 : data.getTribulationHealthBonus();
-        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_TRIBULATION_HP_SNAPSHOT, "xiaoxiang_tribulation_hp_snapshot", tribulationHp, AttributeModifier.Operation.ADDITION);
+        // 渡劫固定快照生命加成：统一入口同时清理旧倍率，并按完整境界+子阶段阈值投影。
+        TechniqueEffectHandler.syncTribulationHealthModifier(sp.getAttribute(Attributes.MAX_HEALTH), data);
         double zhenyuanSpeed = movementBonusEnabled ? ZhenyuanBonusHelper.agilityMoveSpeedMult((Player)sp) : 0.0;
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MOVEMENT_SPEED, UUID_ZHENYUAN_SPEED, "xiaoxiang_zhenyuan_speed", zhenyuanSpeed, AttributeModifier.Operation.MULTIPLY_BASE);
         TechniqueEffectHandler.syncInfiniteEffect(sp, MobEffects.NIGHT_VISION, bonus.nightVision);
@@ -318,9 +316,9 @@ public final class TechniqueEffectHandler {
         if (sp == null) {
             return;
         }
-        TechniqueEffectHandler.clearLegacyTribulationHealthModifier(sp.getAttribute(Attributes.MAX_HEALTH));
         CultivationData data = CultivationCapability.get((Player)sp).orElse(null);
         if (data == null) {
+            TechniqueEffectHandler.syncTribulationHealthModifier(sp.getAttribute(Attributes.MAX_HEALTH), null);
             return;
         }
         // 与 onPlayerTick 完全一致的 MAX_HEALTH 加成重算
@@ -349,9 +347,8 @@ public final class TechniqueEffectHandler {
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_REALM_BASE_HP, "xiaoxiang_realm_base_hp", realmBaseHp, AttributeModifier.Operation.ADDITION);
         // 突破累计生命加成（每次大/小境界突破累加）
         TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_BREAKTHROUGH_HP, "xiaoxiang_breakthrough_hp", (double)data.getBreakthroughHpBonus(), AttributeModifier.Operation.ADDITION);
-        // 渡劫固定快照生命加成：只通过这一条 ADDITION 应用，禁止再次乘算。
-        double tribulationHp = data == null ? 0.0 : data.getTribulationHealthBonus();
-        TechniqueEffectHandler.applyAttributeModifier((Player)sp, Attributes.MAX_HEALTH, UUID_TRIBULATION_HP_SNAPSHOT, "xiaoxiang_tribulation_hp_snapshot", tribulationHp, AttributeModifier.Operation.ADDITION);
+        // 渡劫固定快照生命加成：统一入口同时清理旧倍率，并按完整境界+子阶段阈值投影。
+        TechniqueEffectHandler.syncTribulationHealthModifier(sp.getAttribute(Attributes.MAX_HEALTH), data);
         // clamp 当前生命值到新上限
         if (sp.getHealth() > sp.getMaxHealth()) {
             sp.setHealth(sp.getMaxHealth());
@@ -394,6 +391,10 @@ public final class TechniqueEffectHandler {
 
     private static void applyAttributeModifier(Player p, Attribute attr, UUID uuid, String name, double value, AttributeModifier.Operation op) {
         AttributeInstance inst = p.getAttribute(attr);
+        TechniqueEffectHandler.applyAttributeModifier(inst, uuid, name, value, op);
+    }
+
+    private static void applyAttributeModifier(AttributeInstance inst, UUID uuid, String name, double value, AttributeModifier.Operation op) {
         if (inst == null) {
             return;
         }
@@ -417,6 +418,16 @@ public final class TechniqueEffectHandler {
         if (instance != null) {
             instance.removeModifier(UUID_LEGACY_TRIBULATION_HP_MULT);
         }
+    }
+
+    static void syncTribulationHealthModifier(AttributeInstance instance, CultivationData data) {
+        if (instance == null) {
+            return;
+        }
+        TechniqueEffectHandler.clearLegacyTribulationHealthModifier(instance);
+        double activeBonus = data == null ? 0.0 : data.getTribulationHealthBonus();
+        TechniqueEffectHandler.applyAttributeModifier(instance, UUID_TRIBULATION_HP_SNAPSHOT,
+                "xiaoxiang_tribulation_hp_snapshot", activeBonus, AttributeModifier.Operation.ADDITION);
     }
 
     @SubscribeEvent(priority=EventPriority.HIGH)
