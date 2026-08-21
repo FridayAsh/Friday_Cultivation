@@ -32,8 +32,25 @@ public interface TribulationType {
     /** 生成劫的表现（闪电 / 火焰 / 黑雾 …） */
     void spawnEffect(ServerLevel level, ServerPlayer player, TribulationSpec spec, int strikeDamage);
 
+    /**
+     * Session-aware rendering seam for future tribulation types.
+     * Implementations that need the fixed tier/route can override this method;
+     * the current lightning implementation remains compatible through the
+     * existing spec-only method.
+     */
+    default void spawnEffect(ServerLevel level, ServerPlayer player, TribulationSession session, int strikeDamage) {
+        this.spawnEffect(level, player,
+                session == null ? TribulationSpec.of(0, 1, 0) : session.spec(), strikeDamage);
+    }
+
     /** 伤害结算（雷=闪电伤害；心魔=百分比扣血…）。返回是否造成伤害。 */
     boolean applyDamage(ServerLevel level, ServerPlayer player, TribulationSpec spec, int strikeDamage);
+
+    /** Session-aware damage seam; preserves one fixed source of tier/route context. */
+    default boolean applyDamage(ServerLevel level, ServerPlayer player, TribulationSession session, int strikeDamage) {
+        return this.applyDamage(level, player,
+                session == null ? TribulationSpec.of(0, 1, 0) : session.spec(), strikeDamage);
+    }
 
     /** 雷劫实现 */
     TribulationType LIGHTNING = new LightningTribulation();

@@ -750,7 +750,17 @@ extends Screen {
                 int boltsPerWave = realm.tribulationBoltsPerWave(sub);
                 int damage = realm.tribulationStrikeDamage();
                 if (strikes > 0) {
-                    hint = Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_tribulation", (Object[])new Object[]{Realm.formatTribulationCount(strikes, boltsPerWave), damage});
+                    TribulationTier tier = TribulationScalingHelper.tier(Minecraft.getInstance().player, data);
+                    TribulationSpec finalSpec = TribulationScalingHelper.scaleSpec(Minecraft.getInstance().player, data,
+                            new TribulationSpec(strikes, boltsPerWave, damage, 0.0, 0, data.getTribulationType()));
+                    hint = tier.difficultyMult() > 1.01
+                            ? Component.translatable("screen.friday_cultivation.breakthrough.hint_tribulation_tier",
+                                    Component.translatable(tier.translationKey()),
+                                    Realm.formatTribulationCount(finalSpec.waves(), finalSpec.boltsPerWave()),
+                                    finalSpec.strikeDamage())
+                            : Component.translatable("screen.friday_cultivation.breakthrough.hint_tribulation",
+                                    Realm.formatTribulationCount(finalSpec.waves(), finalSpec.boltsPerWave()),
+                                    finalSpec.strikeDamage());
                 } else {
                     hint = Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_normal");
                 }

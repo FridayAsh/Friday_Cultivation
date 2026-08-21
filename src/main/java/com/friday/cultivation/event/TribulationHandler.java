@@ -52,6 +52,8 @@ import com.friday.cultivation.event.tribulation.TribulationDefense;
 import com.friday.cultivation.event.tribulation.TribulationEvents;
 import com.friday.cultivation.event.tribulation.TribulationScalingHelper;
 import com.friday.cultivation.event.tribulation.TribulationSpec;
+import com.friday.cultivation.event.tribulation.TribulationSession;
+import com.friday.cultivation.event.tribulation.TribulationTier;
 import com.friday.cultivation.event.tribulation.TribulationType;
 import com.friday.cultivation.event.NascentSoulOutOfBodyHandler;
 import com.friday.cultivation.event.SectProtectionDomeHandler;
@@ -153,7 +155,8 @@ public final class TribulationHandler {
         level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.WEATHER, TribulationConstants.THUNDER_SOUND_VOLUME, TribulationConstants.THUNDER_SOUND_PITCH);
         level.sendParticles((ParticleOptions)ParticleTypes.CLOUD, player.getX(), player.getY() + TribulationConstants.CLOUD_Y_OFFSET, player.getZ(), TribulationConstants.CLOUD_PARTICLE_COUNT, TribulationConstants.CLOUD_PARTICLE_RADIUS, TribulationConstants.CLOUD_PARTICLE_HEIGHT, TribulationConstants.CLOUD_PARTICLE_SPREAD, TribulationConstants.CLOUD_PARTICLE_SPEED);
         // 事件钩子：渡劫开始
-        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.Started(player, TribulationHandler.currentSpec(data)));
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.Started(player,
+                TribulationHandler.currentSpec(data), data.getTribulationSession()));
     }
 
     @SubscribeEvent
@@ -199,7 +202,8 @@ public final class TribulationHandler {
         }
         int strikeDmg = TribulationHandler.currentStrikeDamage(data);
         // 事件钩子：雷击前（可修改伤害）
-        TribulationEvents.BoltStrike strikeEvent = new TribulationEvents.BoltStrike(player, TribulationHandler.currentSpec(data), strikeDmg);
+        TribulationEvents.BoltStrike strikeEvent = new TribulationEvents.BoltStrike(player,
+                TribulationHandler.currentSpec(data), strikeDmg, data.getTribulationSession());
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(strikeEvent);
         strikeDmg = Math.max(0, (int) strikeEvent.getDamage());
         TribulationHandler.spawnTribulationBolt(level, player, strikeDmg);
@@ -213,7 +217,8 @@ public final class TribulationHandler {
         data.decrementTribulationStrikes();
         CapabilityEvents.syncToClient(player);
         // 事件钩子：每波结束
-        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.WaveEnd(player, data.getTribulationStrikesRemaining()));
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.WaveEnd(player,
+                data.getTribulationStrikesRemaining(), data.getTribulationSession()));
         if (!data.isInTribulation()) {
             TribulationHandler.onTribulationSuccess(player, data);
         }
@@ -252,7 +257,9 @@ public final class TribulationHandler {
     }
 
     private static void spawnTribulationBolt(ServerLevel level, ServerPlayer player, int strikeDmg) {
-        TribulationHandler.currentSpec(dataOf(player)).type().spawnEffect(level, player, TribulationHandler.currentSpec(dataOf(player)), strikeDmg);
+        CultivationData data = dataOf(player);
+        TribulationHandler.currentSpec(data).type().spawnEffect(level, player,
+                data == null ? null : data.getTribulationSession(), strikeDmg);
         TribulationHandler.applyTribulationBoltDamage(level, player, strikeDmg);
     }
 
@@ -271,20 +278,24 @@ public final class TribulationHandler {
             player.setRemainingFireTicks(0);
             return;
         }
-        TribulationHandler.currentSpec(data).type().applyDamage(level, player, TribulationHandler.currentSpec(data), Math.round(finalDmg));
+        TribulationHandler.currentSpec(data).type().applyDamage(level, player,
+                data == null ? null : data.getTribulationSession(), Math.round(finalDmg));
     }
 
     private static void onTribulationSuccess(ServerPlayer player, CultivationData data) {
+        TribulationSession session = data.getTribulationSession();
         if (data.isLooseImmortalTribulationActive()) {
             LooseImmortalHandler.completeTribulationSuccess(player, data);
             TribulationHandler.clearTribulationCloud(player);
-            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.Succeeded(player, data.getRealm(), data.getSubStage()));
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.Succeeded(player,
+                    data.getRealm(), data.getSubStage(), session));
             return;
         }
         Realm before = data.getRealm();
         SubStage beforeStage = data.getSubStage();
         TribulationHandler.completeBreakthrough(player, data, before, beforeStage, true);
-        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.Succeeded(player, data.getRealm(), data.getSubStage()));
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.Succeeded(player,
+                data.getRealm(), data.getSubStage(), session));
     }
 
     public static void completeBreakthroughWithoutTribulation(ServerPlayer player, CultivationData data) {
@@ -303,6 +314,7 @@ public final class TribulationHandler {
     public static boolean failCurrentTribulation(ServerPlayer player, CultivationData data) {
         Realm before = data.getRealm();
         SubStage beforeStage = data.getSubStage();
+        TribulationSession session = data.getTribulationSession();
         boolean wasInTribulation = data.isInTribulation();
         boolean looseImmortalTribulation = data.isLooseImmortalTribulationActive();
         TribulationHandler.clearDeathRuntimeStates(player, data);
@@ -315,7 +327,8 @@ public final class TribulationHandler {
                 data.demoteOnFailure();
                 player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.tribulation.failure", (Object[])new Object[]{before.displayName(), beforeStage.displayName(), data.getRealm().displayName(), data.getSubStage().displayName()}), false);
             }
-            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.Failed(player, before, beforeStage));
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new TribulationEvents.Failed(player,
+                    before, beforeStage, session));
         }
         TechniqueEffectHandler.refreshMaxHealth(player);
         CapabilityEvents.syncToClient(player);
@@ -324,18 +337,19 @@ public final class TribulationHandler {
 
     private static void completeBreakthrough(ServerPlayer player, CultivationData data, Realm before, SubStage beforeStage, boolean fromTribulation) {
         boolean minorBreakthrough;
-        double rewardPercent = fromTribulation ? TribulationScalingHelper.rewardPercent(player, data) : 0.0;
+        TribulationSession session = fromTribulation ? data.getTribulationSession() : null;
+        double rewardPercent = fromTribulation ? TribulationScalingHelper.rewardPercent(session) : 0.0;
         Realm rewardRealm = nextBreakthroughRealm(before, beforeStage);
         SubStage rewardSubStage = nextBreakthroughSubStage(before, beforeStage, rewardRealm);
         TribulationBonusSnapshot rewardSnapshot = fromTribulation
-                ? data.captureTribulationBonus(player, rewardPercent, rewardRealm, rewardSubStage) : null;
+                ? data.captureTribulationBonus(player, rewardPercent, rewardRealm, rewardSubStage, session) : null;
         data.advanceOnSuccess();
         data.clearTribulation();
         // 渡劫成功后写入渡劫前属性计算出的固定快照；同一里程碑覆盖旧记录。
         if (rewardSnapshot != null) {
             data.recordTribulationBonus(rewardSnapshot);
             player.displayClientMessage(Component.translatable("message.friday_cultivation.tribulation.tier_reward",
-                    Component.translatable(TribulationScalingHelper.tierTranslationKey(player, data)),
+                    Component.translatable(TribulationScalingHelper.tierTranslationKey(session)),
                     Math.round(rewardPercent * 100.0)), false);
         }
         // 突破后生命值、灵气值直接设为上限（灵气在 advanceOnSuccess 内已设满）
@@ -362,6 +376,7 @@ public final class TribulationHandler {
         if (before != data.getRealm()) {
             TribulationHandler.grantRealmAdvancement(player, data.getRealm());
         }
+        TribulationHandler.grantTianjiaoAdvancement(player, session);
     }
 
     private static Realm nextBreakthroughRealm(Realm before, SubStage beforeStage) {
@@ -451,6 +466,29 @@ public final class TribulationHandler {
             return;
         }
         ResourceLocation id = new ResourceLocation("friday_cultivation", "realms/" + realm.id());
+        Advancement advancement = player.getServer().getAdvancements().getAdvancement(id);
+        if (advancement == null) {
+            return;
+        }
+        AdvancementProgress progress = player.getAdvancements().getOrStartProgress(advancement);
+        if (progress.isDone()) {
+            return;
+        }
+        for (String criterion : progress.getRemainingCriteria()) {
+            player.getAdvancements().award(advancement, criterion);
+        }
+    }
+
+    /** 达到任一天骄档位时授予对应成就；档位来自成功渡劫的 Session。 */
+    private static void grantTianjiaoAdvancement(ServerPlayer player, TribulationSession session) {
+        if (player == null || session == null || session.looseImmortal()
+                || !TribulationScalingHelper.hasKnownTier(session)
+                || player.getServer() == null) {
+            return;
+        }
+        TribulationTier tier = TribulationScalingHelper.tier(session);
+        ResourceLocation id = new ResourceLocation("friday_cultivation",
+                "talent/" + tier.name().toLowerCase(java.util.Locale.ROOT));
         Advancement advancement = player.getServer().getAdvancements().getAdvancement(id);
         if (advancement == null) {
             return;

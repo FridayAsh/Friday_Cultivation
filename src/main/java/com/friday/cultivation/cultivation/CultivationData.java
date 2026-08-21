@@ -13,6 +13,7 @@ package com.friday.cultivation.cultivation;
 
 import com.friday.cultivation.event.tribulation.TribulationSpec;
 import com.friday.cultivation.event.tribulation.TribulationSession;
+import com.friday.cultivation.event.tribulation.TribulationScalingHelper;
 import com.friday.cultivation.event.tribulation.TribulationType;
 import java.util.List;
 
@@ -809,6 +810,15 @@ implements INBTSerializable<CompoundTag> {
 
     /** 捕获渡劫前最终有效属性，生成不可重算的固定奖励快照。 */
     public TribulationBonusSnapshot captureTribulationBonus(Player player, double percent, Realm targetRealm, SubStage targetSub) {
+        return this.captureTribulationBonus(player, percent, targetRealm, targetSub, this.tribulationSession);
+    }
+
+    /**
+     * 从渡劫启动时的 Session 捕获奖励来源元数据。
+     * 数值仍然只读取渡劫前的有效属性，后续境界切换或资质变化不会重算。
+     */
+    public TribulationBonusSnapshot captureTribulationBonus(Player player, double percent, Realm targetRealm,
+                                                            SubStage targetSub, TribulationSession sourceSession) {
         if (percent <= 0.0 || targetRealm == null) {
             return null;
         }
@@ -816,10 +826,16 @@ implements INBTSerializable<CompoundTag> {
         String rewardKey = "realm:" + targetRealm.id() + ":" + subId;
         double sourceHealth = player == null ? this.getRealm().standardMaxHealth() : Math.max(0.0, player.getMaxHealth());
         long sourceQi = Math.max(0L, this.getMaxQi());
+        String sourceTierId = sourceSession == null ? "" : sourceSession.tierId();
+        double sourceCompositeScore = player == null ? 0.0 : TribulationScalingHelper.compositeScore(player, this);
+        String sourceRouteId = sourceSession == null ? "realm" : sourceSession.routeId();
         return new TribulationBonusSnapshot(
                 rewardKey,
                 targetRealm.id(),
                 subId,
+                sourceTierId,
+                sourceCompositeScore,
+                sourceRouteId,
                 percent,
                 Math.max(0.0, Math.round(sourceHealth * percent)),
                 CultivationData.saturatedMultiplyLong(sourceQi, percent),

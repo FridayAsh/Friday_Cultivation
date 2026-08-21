@@ -56,6 +56,11 @@ public class CultivationHud {
     private static final int CULT_WIDTH = 90;
     private static final int QI_WIDTH = 80;
     private static final int WUDAO_WIDTH = 70;
+    /** 经验条相对原版底部锚点上移的像素数。 */
+    private static final int EXPERIENCE_BAR_RAISE = 30;
+    private static final int EXPERIENCE_BAR_WIDTH = 182;
+    private static final int EXPERIENCE_BAR_HEIGHT = 6;
+    private static final int EXPERIENCE_LEVEL_LABEL_WIDTH = 42;
 
     // 项目设定色：顶/底渐变
     private static final int HEALTH_TOP = -1944235;
@@ -91,7 +96,7 @@ public class CultivationHud {
     @SubscribeEvent
     public static void onRenderOverlay(RenderGuiOverlayEvent.Pre event) {
         if (event.getOverlay() == VanillaGuiOverlay.EXPERIENCE_BAR.type()) {
-            // 原版经验条由本项目 HUD 在 OVERLAY 中使用项目条带贴图重绘。
+            // 原版经验条与等级数字都由本项目 HUD 统一重绘，避免重复显示。
             event.setCanceled(true);
             return;
         }
@@ -113,10 +118,7 @@ public class CultivationHud {
         event.setCanceled(true);
     }
 
-    /**
-     * 使用项目 HUD 的血条贴图重绘原版经验条，保留原版底部居中锚点。
-     * 经验等级数字仍由 VanillaGuiOverlay.EXPERIENCE_LEVEL 负责绘制。
-     */
+    /** 使用项目 HUD 贴图重绘经验条，并把等级与总经验收拢到同一组布局。 */
     private static void renderExperienceBar(GuiGraphics graphics, int screenWidth, int screenHeight) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
@@ -124,13 +126,21 @@ public class CultivationHud {
                 || player.getXpNeededForNextLevel() <= 0) {
             return;
         }
-        int width = 182;
-        int height = 6;
+        int width = EXPERIENCE_BAR_WIDTH;
+        int height = EXPERIENCE_BAR_HEIGHT;
         int x = screenWidth / 2 - width / 2;
-        int y = screenHeight - 29;
+        // “高度减少 30”按 HUD 坐标解释为整体上移 30 像素，条带厚度保持贴图原比例。
+        int y = screenHeight - 29 - EXPERIENCE_BAR_RAISE;
         double progress = Math.max(0.0, Math.min(1.0, player.experienceProgress));
         renderTextureBar(graphics, mc, x, y, width, height, progress,
-                BLOOD_EMPTY, BLOOD_FILL, 96, 6, CULT_TOP, CULT_BOTTOM, null, -1);
+                BLOOD_EMPTY, BLOOD_FILL, 96, 6, CULT_TOP, CULT_BOTTOM,
+                Component.literal(String.valueOf(Math.max(0, player.totalExperience))), -1);
+
+        // 等级标签放在经验条左侧，使用同一缩放体系并垂直居中。
+        Component level = Component.literal("Level:" + Math.max(0, player.experienceLevel));
+        int levelX = x - EXPERIENCE_LEVEL_LABEL_WIDTH - 4;
+        drawCenteredScaledInRect(graphics, mc, level, levelX, y,
+                EXPERIENCE_LEVEL_LABEL_WIDTH, height, 0.6f, -1, true);
     }
 
     private static void render(GuiGraphics graphics, int screenWidth) {

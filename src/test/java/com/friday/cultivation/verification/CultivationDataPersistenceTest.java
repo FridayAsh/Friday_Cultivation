@@ -150,7 +150,7 @@ class CultivationDataPersistenceTest {
         assertEquals("middle", migratedPlayer.getString("breakthroughBonusTargetSubStage"));
         CompoundTag migratedSnapshot = migratedPlayer
                 .getList("tribulationBonusLedger", 10).getCompound(0);
-        assertEquals(2, migratedSnapshot.getInt("version"));
+        assertEquals(3, migratedSnapshot.getInt("version"));
         assertEquals("middle", migratedSnapshot.getString("targetSubStageId"));
     }
 }

@@ -13,6 +13,9 @@ public record TribulationBonusSnapshot(
         String rewardKey,
         String targetRealmId,
         String targetSubStageId,
+        String sourceTierId,
+        double sourceCompositeScore,
+        String sourceRouteId,
         double sourcePercent,
         double healthBonus,
         long maxQiBonus,
@@ -22,12 +25,15 @@ public record TribulationBonusSnapshot(
         int spellPowerBonus,
         int qiSeaBonus
 ) {
-    public static final int CURRENT_VERSION = 2;
+    public static final int CURRENT_VERSION = 3;
 
     public TribulationBonusSnapshot {
         rewardKey = rewardKey == null || rewardKey.isBlank() ? "legacy:unknown" : rewardKey;
         targetRealmId = targetRealmId == null || targetRealmId.isBlank() ? Realm.MORTAL.id() : targetRealmId;
         targetSubStageId = normalizeTargetSubStageId(rewardKey, targetRealmId, targetSubStageId);
+        sourceTierId = sourceTierId == null ? "" : sourceTierId;
+        sourceCompositeScore = Math.max(0.0, sourceCompositeScore);
+        sourceRouteId = sourceRouteId == null || sourceRouteId.isBlank() ? "realm" : sourceRouteId;
         sourcePercent = Math.max(0.0, sourcePercent);
         healthBonus = Math.max(0.0, healthBonus);
         maxQiBonus = Math.max(0L, maxQiBonus);
@@ -42,6 +48,7 @@ public record TribulationBonusSnapshot(
     public TribulationBonusSnapshot(
             String rewardKey,
             String targetRealmId,
+            String targetSubStageId,
             double sourcePercent,
             double healthBonus,
             long maxQiBonus,
@@ -51,8 +58,27 @@ public record TribulationBonusSnapshot(
             int spellPowerBonus,
             int qiSeaBonus
     ) {
-        this(rewardKey, targetRealmId, "", sourcePercent, healthBonus, maxQiBonus,
-                constitutionBonus, physiqueBonus, agilityBonus, spellPowerBonus, qiSeaBonus);
+        this(rewardKey, targetRealmId, targetSubStageId, "", 0.0, "realm", sourcePercent,
+                healthBonus, maxQiBonus, constitutionBonus, physiqueBonus, agilityBonus,
+                spellPowerBonus, qiSeaBonus);
+    }
+
+    /** 兼容旧调用：未保存目标子阶段和渡劫来源元数据的快照。 */
+    public TribulationBonusSnapshot(
+            String rewardKey,
+            String targetRealmId,
+            double sourcePercent,
+            double healthBonus,
+            long maxQiBonus,
+            int constitutionBonus,
+            int physiqueBonus,
+            int agilityBonus,
+            int spellPowerBonus,
+            int qiSeaBonus
+    ) {
+        this(rewardKey, targetRealmId, "", "", 0.0, "realm", sourcePercent,
+                healthBonus, maxQiBonus, constitutionBonus, physiqueBonus, agilityBonus,
+                spellPowerBonus, qiSeaBonus);
     }
 
     public boolean isActive(Realm currentRealm, SubStage currentSubStage) {
@@ -70,6 +96,9 @@ public record TribulationBonusSnapshot(
         tag.putString("rewardKey", this.rewardKey);
         tag.putString("targetRealmId", this.targetRealmId);
         tag.putString("targetSubStageId", this.targetSubStageId);
+        tag.putString("sourceTierId", this.sourceTierId);
+        tag.putDouble("sourceCompositeScore", this.sourceCompositeScore);
+        tag.putString("sourceRouteId", this.sourceRouteId);
         tag.putDouble("sourcePercent", this.sourcePercent);
         tag.putDouble("healthBonus", this.healthBonus);
         tag.putLong("maxQiBonus", this.maxQiBonus);
@@ -86,6 +115,9 @@ public record TribulationBonusSnapshot(
                 tag.getString("rewardKey"),
                 tag.getString("targetRealmId"),
                 tag.contains("targetSubStageId", 8) ? tag.getString("targetSubStageId") : "",
+                tag.contains("sourceTierId", 8) ? tag.getString("sourceTierId") : "",
+                tag.contains("sourceCompositeScore", 6) ? tag.getDouble("sourceCompositeScore") : 0.0,
+                tag.contains("sourceRouteId", 8) ? tag.getString("sourceRouteId") : "realm",
                 tag.getDouble("sourcePercent"),
                 tag.getDouble("healthBonus"),
                 tag.getLong("maxQiBonus"),

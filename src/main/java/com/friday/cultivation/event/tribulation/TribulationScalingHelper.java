@@ -61,9 +61,44 @@ public final class TribulationScalingHelper {
         return TribulationTier.of(compositeScore(player, data));
     }
 
+    /**
+     * 从渡劫 Session 中解析启动时固定的天骄档位。
+     *
+     * Session 是一次渡劫的权威快照；成功结算、事件和展示不得在渡劫
+     * 过程中重新读取玩家当前灵根/体质/功法来推导档位。
+     */
+    public static TribulationTier tier(TribulationSession session) {
+        if (session == null || session.tierId() == null || session.tierId().isBlank()) {
+            return TribulationTier.MORTAL_DUST;
+        }
+        try {
+            return TribulationTier.valueOf(session.tierId());
+        } catch (IllegalArgumentException ignored) {
+            return TribulationTier.MORTAL_DUST;
+        }
+    }
+
+    /** Session 中的稳定档位 ID 是否能被当前版本识别。 */
+    public static boolean hasKnownTier(TribulationSession session) {
+        if (session == null || session.tierId() == null || session.tierId().isBlank()) {
+            return false;
+        }
+        try {
+            TribulationTier.valueOf(session.tierId());
+            return true;
+        } catch (IllegalArgumentException ignored) {
+            return false;
+        }
+    }
+
     /** 档位名称（本地化键） */
     public static String tierTranslationKey(Player player, CultivationData data) {
         return tier(player, data).translationKey();
+    }
+
+    /** Session 固定档位的本地化键。 */
+    public static String tierTranslationKey(TribulationSession session) {
+        return tier(session).translationKey();
     }
 
     /** 渡劫道数/伤害倍率 */
@@ -74,6 +109,14 @@ public final class TribulationScalingHelper {
     /** 渡劫成功奖励百分比（作用于当前五维点数） */
     public static double rewardPercent(Player player, CultivationData data) {
         return tier(player, data).rewardPercent();
+    }
+
+    /** Session 固定档位的奖励比例；散仙路线不使用普通天骄奖励。 */
+    public static double rewardPercent(TribulationSession session) {
+        if (session == null || session.looseImmortal() || !hasKnownTier(session)) {
+            return 0.0;
+        }
+        return tier(session).rewardPercent();
     }
 
     /**
