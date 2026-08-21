@@ -2395,5 +2395,7 @@
   "screen.friday_cultivation.attr.talent_label": "天资",
   "screen.friday_cultivation.attr.talent_hint": "由灵根、体质、功法品质综合评定。天资越高，渡劫越猛、奖励越高；低于获得境界时奖励失效",
   "screen.friday_cultivation.attr.talent_difficulty": "渡劫难度：%s 倍（道数与伤害）",
-  "screen.friday_cultivation.attr.talent_reward": "渡劫奖励：当前五维总属性值的 %s%%（隐藏加成）"
+  "screen.friday_cultivation.attr.talent_reward": "渡劫奖励：当前五维总属性值的 %s%%（隐藏加成）",
+  "message.friday_cultivation.authorization.realm_selection_denied": "你没有权限使用境界选择功能。",
+  "message.friday_cultivation.authorization.stat_edit_denied": "你没有权限编辑玩家属性。"
 }

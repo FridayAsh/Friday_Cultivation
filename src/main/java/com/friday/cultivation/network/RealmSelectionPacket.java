@@ -45,6 +45,10 @@ public class RealmSelectionPacket {
             if (player == null) {
                 return;
             }
+            if (!ServerAuthorization.canSelectRealm(player)) {
+                ServerAuthorization.reject(player, "realm_selection_denied");
+                return;
+            }
             Realm realm = Realm.byId(msg.realmId);
             CultivationData data = CultivationCapability.get((net.minecraft.world.entity.player.Player)player).orElse(null);
             if (data == null) {

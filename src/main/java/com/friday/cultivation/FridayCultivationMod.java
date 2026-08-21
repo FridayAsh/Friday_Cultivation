@@ -100,7 +100,6 @@ public class FridayCultivationMod {
         modEventBus.addListener(FridayCultivationMod::onEntityAttributeCreation);
         modEventBus.addListener(FridayCultivationMod::onSpawnPlacementRegister);
         MinecraftForge.EVENT_BUS.register((Object)this);
-        MinecraftForge.EVENT_BUS.register(com.friday.cultivation.flight.CultivationFlightEvents.class);
         LOGGER.info("[{}] \u5c0f\u7fd4\u7684\u4fee\u4ed9\u4e16\u754c \u5df2\u521d\u59cb\u5316\u5b8c\u6210", (Object)MOD_ID);
     }
 

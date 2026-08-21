@@ -81,6 +81,10 @@ public class EditPlayerStatsPacket {
             if (player == null) {
                 return;
             }
+            if (!ServerAuthorization.canEditPlayerStats(player)) {
+                ServerAuthorization.reject(player, "stat_edit_denied");
+                return;
+            }
             CultivationCapability.get((Player)player).ifPresent(data -> {
                 data.setAttrConstitution(EditPlayerStatsPacket.clamp(m.constitution, 0, 9999));
                 data.setAttrPhysique(EditPlayerStatsPacket.clamp(m.physique, 0, 9999));

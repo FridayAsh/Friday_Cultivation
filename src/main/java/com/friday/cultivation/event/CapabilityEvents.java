@@ -21,6 +21,7 @@ import com.friday.cultivation.config.ModCommonConfig;
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.sect.SectSavedData;
+import com.friday.cultivation.flight.CultivationFlightHandler;
 import com.friday.cultivation.network.ModNetwork;
 import com.friday.cultivation.network.SyncCultivationDataPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -67,10 +68,8 @@ public final class CapabilityEvents {
                 data.clearCharging();
                 data.applyZhenyuanMajorAutoRebalanceMigration();
                 CapabilityEvents.applySpellTerrainRuleSnapshot(data, true);
-                if (data.isSwordFlightActive()) {
-                    data.clearSwordFlight();
-                }
             });
+            CultivationFlightHandler.restoreAfterLogin(player2);
             CapabilityEvents.syncToClient(player2);
         }
     }

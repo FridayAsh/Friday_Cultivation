@@ -103,6 +103,35 @@ public final class CultivationFlightHandler {
         return isSwordFlightActive(player) || canQiFlight(player);
     }
 
+    /**
+     * 从 CultivationData 恢复登录/重启后的御剑运行态。
+     * Capability 是唯一权威来源，静态 Map 只重建当前服务器进程的运行缓存。
+     */
+    public static void restoreAfterLogin(ServerPlayer player) {
+        if (player == null) {
+            return;
+        }
+        CultivationData data = CultivationCapability.get((Player)player).orElse(null);
+        if (data == null || !data.isSwordFlightActive()) {
+            SWORD_FLIGHT.remove(player.getUUID());
+            SWORD_FLIGHT_SLOT.remove(player.getUUID());
+            FLIGHT_TICKS.remove(player.getUUID());
+            return;
+        }
+        ItemStack sword = data.getSwordFlightStack();
+        if (sword == null || sword.isEmpty()) {
+            data.clearSwordFlight();
+            SWORD_FLIGHT.remove(player.getUUID());
+            SWORD_FLIGHT_SLOT.remove(player.getUUID());
+            FLIGHT_TICKS.remove(player.getUUID());
+            return;
+        }
+        SWORD_FLIGHT.put(player.getUUID(), sword.copy());
+        SWORD_FLIGHT_SLOT.put(player.getUUID(), data.getSwordFlightOriginalSlot());
+        FLIGHT_TICKS.remove(player.getUUID());
+        enableFlight(player);
+    }
+
     /** 施放/切换御剑飞行 */
     public static void toggleSwordFlight(ServerPlayer player) {
         if (isSwordFlightActive(player)) {
@@ -144,6 +173,12 @@ public final class CultivationFlightHandler {
         ItemStack sword = SWORD_FLIGHT.remove(id);
         Integer slot = SWORD_FLIGHT_SLOT.remove(id);
         CultivationData cd = CultivationCapability.get((Player)player).orElse(null);
+        if ((sword == null || sword.isEmpty()) && cd != null) {
+            sword = cd.getSwordFlightStack().copy();
+        }
+        if (slot == null && cd != null) {
+            slot = cd.getSwordFlightOriginalSlot();
+        }
         if (cd != null) {
             cd.clearSwordFlight();
         }

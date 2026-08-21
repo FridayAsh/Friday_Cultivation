@@ -2395,5 +2395,7 @@
   "screen.friday_cultivation.attr.talent_label": "Talent",
   "screen.friday_cultivation.attr.talent_hint": "Determined by Spirit Root, Physique and Technique. Higher talent = harder tribulation, higher reward; reward lost below earned realm",
   "screen.friday_cultivation.attr.talent_difficulty": "Tribulation difficulty: %sx (bolts & damage)",
-  "screen.friday_cultivation.attr.talent_reward": "Tribulation reward: %s%% of current stats (hidden bonus)"
+  "screen.friday_cultivation.attr.talent_reward": "Tribulation reward: %s%% of current stats (hidden bonus)",
+  "message.friday_cultivation.authorization.realm_selection_denied": "You are not authorized to use realm selection.",
+  "message.friday_cultivation.authorization.stat_edit_denied": "You are not authorized to edit player attributes."
 }
