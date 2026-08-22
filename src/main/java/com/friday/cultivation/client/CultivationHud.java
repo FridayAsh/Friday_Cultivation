@@ -366,10 +366,10 @@ public class CultivationHud {
         double trailingRatio = Math.max(primaryRatio, visual.trailingRatio());
         if (trailingRatio > primaryRatio + 0.0001D) {
             drawTextureFill(graphics, x, y, width, height, trailingRatio, emptyTex, fillTex, texW, texH,
-                    scaleColor(topColor, 0.58D), scaleColor(bottomColor, 0.58D), false);
+                    scaleColor(topColor, 0.58D), scaleColor(bottomColor, 0.58D));
         }
         drawTextureFill(graphics, x, y, width, height, primaryRatio, emptyTex, fillTex, texW, texH,
-                topColor, bottomColor, true);
+                topColor, bottomColor);
 
         // 左上角纹理属性条不绘制白色闪光；经验条的白色闪光仍由下方程序化经验条保留。
         graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -381,7 +381,7 @@ public class CultivationHud {
 
     private static void drawTextureFill(GuiGraphics graphics, int x, int y, int width, int height, double ratio,
                                         ResourceLocation emptyTex, ResourceLocation fillTex, int texW, int texH,
-                                        int topColor, int bottomColor, boolean highlight) {
+                                        int topColor, int bottomColor) {
         int targetW = (int)((double)width * Math.max(0.0D, Math.min(1.0D, ratio)));
         if (targetW > 0) {
             int halfH = Math.max(1, height / 2);
@@ -420,9 +420,6 @@ public class CultivationHud {
                 setBarColor(graphics, bottomColor);
                 graphics.blit(fillTex, x + clipScreen, y + topH, rightScreen, botH, (float)(texW - rightSrc), (float)halfH, rightSrc, texH - halfH, texW, texH);
                 graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-            }
-            if (highlight) {
-                graphics.fill(x, y, x + targetW, y + 1, 0x40FFFFFF);
             }
         }
     }
