@@ -33,7 +33,6 @@ public class CultivationHud {
     public static final IGuiOverlay OVERLAY = (gui, graphics, partialTick, screenWidth, screenHeight) -> {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
-        BAR_ANIMATOR.beginFrame(player == null ? null : player.getUUID());
         long nowMillis = System.currentTimeMillis();
         CultivationHud.renderExperienceBar(graphics, screenWidth, screenHeight, nowMillis);
         CultivationHud.render(graphics, screenWidth, nowMillis);
@@ -152,6 +151,7 @@ public class CultivationHud {
         int currentLevelExperience = Math.max(0, Math.min(nextLevelExperience,
                 Math.round(player.experienceProgress * (float)nextLevelExperience)));
         HudBarAnimator.Visual experienceVisual = BAR_ANIMATOR.sample(
+                player.getUUID(),
                 HudBarAnimator.BarId.EXPERIENCE,
                 currentLevelExperience,
                 nextLevelExperience,
@@ -228,6 +228,7 @@ public class CultivationHud {
             // 生命条（条内显示 当前/最大 HP）
             Component healthText = Component.literal(String.format("%.0f/%.0f", player.getHealth(), player.getMaxHealth()));
             HudBarAnimator.Visual healthVisual = BAR_ANIMATOR.sample(
+                    player.getUUID(),
                     HudBarAnimator.BarId.HEALTH, player.getHealth(), player.getMaxHealth(), 0L, nowMillis);
             renderHealthBar(graphics, textBaseX, barY, HEALTH_WIDTH, BAR_HEIGHT,
                     healthVisual, healthText, -1);
@@ -252,6 +253,7 @@ public class CultivationHud {
                 long maxCult = data.getMaxCultivation();
                 Component cultText = Component.translatable("hud.friday_cultivation.cultivation", curCult, maxCult);
                 HudBarAnimator.Visual cultivationVisual = BAR_ANIMATOR.sample(
+                        player.getUUID(),
                         HudBarAnimator.BarId.CULTIVATION, curCult, maxCult, cultivationCycleKey(data), nowMillis);
                 renderValueBar(graphics, mc, textBaseX, barY, CULT_WIDTH, BAR_HEIGHT,
                         cultivationVisual, CULT_TOP, CULT_BOTTOM, CULT_TOP, cultText);
@@ -265,6 +267,7 @@ public class CultivationHud {
                 long maxQi = data.getMaxQi();
                 Component qiText = Component.translatable("hud.friday_cultivation.qi", curQi, maxQi);
                 HudBarAnimator.Visual qiVisual = BAR_ANIMATOR.sample(
+                        player.getUUID(),
                         HudBarAnimator.BarId.QI, curQi, maxQi, 0L, nowMillis);
                 renderValueBar(graphics, mc, textBaseX, barY, QI_WIDTH, BAR_HEIGHT,
                         qiVisual, QI_TOP, QI_BOTTOM, QI_TOP, qiText);
@@ -278,6 +281,7 @@ public class CultivationHud {
                 long curWudao = data.getWuDaoProgress();
                 Component wudaoText = Component.translatable("hud.friday_cultivation.wudao", curWudao, maxWudao);
                 HudBarAnimator.Visual wudaoVisual = BAR_ANIMATOR.sample(
+                        player.getUUID(),
                         HudBarAnimator.BarId.WUDAO, curWudao, maxWudao, 0L, nowMillis);
                 renderValueBar(graphics, mc, textBaseX, barY, WUDAO_WIDTH, BAR_HEIGHT,
                         wudaoVisual, WUDAO_TOP, WUDAO_BOTTOM, WUDAO_TOP, wudaoText);

@@ -87,10 +87,10 @@ class StageOnePolicyTest {
 
         String entityHud = read("com/friday/cultivation/client/EntityStatusHudRenderer.java");
         assertTrue(entityHud.contains("HEAD_ANCHOR_OFFSET"));
-        assertTrue(entityHud.contains("SCREEN_BAR_OFFSET_Y"));
-        assertTrue(entityHud.contains("healthBarAnchor(living, partial)"));
+        assertTrue(entityHud.contains("RenderNameTagEvent"));
+        assertTrue(entityHud.contains("healthBarAnchor(living, event.getPartialTick())"));
         assertTrue(entityHud.contains("HURT_SHOW_TICKS"));
-        assertTrue(entityHud.contains("LAST_HURT"));
+        assertTrue(entityHud.contains("HEALTH_TRACKS"));
     }
 
     private static String read(String relativePath) throws IOException {

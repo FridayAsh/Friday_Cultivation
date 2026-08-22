@@ -1,7 +1,9 @@
 package com.friday.cultivation.client;
 
-import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -12,6 +14,8 @@ import java.util.UUID;
  */
 public final class HudBarAnimator {
     private static final long SNAP_AFTER_IDLE_MS = 650L;
+    private static final long STATE_PRUNE_INTERVAL_MS = 1_000L;
+    private static final long STATE_EXPIRE_AFTER_MS = 5_000L;
     private static final double EPSILON = 0.0001D;
 
     private static final Profile HEALTH = new Profile(220L, 90L, 120L, 320L, false, 0L, 0L, 0L);
@@ -44,38 +48,54 @@ public final class HudBarAnimator {
         }
     }
 
-    private final Map<BarId, State> states = new EnumMap<>(BarId.class);
-    private UUID playerId;
-
-    public HudBarAnimator() {
-        for (BarId id : BarId.values()) {
-            states.put(id, new State());
-        }
+    /** 拥有者 UUID + 属性条类型，保证多只生物不会互相覆盖动画状态。 */
+    private record AnimationKey(UUID ownerId, BarId barId) {
     }
 
-    /** 在每帧开始时调用；切换玩家后会清空旧玩家的视觉状态。 */
-    public void beginFrame(UUID currentPlayerId) {
-        if (playerId == null ? currentPlayerId != null : !playerId.equals(currentPlayerId)) {
-            reset();
-            playerId = currentPlayerId;
+    private final Map<AnimationKey, State> states = new HashMap<>();
+    private long nextPruneMillis;
+
+    /** 清空指定拥有者的所有属性条状态。 */
+    public void reset(UUID ownerId) {
+        if (ownerId == null) {
+            return;
         }
+        states.keySet().removeIf(key -> key.ownerId().equals(ownerId));
     }
 
+    /** 清空全部视觉状态；客户端换世界或退出时调用。 */
     public void reset() {
-        for (State state : states.values()) {
-            state.clear();
-        }
+        states.clear();
+        nextPruneMillis = 0L;
     }
 
     /**
      * 提交一个属性条的真实值并取得当前应绘制的视觉状态。
      * cycleKey 只用于经验等级、修为境界等“阶段切换”属性；普通属性传 0 即可。
      */
-    public Visual sample(BarId id, double current, double max, long cycleKey, long nowMillis) {
+    public Visual sample(UUID ownerId, BarId id, double current, double max, long cycleKey, long nowMillis) {
+        Objects.requireNonNull(ownerId, "HUD animation owner id cannot be null");
         if (id == null) {
             throw new IllegalArgumentException("HUD bar id cannot be null");
         }
-        return states.get(id).sample(current, max, cycleKey, nowMillis, profile(id));
+        pruneIfDue(nowMillis);
+        AnimationKey key = new AnimationKey(ownerId, id);
+        State state = states.computeIfAbsent(key, ignored -> new State());
+        return state.sample(current, max, cycleKey, nowMillis, profile(id));
+    }
+
+    private void pruneIfDue(long nowMillis) {
+        if (nowMillis < nextPruneMillis) {
+            return;
+        }
+        nextPruneMillis = nowMillis + STATE_PRUNE_INTERVAL_MS;
+        Iterator<Map.Entry<AnimationKey, State>> iterator = states.entrySet().iterator();
+        while (iterator.hasNext()) {
+            State state = iterator.next().getValue();
+            if (nowMillis - state.lastSampleMillis > STATE_EXPIRE_AFTER_MS) {
+                iterator.remove();
+            }
+        }
     }
 
     private static Profile profile(BarId id) {

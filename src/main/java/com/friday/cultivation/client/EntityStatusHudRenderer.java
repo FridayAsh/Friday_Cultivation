@@ -1,11 +1,29 @@
 package com.friday.cultivation.client;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import net.minecraft.Util;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
@@ -13,358 +31,440 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.minecraftforge.client.event.RenderNameTagEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 /**
- * 生物头顶血条渲染器（GUI 空间版）。
+ * 生物头顶状态牌渲染器。
  *
- * 在 GUI 空间（RenderGuiOverlayEvent.Pre，与玩家血条同一 overlay 阶段）渲染，
- * 完全绕开光影包接管的世界渲染管线——光影包对 GUI 渲染有专门处理路径，
- * 因此血条不会像世界空间 Tesselator 立即模式那样被光影重写 blend/alpha 而变透明。
- *
- * 血条贴图与玩家 CultivationHud.renderTextureBar 完全一致（blood_empty 白底条
- * + blood_fill 染深灰底槽 + clip 渐变填充），用 GuiGraphics.blit 绘制。
+ * <p>状态牌在原版名称牌事件中以世界空间 billboard 绘制，使用真实投影矩阵将固定的
+ * GUI 逻辑像素尺寸换算成世界尺寸。动画状态由统一的 {@link HudBarAnimator} 提供，
+ * 本类只负责生物状态追踪、可见性策略、世界变换和绘制。</p>
  */
 @Mod.EventBusSubscriber(modid = "friday_cultivation", value = Dist.CLIENT)
-public class EntityStatusHudRenderer {
-    private static final ResourceLocation BLOOD_EMPTY = new ResourceLocation("friday_cultivation", "textures/gui/blood_empty.png");
-    private static final ResourceLocation BLOOD_FILL = new ResourceLocation("friday_cultivation", "textures/gui/blood_fill.png");
-    private static final ResourceLocation VANILLA_ICONS = new ResourceLocation("textures/gui/icons.png");
-    private static final ResourceLocation OVERFLOWING_ICONS = new ResourceLocation("friday_cultivation", "textures/gui/overflowing_icons.png");
+public final class EntityStatusHudRenderer {
+    private static final ResourceLocation BLOOD_EMPTY = new ResourceLocation(
+            "friday_cultivation", "textures/gui/blood_empty.png");
+    private static final ResourceLocation BLOOD_FILL = new ResourceLocation(
+            "friday_cultivation", "textures/gui/blood_fill.png");
+    private static final ResourceLocation VANILLA_ICONS = new ResourceLocation(
+            "textures/gui/icons.png");
+    private static final ResourceLocation OVERFLOWING_ICONS = new ResourceLocation(
+            "friday_cultivation", "textures/gui/overflowing_icons.png");
 
     private static final int BAR_INNER_BG = 0xFF1A1A1A;
-    private static final int ARMOR_ICON_U = 34, ARMOR_ICON_V = 9;
-    private static final int TOUGH_ICON_U = 18, TOUGH_ICON_V = 0;
-    private static final int ARMOR_COLOR = 0xAAAAAA;
-    private static final int TOUGH_COLOR = 0x40E0D0;
+    private static final int ARMOR_ICON_U = 34;
+    private static final int ARMOR_ICON_V = 9;
+    private static final int TOUGH_ICON_U = 18;
+    private static final int TOUGH_ICON_V = 0;
+    private static final int ARMOR_COLOR = 0xFFAAAAAA;
+    private static final int TOUGH_COLOR = 0xFF40E0D0;
     private static final int HEALTH_TOP = -1944235;
     private static final int HEALTH_BOTTOM = -5758944;
 
-    // 血条基准屏幕尺寸（按 1 格距离换算）
-    private static final float BASE_BAR_W = 48.0f;
-    private static final float BAR_H = 6.0f;
-    private static final float ICON_SIZE = 8.0f;
-    private static final float TEXT_SCALE = 0.5f;
-    private static final double MAX_DISTANCE = 24.0;
-    // 与玩家血条一致：填充条左端固定圆角段在贴图中所占像素（blood_fill 左端圆角宽度）
-    private static final int CLIP_PX = 3;
-    // 恒定屏幕缩放：固定为 8 格距离视角下的 65% 基准大小（约 1.56 倍），任何距离都不变
-    private static final float BAR_SCREEN_SCALE = (float) (BASE_BAR_W * 0.4 * 0.65 / 8.0);
-    // 受伤后血条显示时长（tick）：受伤短暂显示方案，3 秒后自动隐藏
+    private static final double MAX_DISTANCE = 24.0D;
+    private static final double MAX_DISTANCE_SQUARED = MAX_DISTANCE * MAX_DISTANCE;
+    private static final double HEAD_ANCHOR_OFFSET = 0.6D;
     private static final long HURT_SHOW_TICKS = 60L;
-    // 新实体血量检测冷却期（tick）：新生成实体（如史莱姆分裂/自然生成）血量同步可能有波动，
-    // 冷却期内不触发受伤判定，避免误显示血条
     private static final long HURT_DETECT_COOLDOWN_TICKS = 20L;
-    /** 实体ID → 上次受伤时的游戏 tick（客户端本地追踪） */
-    private static final java.util.Map<Integer, Long> LAST_HURT = new java.util.HashMap<>();
-    /** 实体ID → 血量追踪（当前血量 + 首次出现的游戏 tick） */
-    private static final java.util.Map<Integer, HealthTrack> LAST_HEALTH = new java.util.HashMap<>();
+    private static final long TRACKING_EXPIRE_TICKS = 40L;
 
-    /** 血量追踪：当前血量 + 首次出现的游戏 tick（用于新实体冷却期） */
-    private static final class HealthTrack {
-        float health;
-        final long firstSeenTick;
+    private static final float FRAME_Z = 0.000F;
+    private static final float BACKGROUND_Z = 0.001F;
+    private static final float TRAILING_Z = 0.002F;
+    private static final float PRIMARY_Z = 0.003F;
+    private static final float TEXT_Z = 0.004F;
 
-        HealthTrack(float health, long firstSeenTick) {
-            this.health = health;
-            this.firstSeenTick = firstSeenTick;
-        }
-    }
-    /** 世界空间中头顶锚点相对碰撞箱顶部的固定距离。 */
-    private static final double HEAD_ANCHOR_OFFSET = 0.6;
-    /** 屏幕空间中血条相对头顶投影点的固定上移量。 */
-    private static final float SCREEN_BAR_OFFSET_Y = 12.0f;
+    private static final Map<UUID, HealthTrack> HEALTH_TRACKS = new HashMap<>();
+    private static final HudBarAnimator ANIMATOR = new HudBarAnimator();
+    private static final ShadowPassGuard SHADOW_PASS_GUARD = ShadowPassGuard.create();
+    private static Object trackedLevel;
 
     private EntityStatusHudRenderer() {
     }
 
+    /** 在客户端 tick 更新生命基线和动画目标，保证首次受伤也能产生拖影。 */
     @SubscribeEvent
-    public static void onRenderOverlay(RenderGuiOverlayEvent.Pre event) {
-        if (event.getOverlay() != VanillaGuiOverlay.PLAYER_HEALTH.type()) {
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
             return;
         }
+
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null) {
+            clearTracking();
+            trackedLevel = null;
+            return;
+        }
+        if (trackedLevel != mc.level) {
+            clearTracking();
+            trackedLevel = mc.level;
+        }
+
+        Player player = mc.player;
+        long nowTick = mc.level.getGameTime();
+        long nowMillis = Util.getMillis();
+        Set<UUID> seen = new HashSet<>();
+        AABB broadphase = player.getBoundingBox().inflate(MAX_DISTANCE);
+
+        for (Entity entity : mc.level.getEntities(player, broadphase, EntityStatusHudRenderer::canTrack)) {
+            LivingEntity living = (LivingEntity) entity;
+            if (player.distanceToSqr(living) > MAX_DISTANCE_SQUARED) {
+                continue;
+            }
+
+            UUID id = living.getUUID();
+            seen.add(id);
+            float health = living.getHealth();
+            HealthTrack track = HEALTH_TRACKS.get(id);
+            if (track == null) {
+                track = new HealthTrack(health, nowTick);
+                HEALTH_TRACKS.put(id, track);
+            } else {
+                if (nowTick - track.firstSeenTick >= HURT_DETECT_COOLDOWN_TICKS
+                        && health < track.health - 0.01F) {
+                    track.hurtUntilTick = nowTick + HURT_SHOW_TICKS;
+                }
+                track.health = health;
+            }
+            track.lastSeenTick = nowTick;
+
+            // 提前提交目标值，避免生命条首次出现时才初始化到受伤后的比例。
+            ANIMATOR.sample(id, HudBarAnimator.BarId.HEALTH,
+                    health, living.getMaxHealth(), 0L, nowMillis);
+        }
+
+        HEALTH_TRACKS.entrySet().removeIf(entry -> {
+            HealthTrack track = entry.getValue();
+            if (nowTick - track.lastSeenTick > TRACKING_EXPIRE_TICKS || !seen.contains(entry.getKey())) {
+                ANIMATOR.reset(entry.getKey());
+                return true;
+            }
+            return false;
+        });
+    }
+
+    /** 在原版名称牌世界渲染阶段绘制状态牌，光影与实体共用同一投影链。 */
+    @SubscribeEvent
+    public static void onRenderNameTag(RenderNameTagEvent event) {
+        if (!(event.getEntity() instanceof LivingEntity living)) {
+            return;
+        }
+
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
-        if (player == null || mc.level == null || mc.options.hideGui) {
+        if (player == null || mc.level == null || mc.options.hideGui
+                || SHADOW_PASS_GUARD.isRenderingShadowPass()
+                || living == player || !living.isAlive()) {
             return;
         }
-        GuiGraphics graphics = event.getGuiGraphics();
-        float partial = mc.getFrameTime();
+
+        HealthTrack track = HEALTH_TRACKS.get(living.getUUID());
         long nowTick = mc.level.getGameTime();
-
-        // 清理过期的受伤记录（防内存泄漏）
-        LAST_HURT.entrySet().removeIf(e -> nowTick - e.getValue() > HURT_SHOW_TICKS);
-
-        // 第一阶段：收集可见且近期受伤的生物血条。
-        // 受伤检测为纯客户端方案：每帧比较生物血量，血量下降即视为受伤并记录时刻
-        //（LivingHurtEvent 在客户端物理端不触发，伤害计算在服务端逻辑，故不能用事件）。
-        java.util.List<BarEntry> entries = new java.util.ArrayList<>();
-        java.util.Set<Integer> seenIds = new java.util.HashSet<>();
-        AABB box = player.getBoundingBox().inflate(MAX_DISTANCE, MAX_DISTANCE, MAX_DISTANCE);
-        for (Entity e : mc.level.getEntities(player, box, EntityStatusHudRenderer::canShowStatus)) {
-            LivingEntity living = (LivingEntity) e;
-            int id = e.getId();
-            seenIds.add(id);
-            float hp = living.getHealth();
-            HealthTrack track = LAST_HEALTH.get(id);
-            if (track == null) {
-                // 首次见到该实体：只记录基线与出现时刻，不判定受伤（避免新生成实体误报）
-                LAST_HEALTH.put(id, new HealthTrack(hp, nowTick));
-            } else {
-                if (nowTick - track.firstSeenTick >= HURT_DETECT_COOLDOWN_TICKS && hp < track.health - 0.01f) {
-                    // 已过冷却期且血量下降 → 受伤
-                    LAST_HURT.put(id, nowTick);
-                }
-                // 持续更新基线血量（冷却期内同步波动值，避免之后误判）
-                track.health = hp;
-            }
-
-            // 受伤短暂显示：仅渲染最近 3 秒内受过伤的生物
-            Long hurtTick = LAST_HURT.get(id);
-            if (hurtTick == null || nowTick - hurtTick >= HURT_SHOW_TICKS) {
-                continue;
-            }
-            if (!isVisibleToPlayer(player, living, partial)) {
-                continue;
-            }
-            Vec3 head = healthBarAnchor(living, partial);
-            Vec2 proj = projectToScreen(mc, head, partial);
-            if (proj == null) {
-                continue;
-            }
-            float bodyScale = Math.max(0.5f, Math.min(2.0f, (float) living.getBbWidth() / 0.6f));
-            float barW = BASE_BAR_W * bodyScale * BAR_SCREEN_SCALE;
-            float barH = BAR_H * BAR_SCREEN_SCALE;
-            if (barW < 12.0f || barH < 2.0f) {
-                continue;
-            }
-            float realDist = (float) player.distanceToSqr(living);
-            entries.add(new BarEntry(living, proj.x, proj.y, barW, barH, realDist));
+        if (track == null || nowTick >= track.hurtUntilTick
+                || player.distanceToSqr(living) > MAX_DISTANCE_SQUARED
+                || !isVisibleToPlayer(player, living, event.getPartialTick())) {
+            return;
         }
-        // 清理过期记录（防内存泄漏）：受伤表保留 3 秒；血量表只保留本帧仍可见的实体
-        LAST_HURT.entrySet().removeIf(e -> nowTick - e.getValue() > HURT_SHOW_TICKS);
-        LAST_HEALTH.keySet().removeIf(id -> !seenIds.contains(id));
 
-        // 第二阶段：按真实距离从远到近排序——远的先绘制，近的最后绘制（覆盖在上面），
-        // 因此重叠时永远优先显示离玩家近的生物血条
-        entries.sort((a, b) -> Float.compare(b.realDist, a.realDist));
-
-        // 第三阶段：按序绘制（远→近，近的覆盖远的）
-        for (BarEntry entry : entries) {
-            renderEntityStatus(graphics, mc, entry, partial);
+        Vec3 anchor = healthBarAnchor(living, event.getPartialTick());
+        EntityStatusPlateLayout.Layout layout = computeLayout(mc, anchor);
+        if (layout == null) {
+            return;
         }
+
+        HudBarAnimator.Visual visual = ANIMATOR.sample(living.getUUID(), HudBarAnimator.BarId.HEALTH,
+                living.getHealth(), living.getMaxHealth(), 0L, Util.getMillis());
+        renderEntityStatus(event, mc, living, visual, layout);
     }
 
-    /** 收集到的血条条目（屏幕坐标、尺寸、真实距离平方） */
-    private static final class BarEntry {
-        final LivingEntity living;
-        final int screenX;
-        final int screenY;
-        final float barW;
-        final float barH;
-        final float realDist;
-
-        BarEntry(LivingEntity living, int screenX, int screenY, float barW, float barH, float realDist) {
-            this.living = living;
-            this.screenX = screenX;
-            this.screenY = screenY;
-            this.barW = barW;
-            this.barH = barH;
-            this.realDist = realDist;
-        }
+    private static boolean canTrack(Entity entity) {
+        return entity instanceof LivingEntity living && living.isAlive();
     }
 
-    private static boolean canShowStatus(Entity e) {
-        return e instanceof LivingEntity && e.isAlive();
+    private static void clearTracking() {
+        HEALTH_TRACKS.clear();
+        ANIMATOR.reset();
     }
 
-    /** 固定头顶锚点：所有实体都使用同一“碰撞箱顶部 + 0.6 格”规则。 */
-    private static Vec3 healthBarAnchor(LivingEntity living, float partial) {
-        return living.getPosition(partial).add(0.0, living.getBbHeight() + HEAD_ANCHOR_OFFSET, 0.0);
+    private static Vec3 healthBarAnchor(LivingEntity living, float partialTick) {
+        return living.getPosition(partialTick).add(0.0D,
+                living.getBbHeight() + HEAD_ANCHOR_OFFSET, 0.0D);
+    }
+
+    private static EntityStatusPlateLayout.Layout computeLayout(Minecraft mc, Vec3 anchor) {
+        Camera camera = mc.gameRenderer.getMainCamera();
+        Vec3 delta = anchor.subtract(camera.getPosition());
+        Vector3f look = camera.getLookVector();
+        double depth = delta.x * look.x() + delta.y * look.y() + delta.z * look.z();
+        float projectionY = Math.abs(RenderSystem.getProjectionMatrix().m11());
+        return EntityStatusPlateLayout.compute(depth, projectionY,
+                mc.getWindow().getGuiScaledHeight());
     }
 
     /**
-     * 视线遮挡判断：从玩家眼睛到生物身体中心做方块射线，若射线先命中方块（命中点比目标点更近），
-     * 说明该生物被方块遮挡，玩家看不到，则不渲染其血条。
+     * 视线遮挡判断保留原有规则：玩家眼睛到生物身体中心之间若先命中方块，则隐藏状态牌。
      */
-    private static boolean isVisibleToPlayer(Player player, LivingEntity living, float partial) {
-        Vec3 eye = player.getEyePosition(partial);
-        Vec3 target = living.getPosition(partial).add(0.0, living.getBbHeight() * 0.5, 0.0);
-        ClipContext ctx = new ClipContext(eye, target, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player);
-        BlockHitResult hit = player.level().clip(ctx);
+    private static boolean isVisibleToPlayer(Player player, LivingEntity living, float partialTick) {
+        Vec3 eye = player.getEyePosition(partialTick);
+        Vec3 target = living.getPosition(partialTick).add(0.0D,
+                living.getBbHeight() * 0.5D, 0.0D);
+        ClipContext context = new ClipContext(eye, target,
+                ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player);
+        BlockHitResult hit = player.level().clip(context);
         if (hit.getType() == HitResult.Type.MISS) {
             return true;
         }
-        return hit.getLocation().distanceToSqr(eye) >= target.distanceToSqr(eye) - 1.0E-4;
+        return hit.getLocation().distanceToSqr(eye)
+                >= target.distanceToSqr(eye) - 1.0E-4D;
     }
 
-    /**
-     * 世界坐标 → 屏幕坐标（相机正交基投影，使用 MC Camera.getLookVector/getUpVector/getLeftVector）。
-     * 返回 null 表示在相机后方（不可见）。
-     */
-    private static Vec2 projectToScreen(Minecraft mc, Vec3 worldPos, float partial) {
-        net.minecraft.client.Camera camera = mc.gameRenderer.getMainCamera();
-        Vec3 camPos = camera.getPosition();
-        org.joml.Vector3f look = camera.getLookVector();
-        org.joml.Vector3f up = camera.getUpVector();
-        org.joml.Vector3f left = camera.getLeftVector();
+    private static void renderEntityStatus(RenderNameTagEvent event, Minecraft mc,
+                                           LivingEntity living, HudBarAnimator.Visual visual,
+                                           EntityStatusPlateLayout.Layout layout) {
+        PoseStack pose = event.getPoseStack();
+        MultiBufferSource buffers = event.getMultiBufferSource();
+        EntityRenderDispatcher dispatcher = mc.getEntityRenderDispatcher();
 
-        Vec3 rel = worldPos.subtract(camPos);
-        double fwdDist = rel.x * look.x + rel.y * look.y + rel.z * look.z;
-        if (fwdDist <= 0.1) {
-            return null;
+        pose.pushPose();
+        pose.translate(0.0D, living.getBbHeight() + HEAD_ANCHOR_OFFSET, 0.0D);
+        pose.mulPose(dispatcher.cameraOrientation());
+        float scale = layout.worldUnitsPerLogicalPixel();
+        pose.scale(-scale, -scale, scale);
+
+        drawTextureQuad(buffers, pose, BLOOD_EMPTY,
+                -EntityStatusPlateLayout.BAR_WIDTH_PIXELS * 0.5F,
+                -EntityStatusPlateLayout.BAR_HEAD_GAP_PIXELS - EntityStatusPlateLayout.BAR_HEIGHT_PIXELS,
+                EntityStatusPlateLayout.BAR_WIDTH_PIXELS * 0.5F,
+                -EntityStatusPlateLayout.BAR_HEAD_GAP_PIXELS,
+                0.0F, 0.0F, EntityStatusPlateLayout.TEXTURE_WIDTH,
+                EntityStatusPlateLayout.TEXTURE_HEIGHT, 0xFFFFFFFF, FRAME_Z);
+
+        drawTextureQuad(buffers, pose, BLOOD_FILL,
+                -EntityStatusPlateLayout.BAR_WIDTH_PIXELS * 0.5F,
+                -EntityStatusPlateLayout.BAR_HEAD_GAP_PIXELS - EntityStatusPlateLayout.BAR_HEIGHT_PIXELS,
+                EntityStatusPlateLayout.BAR_WIDTH_PIXELS * 0.5F,
+                -EntityStatusPlateLayout.BAR_HEAD_GAP_PIXELS,
+                0.0F, 0.0F, EntityStatusPlateLayout.TEXTURE_WIDTH,
+                EntityStatusPlateLayout.TEXTURE_HEIGHT, BAR_INNER_BG, BACKGROUND_Z);
+
+        double primary = EntityStatusPlateLayout.clampRatio(visual.primaryRatio());
+        double trailing = Math.max(primary,
+                EntityStatusPlateLayout.clampRatio(visual.trailingRatio()));
+        if (trailing > primary + 0.0001D) {
+            drawFill(buffers, pose, trailing,
+                    scaleColor(HEALTH_TOP, 0.58D), scaleColor(HEALTH_BOTTOM, 0.58D), TRAILING_Z);
         }
-        // right = -left
-        double rightDist = -(rel.x * left.x + rel.y * left.y + rel.z * left.z);
-        double upDist = rel.x * up.x + rel.y * up.y + rel.z * up.z;
+        drawFill(buffers, pose, primary, HEALTH_TOP, HEALTH_BOTTOM, PRIMARY_Z);
 
-        double fov = mc.options.fov().get();
-        int guiW = mc.getWindow().getGuiScaledWidth();
-        int guiH = mc.getWindow().getGuiScaledHeight();
-        double scale = (guiH / 2.0) / Math.tan(Math.toRadians(fov / 2.0));
-        int sx = guiW / 2 + (int) Math.round(rightDist / fwdDist * scale);
-        int sy = guiH / 2 - (int) Math.round(upDist / fwdDist * scale);
-        float dist = (float) fwdDist;
-        return new Vec2(sx, sy, dist);
+        drawHealthText(buffers, pose, mc.font, living, TEXT_Z);
+        drawAttributes(buffers, pose, mc.font, living, layout.iconSize(), TEXT_Z);
+        pose.popPose();
     }
 
-    private static void renderEntityStatus(GuiGraphics graphics, Minecraft mc, BarEntry entry, float partial) {
-        LivingEntity living = entry.living;
-        int sx = entry.screenX;
-        int sy = entry.screenY;
+    private static void drawFill(MultiBufferSource buffers, PoseStack pose, double ratio,
+                                 int topColor, int bottomColor, float z) {
+        float width = EntityStatusPlateLayout.BAR_WIDTH_PIXELS
+                * EntityStatusPlateLayout.clampRatio(ratio);
+        if (width <= 0.0F) {
+            return;
+        }
+        float left = -EntityStatusPlateLayout.BAR_WIDTH_PIXELS * 0.5F;
+        float top = -EntityStatusPlateLayout.BAR_HEAD_GAP_PIXELS
+                - EntityStatusPlateLayout.BAR_HEIGHT_PIXELS;
+        float bottom = -EntityStatusPlateLayout.BAR_HEAD_GAP_PIXELS;
+        float half = EntityStatusPlateLayout.BAR_HEIGHT_PIXELS * 0.5F;
+        float fullWidth = EntityStatusPlateLayout.BAR_WIDTH_PIXELS;
+        float cap = fullWidth * EntityStatusPlateLayout.CLIP_TEXTURE_PIXELS
+                / EntityStatusPlateLayout.TEXTURE_WIDTH;
 
-        float hp = living.getHealth();
-        float maxHp = living.getMaxHealth();
-        double ratio = maxHp <= 0.0f ? 0.0 : (double) hp / (double) maxHp;
-
-        // 恒定屏幕大小（不随距离变化）：8 格距离视角下的 65% 基准大小，仅随体型微调宽度
-        float distScale = BAR_SCREEN_SCALE;
-        float barW = entry.barW;
-        float barH = entry.barH;
-        if (barW < 12.0f || barH < 2.0f) {
+        if (width <= cap) {
+            drawTextureQuad(buffers, pose, BLOOD_FILL, left, top, left + width, top + half,
+                    0.0F, 0.0F, EntityStatusPlateLayout.TEXTURE_WIDTH, 3.0F, topColor, z);
+            drawTextureQuad(buffers, pose, BLOOD_FILL, left, top + half, left + width, bottom,
+                    0.0F, 3.0F, EntityStatusPlateLayout.TEXTURE_WIDTH,
+                    EntityStatusPlateLayout.TEXTURE_HEIGHT, bottomColor, z);
             return;
         }
 
-        float bx = (float) sx - barW / 2.0f;
-        float by = (float) sy - SCREEN_BAR_OFFSET_Y;
+        float capWidth = Math.min(cap, width);
+        drawTextureQuad(buffers, pose, BLOOD_FILL, left, top, left + capWidth, top + half,
+                0.0F, 0.0F, EntityStatusPlateLayout.CLIP_TEXTURE_PIXELS, 3.0F, topColor, z);
+        drawTextureQuad(buffers, pose, BLOOD_FILL, left, top + half, left + capWidth, bottom,
+                0.0F, 3.0F, EntityStatusPlateLayout.CLIP_TEXTURE_PIXELS,
+                EntityStatusPlateLayout.TEXTURE_HEIGHT, bottomColor, z);
 
-        // 与玩家血条 renderTextureBar 完全一致的三层贴图结构（GuiGraphics.blit）：
-        // ① 底条：blood_empty 整张贴图等比缩放（白色 tint）
-        graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-        graphics.blit(BLOOD_EMPTY, (int) bx, (int) by, Math.round(barW), Math.round(barH),
-                0.0f, 0.0f, 96, 6, 96, 6);
-        // ② 内部深黑灰底槽：blood_fill 染 BAR_INNER_BG 铺满全条
-        setBarColor(graphics, BAR_INNER_BG);
-        graphics.blit(BLOOD_FILL, (int) bx, (int) by, Math.round(barW), Math.round(barH),
-                0.0f, 0.0f, 96, 6, 96, 6);
-        graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+        float bodyWidth = width - capWidth;
+        float sourceWidth = EntityStatusPlateLayout.TEXTURE_WIDTH * bodyWidth / fullWidth;
+        float sourceLeft = EntityStatusPlateLayout.TEXTURE_WIDTH - sourceWidth;
+        drawTextureQuad(buffers, pose, BLOOD_FILL, left + capWidth, top, left + width, top + half,
+                sourceLeft, 0.0F, EntityStatusPlateLayout.TEXTURE_WIDTH, 3.0F, topColor, z);
+        drawTextureQuad(buffers, pose, BLOOD_FILL, left + capWidth, top + half, left + width, bottom,
+                sourceLeft, 3.0F, EntityStatusPlateLayout.TEXTURE_WIDTH,
+                EntityStatusPlateLayout.TEXTURE_HEIGHT, bottomColor, z);
+    }
 
-        // ③ 填充：电池护盾 clip（左端固定圆角 + 右侧从贴图尾部滑入）
-        int targetW = (int) Math.round(barW * ratio);
-        if (targetW > 0) {
-            int x0 = (int) bx;
-            int y0 = (int) by;
-            int w = Math.round(barW);
-            int h = Math.round(barH);
-            int halfH = Math.max(1, h / 2);
-            int clipScreen = Math.max(1, Math.round(barW * CLIP_PX / 96.0f));
-            if (targetW >= w) {
-                setBarColor(graphics, HEALTH_TOP);
-                graphics.blit(BLOOD_FILL, x0, y0, w, halfH, 0.0f, 0.0f, 96, 3, 96, 6);
-                setBarColor(graphics, HEALTH_BOTTOM);
-                graphics.blit(BLOOD_FILL, x0, y0 + halfH, w, h - halfH, 0.0f, 3.0f, 96, 3, 96, 6);
-            } else if (targetW <= clipScreen) {
-                setBarColor(graphics, HEALTH_TOP);
-                graphics.blit(BLOOD_FILL, x0, y0, targetW, halfH, 0.0f, 0.0f, 96, 3, 96, 6);
-                setBarColor(graphics, HEALTH_BOTTOM);
-                graphics.blit(BLOOD_FILL, x0, y0 + halfH, targetW, h - halfH, 0.0f, 3.0f, 96, 3, 96, 6);
-            } else {
-                int rightScreen = targetW - clipScreen;
-                setBarColor(graphics, HEALTH_TOP);
-                graphics.blit(BLOOD_FILL, x0, y0, clipScreen, halfH, 0.0f, 0.0f, CLIP_PX, 3, 96, 6);
-                setBarColor(graphics, HEALTH_BOTTOM);
-                graphics.blit(BLOOD_FILL, x0, y0 + halfH, clipScreen, h - halfH, 0.0f, 3.0f, CLIP_PX, 3, 96, 6);
-                int rightSrc = Math.max(1, (int) Math.round((double) rightScreen * 96.0 / (double) w));
-                setBarColor(graphics, HEALTH_TOP);
-                graphics.blit(BLOOD_FILL, x0 + clipScreen, y0, rightScreen, halfH, 96.0f - rightSrc, 0.0f, rightSrc, 3, 96, 6);
-                setBarColor(graphics, HEALTH_BOTTOM);
-                graphics.blit(BLOOD_FILL, x0 + clipScreen, y0 + halfH, rightScreen, h - halfH, 96.0f - rightSrc, 3.0f, rightSrc, 3, 96, 6);
-            }
-            graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-        }
+    private static void drawHealthText(MultiBufferSource buffers, PoseStack pose, Font font,
+                                       LivingEntity living, float z) {
+        String value = formatNumber(living.getHealth()) + "/" + formatNumber(living.getMaxHealth());
+        Component text = Component.literal(value);
+        float width = font.width(text) * EntityStatusPlateLayout.TEXT_SCALE;
+        float x = -width * 0.5F;
+        float y = -EntityStatusPlateLayout.BAR_HEAD_GAP_PIXELS
+                - EntityStatusPlateLayout.BAR_HEIGHT_PIXELS
+                + (EntityStatusPlateLayout.BAR_HEIGHT_PIXELS
+                - font.lineHeight * EntityStatusPlateLayout.TEXT_SCALE) * 0.5F;
+        drawText(buffers, pose, font, text, x, y, EntityStatusPlateLayout.TEXT_SCALE, 0xFFFFFFFF, z);
+    }
 
-        // 条内居中显示当前/最大生命值文本（随条缩放）
-        Component text = Component.literal(String.format("%.0f/%.0f", hp, maxHp));
-        float textScale = 0.5f * distScale;
-        if (textScale >= 0.22f) {
-            float rawW = mc.font.width(text);
-            float scale = Math.min(textScale, barW / rawW);
-            float textW = rawW * scale;
-            float textX = bx + (barW - textW) / 2.0f;
-            float textY = by + (barH - mc.font.lineHeight * scale) / 2.0f;
-            graphics.pose().pushPose();
-            graphics.pose().translate(textX, textY, 0.0f);
-            graphics.pose().scale(scale, scale, 1.0f);
-            graphics.drawString(mc.font, text, 0, 0, 0xFFFFFF, true);
-            graphics.pose().popPose();
-        }
-
-        // 盔甲 / 韧性（水平排列在血条右侧，随条缩放）
+    private static void drawAttributes(MultiBufferSource buffers, PoseStack pose, Font font,
+                                       LivingEntity living, float iconSize, float z) {
         int armor = living.getArmorValue();
-        double toughness = living.getAttribute(Attributes.ARMOR_TOUGHNESS).getValue();
+        AttributeInstance toughnessAttribute = living.getAttribute(Attributes.ARMOR_TOUGHNESS);
+        double toughness = toughnessAttribute == null ? 0.0D : toughnessAttribute.getValue();
         boolean showArmor = armor > 0;
-        boolean showToughness = toughness > 0.0;
-        if ((showArmor || showToughness) && distScale >= 0.22f) {
-            float gx = bx + barW + 2.0f * distScale;
-            float gy = by + (barH - ICON_SIZE * distScale) / 2.0f;
-            float icon = ICON_SIZE * distScale;
-            float gap = 4.0f * distScale;
-            if (showArmor) {
-                graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-                graphics.blit(VANILLA_ICONS, (int) gx, (int) gy, Math.round(icon), Math.round(icon),
-                        ARMOR_ICON_U, ARMOR_ICON_V, 9, 9, 256, 256);
-                drawScaledText(graphics, mc, Component.literal(String.valueOf(armor)),
-                        gx + icon + 1.0f * distScale, gy, 0.5f * distScale, ARMOR_COLOR);
-                float armorW = icon + 1.0f * distScale + mc.font.width(Component.literal(String.valueOf(armor))) * 0.5f * distScale;
-                gx += armorW + gap;
-            }
-            if (showToughness) {
-                graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-                graphics.blit(OVERFLOWING_ICONS, (int) gx, (int) gy, Math.round(icon), Math.round(icon),
-                        TOUGH_ICON_U, TOUGH_ICON_V, 9, 9, 256, 256);
-                drawScaledText(graphics, mc, Component.literal(String.format("%.0f", toughness)),
-                        gx + icon + 1.0f * distScale, gy, 0.5f * distScale, TOUGH_COLOR);
-            }
-        }
-    }
-
-    /** 缩放绘制文本（坐标=缩放前） */
-    private static void drawScaledText(GuiGraphics graphics, Minecraft mc, Component text, float x, float y, float scale, int color) {
-        if (scale <= 0.0f) {
+        boolean showToughness = toughness > 0.0D;
+        if (!showArmor && !showToughness) {
             return;
         }
-        graphics.pose().pushPose();
-        graphics.pose().translate(x, y, 0.0f);
-        graphics.pose().scale(scale, scale, 1.0f);
-        graphics.drawString(mc.font, text, 0, 0, color, true);
-        graphics.pose().popPose();
+
+        float barRight = EntityStatusPlateLayout.BAR_WIDTH_PIXELS * 0.5F;
+        float iconY = -EntityStatusPlateLayout.BAR_HEAD_GAP_PIXELS
+                - EntityStatusPlateLayout.BAR_HEIGHT_PIXELS
+                + (EntityStatusPlateLayout.BAR_HEIGHT_PIXELS - iconSize) * 0.5F;
+        float x = barRight + EntityStatusPlateLayout.ICON_GAP_PIXELS;
+        if (showArmor) {
+            drawTextureQuad(buffers, pose, VANILLA_ICONS, x, iconY, x + iconSize, iconY + iconSize,
+                    ARMOR_ICON_U, ARMOR_ICON_V, ARMOR_ICON_U + 9.0F, ARMOR_ICON_V + 9.0F,
+                    0xFFFFFFFF, z, 256.0F, 256.0F);
+            String armorText = formatNumber(armor);
+            drawText(buffers, pose, font, Component.literal(armorText),
+                    x + iconSize + 1.0F, iconY + 1.0F, 0.5F, ARMOR_COLOR, z + 0.001F);
+            x += iconSize + 1.0F + font.width(armorText) * 0.5F + EntityStatusPlateLayout.ICON_GAP_PIXELS;
+        }
+        if (showToughness) {
+            drawTextureQuad(buffers, pose, OVERFLOWING_ICONS, x, iconY, x + iconSize, iconY + iconSize,
+                    TOUGH_ICON_U, TOUGH_ICON_V, TOUGH_ICON_U + 9.0F, TOUGH_ICON_V + 9.0F,
+                    0xFFFFFFFF, z, 256.0F, 256.0F);
+            drawText(buffers, pose, font, Component.literal(formatNumber(toughness)),
+                    x + iconSize + 1.0F, iconY + 1.0F, 0.5F, TOUGH_COLOR, z + 0.001F);
+        }
     }
 
-    /** 与玩家 CultivationHud.setBarColor 相同：染贴图颜色（含 alpha） */
-    private static void setBarColor(GuiGraphics graphics, int color) {
-        float a = ((color >> 24) & 0xFF) / 255.0f;
-        float r = ((color >> 16) & 0xFF) / 255.0f;
-        float g = ((color >> 8) & 0xFF) / 255.0f;
-        float b = (color & 0xFF) / 255.0f;
-        graphics.setColor(r, g, b, a);
+    private static void drawText(MultiBufferSource buffers, PoseStack pose, Font font,
+                                 Component text, float x, float y, float scale, int color, float z) {
+        if (scale <= 0.0F) {
+            return;
+        }
+        pose.pushPose();
+        pose.translate(x, y, z);
+        pose.scale(scale, scale, 1.0F);
+        font.drawInBatch(text, 0.0F, 0.0F, color, true, pose.last().pose(), buffers,
+                Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+        pose.popPose();
     }
 
-    /** 屏幕坐标 + 距离 */
-    private record Vec2(int x, int y, float dist) {
+    private static void drawTextureQuad(MultiBufferSource buffers, PoseStack pose,
+                                         ResourceLocation texture, float left, float top,
+                                         float right, float bottom, float u0, float v0,
+                                         float u1, float v1, int color, float z) {
+        drawTextureQuad(buffers, pose, texture, left, top, right, bottom,
+                u0, v0, u1, v1, color, z,
+                EntityStatusPlateLayout.TEXTURE_WIDTH, EntityStatusPlateLayout.TEXTURE_HEIGHT);
+    }
+
+    private static void drawTextureQuad(MultiBufferSource buffers, PoseStack pose,
+                                         ResourceLocation texture, float left, float top,
+                                         float right, float bottom, float u0, float v0,
+                                         float u1, float v1, int color, float z,
+                                         float textureWidth, float textureHeight) {
+        if (right <= left || bottom <= top) {
+            return;
+        }
+        VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
+        PoseStack.Pose current = pose.last();
+        Matrix4f matrix = current.pose();
+        Matrix3f normal = current.normal();
+        putVertex(consumer, matrix, normal, left, bottom, z, u0 / textureWidth, v1 / textureHeight, color);
+        putVertex(consumer, matrix, normal, right, bottom, z, u1 / textureWidth, v1 / textureHeight, color);
+        putVertex(consumer, matrix, normal, right, top, z, u1 / textureWidth, v0 / textureHeight, color);
+        putVertex(consumer, matrix, normal, left, top, z, u0 / textureWidth, v0 / textureHeight, color);
+    }
+
+    private static void putVertex(VertexConsumer consumer, Matrix4f matrix, Matrix3f normal,
+                                  float x, float y, float z, float u, float v, int color) {
+        consumer.vertex(matrix, x, y, z)
+                .color((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF,
+                        (color >>> 24) & 0xFF)
+                .uv(u, v)
+                .overlayCoords(OverlayTexture.NO_OVERLAY)
+                .uv2(LightTexture.FULL_BRIGHT)
+                .normal(normal, 0.0F, 0.0F, 1.0F)
+                .endVertex();
+    }
+
+    private static int scaleColor(int color, double factor) {
+        int red = (int) Math.round(((color >> 16) & 0xFF) * factor);
+        int green = (int) Math.round(((color >> 8) & 0xFF) * factor);
+        int blue = (int) Math.round((color & 0xFF) * factor);
+        return 0xFF000000 | (red << 16) | (green << 8) | blue;
+    }
+
+    private static String formatNumber(double value) {
+        double absolute = Math.abs(value);
+        if (absolute >= 1_000_000_000.0D) {
+            return String.format(Locale.ROOT, "%.2fB", value / 1_000_000_000.0D);
+        }
+        if (absolute >= 1_000_000.0D) {
+            return String.format(Locale.ROOT, "%.2fM", value / 1_000_000.0D);
+        }
+        if (absolute >= 1_000.0D) {
+            return String.format(Locale.ROOT, "%.2fK", value / 1_000.0D);
+        }
+        return String.format(Locale.ROOT, "%.0f", value);
+    }
+
+    private static final class HealthTrack {
+        private float health;
+        private final long firstSeenTick;
+        private long lastSeenTick;
+        private long hurtUntilTick;
+
+        private HealthTrack(float health, long firstSeenTick) {
+            this.health = health;
+            this.firstSeenTick = firstSeenTick;
+            this.lastSeenTick = firstSeenTick;
+        }
+    }
+
+    /** Oculus/Iris 可选阴影轮次 Adapter；未安装时安全退化到主世界轮次。 */
+    private record ShadowPassGuard(Method getInstance, Method shadowMethod) {
+        private static ShadowPassGuard create() {
+            try {
+                Class<?> api = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+                return new ShadowPassGuard(api.getMethod("getInstance"),
+                        api.getMethod("isRenderingShadowPass"));
+            } catch (ReflectiveOperationException | LinkageError | RuntimeException ignored) {
+                return new ShadowPassGuard(null, null);
+            }
+        }
+
+        private boolean isRenderingShadowPass() {
+            if (getInstance == null || shadowMethod == null) {
+                return false;
+            }
+            try {
+                Object api = getInstance.invoke(null);
+                return Boolean.TRUE.equals(shadowMethod.invoke(api));
+            } catch (ReflectiveOperationException | RuntimeException ignored) {
+                return false;
+            }
+        }
     }
 }
