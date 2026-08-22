@@ -58,10 +58,12 @@ public class CultivationHud {
     private static final int WUDAO_WIDTH = 70;
     /** 经验 HUD 组的总长度（经验条 + 左侧等级文本），保持原版组宽度。 */
     private static final int EXPERIENCE_GROUP_WIDTH = 182;
-    /** 提高项目经验贴图的渲染高度，让中央经验值完整落在条带内部。 */
-    private static final int EXPERIENCE_BAR_HEIGHT = 8;
-    private static final float EXPERIENCE_LEVEL_TEXT_SCALE = 0.6f;
-    private static final int EXPERIENCE_LEVEL_GAP = 2;
+    /** A 版经验条沿用 CultivationScreen 属性条的 7 像素高度。 */
+    private static final int EXPERIENCE_BAR_HEIGHT = 7;
+    private static final float EXPERIENCE_LEVEL_TEXT_SCALE = 0.62f;
+    private static final float EXPERIENCE_VALUE_TEXT_SCALE = 0.6f;
+    /** drawLeftStatusBar/drawThinBar 使用的统一属性条标签预留宽度。 */
+    private static final int EXPERIENCE_LEVEL_LABEL_EXTRA = 4;
     /** 原版经验等级文字颜色（Gui 中的 0x80FF20）。 */
     private static final int EXPERIENCE_LEVEL_TEXT_COLOR = 0x80FF20;
 
@@ -127,7 +129,7 @@ public class CultivationHud {
         event.setCanceled(true);
     }
 
-    /** 使用项目 HUD 贴图重绘经验条，并把等级与总经验收拢到同一组布局。 */
+    /** A 版布局：左侧属性条标签，右侧复用修仙面板属性条样式的经验条。 */
     private static void renderExperienceBar(GuiGraphics graphics, int screenWidth, int screenHeight) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
@@ -139,20 +141,18 @@ public class CultivationHud {
         int height = EXPERIENCE_BAR_HEIGHT;
         Component level = Component.literal("等级:" + Math.max(0, player.experienceLevel));
         int rawLevelWidth = mc.font.width((FormattedText)level);
-        int levelWidth = Math.max(1, Math.min(EXPERIENCE_GROUP_WIDTH - EXPERIENCE_LEVEL_GAP - 1,
-                (int)Math.ceil((double)rawLevelWidth * (double)EXPERIENCE_LEVEL_TEXT_SCALE)));
-        int width = EXPERIENCE_GROUP_WIDTH - levelWidth - EXPERIENCE_LEVEL_GAP;
-        int x = groupX + levelWidth + EXPERIENCE_LEVEL_GAP;
-        // 保留原版经验 HUD 的底部锚点；仅缩短贴图渲染高度，不改变整组位置。
+        int levelWidth = Math.max(18, Math.min(EXPERIENCE_GROUP_WIDTH - 1,
+                (int)Math.ceil((double)rawLevelWidth * (double)EXPERIENCE_LEVEL_TEXT_SCALE) + EXPERIENCE_LEVEL_LABEL_EXTRA));
+        int width = EXPERIENCE_GROUP_WIDTH - levelWidth;
+        int x = groupX + levelWidth;
+        // 保留原版经验 HUD 的底部锚点；经验条高度和属性面板保持一致。
         int y = screenHeight - 29;
         double progress = Math.max(0.0, Math.min(1.0, player.experienceProgress));
-        renderTextureBar(graphics, mc, x, y, width, height, progress,
-                BLOOD_EMPTY, BLOOD_FILL, 96, 6, EXPERIENCE_TOP, EXPERIENCE_BOTTOM,
-                Component.literal(String.valueOf(Math.max(0, player.totalExperience))), -1);
-
-        // 等级标签左对齐；经验条紧接实际文字宽度，自动使用剩余长度。
-        drawLeftScaledInRect(graphics, mc, level, groupX, y,
-                levelWidth, height, EXPERIENCE_LEVEL_TEXT_SCALE, EXPERIENCE_LEVEL_TEXT_COLOR, true);
+        drawLeftScaledInRect(graphics, mc, level, groupX, y - 1,
+                levelWidth, height, EXPERIENCE_LEVEL_TEXT_SCALE, EXPERIENCE_LEVEL_TEXT_COLOR, false);
+        renderCultivationPanelBar(graphics, mc, x, y, width, height, progress,
+                EXPERIENCE_TOP, EXPERIENCE_BOTTOM,
+                Component.literal(String.valueOf(Math.max(0, player.totalExperience))));
     }
 
     private static void render(GuiGraphics graphics, int screenWidth) {
@@ -362,6 +362,42 @@ public class CultivationHud {
 
         if (text != null) {
             drawCenteredScaledInRect(graphics, mc, text, x, y, width, height, 0.5f, textColor, true);
+        }
+    }
+
+    /**
+     * 修仙面板属性条的统一视觉：边框、暗槽、顶端高光、上下渐变、底部阴影与分隔纹。
+     * 经验条只替换属性条的填充颜色为原版经验绿色，避免再次引入另一套贴图样式。
+     */
+    private static void renderCultivationPanelBar(GuiGraphics graphics, Minecraft mc, int x, int y, int width, int height, double ratio, int topColor, int bottomColor, Component text) {
+        int barW = Math.max(1, width);
+        int barH = Math.max(1, height);
+        int border = -15067628;
+        int background = -14739179;
+        int topHighlight = -16119802;
+
+        graphics.fill(x - 1, y - 1, x + barW + 1, y, border);
+        graphics.fill(x - 1, y + barH, x + barW + 1, y + barH + 1, border);
+        graphics.fill(x - 1, y, x, y + barH, border);
+        graphics.fill(x + barW, y, x + barW + 1, y + barH, border);
+        graphics.fill(x, y, x + barW, y + barH, background);
+        graphics.fill(x, y, x + barW, y + 1, topHighlight);
+
+        double clampedRatio = Math.max(0.0, Math.min(1.0, ratio));
+        int filledW = (int)((double)barW * clampedRatio);
+        if (filledW > 0) {
+            int half = Math.max(1, barH / 2);
+            graphics.fill(x, y, x + filledW, y + half, topColor);
+            graphics.fill(x, y + half, x + filledW, y + barH, bottomColor);
+            graphics.fill(x, y, x + filledW, y + 1, 0x40FFFFFF);
+            graphics.fill(x, y + barH - 1, x + filledW, y + barH, 0x33000000);
+            for (int stripeX = x + 6; stripeX < x + filledW; stripeX += 6) {
+                graphics.fill(stripeX, y, stripeX + 1, y + barH, 0x1F000000);
+            }
+        }
+        if (text != null) {
+            drawCenteredScaledInRect(graphics, mc, text, x, y, barW, barH,
+                    EXPERIENCE_VALUE_TEXT_SCALE, -1, false);
         }
     }
 
