@@ -67,8 +67,8 @@ public class CultivationHud {
     private static final float EXPERIENCE_LEVEL_TEXT_SCALE = 0.62f;
     private static final float EXPERIENCE_VALUE_TEXT_SCALE = 0.6f;
     private static final float EXPERIENCE_PROGRESS_TEXT_SCALE = 0.45f;
-    /** 原版经验等级文字颜色（Gui 中的 0x80FF20）。 */
-    private static final int EXPERIENCE_LEVEL_TEXT_COLOR = 0x80FF20;
+    /** 经验等级文字改为白色，与快捷栏文字保持一致。 */
+    private static final int EXPERIENCE_LEVEL_TEXT_COLOR = 0xFFFFFF;
 
     // 项目设定色：顶/底渐变
     private static final int HEALTH_TOP = -1944235;
@@ -83,8 +83,8 @@ public class CultivationHud {
      * 原版 1.20.1 assets/minecraft/textures/gui/icons.png 经验条填充区域
      * (x=120, y=70..72) 的内部像素采样：顶部/底部各取对应渐变色。
      */
-    private static final int EXPERIENCE_TOP = 0x5F8B3E;
-    private static final int EXPERIENCE_BOTTOM = 0x436924;
+    private static final int EXPERIENCE_TOP = 0xFF5F8B3E;
+    private static final int EXPERIENCE_BOTTOM = 0xFF436924;
 
     // 原版属性行（位于生命条右侧，与生命条同 y）
     private static final int ATTR_ICON_SIZE = 8;
@@ -146,7 +146,8 @@ public class CultivationHud {
         int levelWidth = Math.max(1,
                 (int)Math.ceil((double)rawLevelWidth * (double)EXPERIENCE_LEVEL_TEXT_SCALE));
         Component totalExperience = Component.literal("总经验 " + Math.max(0, player.totalExperience));
-        int barY = screenHeight - 29;
+        // 快捷栏顶部约为 screenHeight - 22；将经验条下移 2 像素，压缩两者之间的空隙。
+        int barY = screenHeight - 27;
         int metaY = barY - EXPERIENCE_META_HEIGHT - EXPERIENCE_META_GAP;
         int nextLevelExperience = Math.max(1, player.getXpNeededForNextLevel());
         int currentLevelExperience = Math.max(0, Math.min(nextLevelExperience,
