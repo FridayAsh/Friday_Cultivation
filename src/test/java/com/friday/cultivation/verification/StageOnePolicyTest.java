@@ -91,6 +91,12 @@ class StageOnePolicyTest {
         assertTrue(entityHud.contains("healthBarAnchor(living, event.getPartialTick())"));
         assertTrue(entityHud.contains("HURT_SHOW_TICKS"));
         assertTrue(entityHud.contains("HEALTH_TRACKS"));
+        assertTrue(entityHud.contains("BACKGROUND_Z = -0.001F"),
+                "背景、填充、文字必须沿朝向相机的负 Z 方向分层，不能让背景遮住填充和图标");
+        assertTrue(entityHud.contains("PRIMARY_Z = -0.003F"));
+        assertTrue(entityHud.contains("TEXT_Z = -0.004F"));
+        assertTrue(entityHud.contains("RenderType.text(texture)"),
+                "状态牌贴图必须进入与原版名称牌一致的 textured 管线，避免 iterationT 实体材质延迟光照压暗 HUD 颜色");
     }
 
     private static String read(String relativePath) throws IOException {

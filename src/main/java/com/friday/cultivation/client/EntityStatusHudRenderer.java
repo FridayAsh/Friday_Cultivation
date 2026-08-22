@@ -1,6 +1,5 @@
 package com.friday.cultivation.client;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.lang.reflect.Method;
@@ -18,7 +17,6 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -36,7 +34,6 @@ import net.minecraftforge.client.event.RenderNameTagEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -76,10 +73,10 @@ public final class EntityStatusHudRenderer {
     private static final long TRACKING_EXPIRE_TICKS = 40L;
 
     private static final float FRAME_Z = 0.000F;
-    private static final float BACKGROUND_Z = 0.001F;
-    private static final float TRAILING_Z = 0.002F;
-    private static final float PRIMARY_Z = 0.003F;
-    private static final float TEXT_Z = 0.004F;
+    private static final float BACKGROUND_Z = -0.001F;
+    private static final float TRAILING_Z = -0.002F;
+    private static final float PRIMARY_Z = -0.003F;
+    private static final float TEXT_Z = -0.004F;
 
     private static final Map<UUID, HealthTrack> HEALTH_TRACKS = new HashMap<>();
     private static final HudBarAnimator ANIMATOR = new HudBarAnimator();
@@ -203,9 +200,7 @@ public final class EntityStatusHudRenderer {
         Vec3 delta = anchor.subtract(camera.getPosition());
         Vector3f look = camera.getLookVector();
         double depth = delta.x * look.x() + delta.y * look.y() + delta.z * look.z();
-        float projectionY = Math.abs(RenderSystem.getProjectionMatrix().m11());
-        return EntityStatusPlateLayout.compute(depth, projectionY,
-                mc.getWindow().getGuiScaledHeight());
+        return EntityStatusPlateLayout.compute(depth);
     }
 
     /**
@@ -387,25 +382,22 @@ public final class EntityStatusHudRenderer {
         if (right <= left || bottom <= top) {
             return;
         }
-        VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
+        VertexConsumer consumer = buffers.getBuffer(RenderType.text(texture));
         PoseStack.Pose current = pose.last();
         Matrix4f matrix = current.pose();
-        Matrix3f normal = current.normal();
-        putVertex(consumer, matrix, normal, left, bottom, z, u0 / textureWidth, v1 / textureHeight, color);
-        putVertex(consumer, matrix, normal, right, bottom, z, u1 / textureWidth, v1 / textureHeight, color);
-        putVertex(consumer, matrix, normal, right, top, z, u1 / textureWidth, v0 / textureHeight, color);
-        putVertex(consumer, matrix, normal, left, top, z, u0 / textureWidth, v0 / textureHeight, color);
+        putVertex(consumer, matrix, left, bottom, z, u0 / textureWidth, v1 / textureHeight, color);
+        putVertex(consumer, matrix, right, bottom, z, u1 / textureWidth, v1 / textureHeight, color);
+        putVertex(consumer, matrix, right, top, z, u1 / textureWidth, v0 / textureHeight, color);
+        putVertex(consumer, matrix, left, top, z, u0 / textureWidth, v0 / textureHeight, color);
     }
 
-    private static void putVertex(VertexConsumer consumer, Matrix4f matrix, Matrix3f normal,
+    private static void putVertex(VertexConsumer consumer, Matrix4f matrix,
                                   float x, float y, float z, float u, float v, int color) {
         consumer.vertex(matrix, x, y, z)
                 .color((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF,
                         (color >>> 24) & 0xFF)
                 .uv(u, v)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
                 .uv2(LightTexture.FULL_BRIGHT)
-                .normal(normal, 0.0F, 0.0F, 1.0F)
                 .endVertex();
     }
 

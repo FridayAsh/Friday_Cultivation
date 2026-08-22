@@ -9,21 +9,28 @@ import org.junit.jupiter.api.Test;
 /** 生物状态牌恒定逻辑尺寸公式的纯数学回归测试。 */
 class EntityStatusPlateLayoutTest {
     @Test
-    void projectedLogicalSizeRemainsConstantAtDifferentDepths() {
+    void worldDimensionsRemainConstantAtDifferentDepths() {
         for (double depth : new double[]{2.0D, 4.0D, 8.0D, 16.0D, 24.0D}) {
-            EntityStatusPlateLayout.Layout layout = EntityStatusPlateLayout.compute(depth, 1.73205F, 240);
-            double projectedWidth = (double) layout.barWidth() * 1.73205D * 240.0D / (2.0D * depth);
-            double projectedHeight = (double) layout.barHeight() * 1.73205D * 240.0D / (2.0D * depth);
+            EntityStatusPlateLayout.Layout layout = EntityStatusPlateLayout.compute(depth);
 
-            assertEquals(EntityStatusPlateLayout.BAR_WIDTH_PIXELS, projectedWidth, 0.0001D);
-            assertEquals(EntityStatusPlateLayout.BAR_HEIGHT_PIXELS, projectedHeight, 0.0001D);
+            assertEquals(1.2F, layout.barWidth(), 0.0001F);
+            assertEquals(0.144F, layout.barHeight(), 0.0001F);
         }
     }
 
     @Test
+    void worldPlaneScaleDoesNotGrowWithCameraDistance() {
+        EntityStatusPlateLayout.Layout near = EntityStatusPlateLayout.compute(2.0D);
+        EntityStatusPlateLayout.Layout far = EntityStatusPlateLayout.compute(24.0D);
+
+        assertEquals(near.worldUnitsPerLogicalPixel(), far.worldUnitsPerLogicalPixel(), 0.000001F,
+                "状态牌必须保持固定世界尺寸，让它与生物一起自然缩小，不能在远处放大世界平面");
+    }
+
+    @Test
     void entityWidthDoesNotParticipateInLayout() {
-        EntityStatusPlateLayout.Layout small = EntityStatusPlateLayout.compute(8.0D, 1.2F, 240);
-        EntityStatusPlateLayout.Layout large = EntityStatusPlateLayout.compute(8.0D, 1.2F, 240);
+        EntityStatusPlateLayout.Layout small = EntityStatusPlateLayout.compute(8.0D);
+        EntityStatusPlateLayout.Layout large = EntityStatusPlateLayout.compute(8.0D);
 
         assertEquals(small.barWidth(), large.barWidth(), 0.0F);
         assertEquals(small.barHeight(), large.barHeight(), 0.0F);
@@ -31,9 +38,8 @@ class EntityStatusPlateLayoutTest {
 
     @Test
     void invalidProjectionIsNotDrawable() {
-        assertNull(EntityStatusPlateLayout.compute(-1.0D, 1.2F, 240));
-        assertNull(EntityStatusPlateLayout.compute(8.0D, 0.0F, 240));
-        assertNull(EntityStatusPlateLayout.compute(8.0D, 1.2F, 0));
+        assertNull(EntityStatusPlateLayout.compute(-1.0D));
+        assertNull(EntityStatusPlateLayout.compute(Double.NaN));
     }
 
     @Test
