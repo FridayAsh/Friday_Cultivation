@@ -40,8 +40,8 @@ import org.joml.Vector3f;
 /**
  * 生物头顶状态牌渲染器。
  *
- * <p>状态牌在原版名称牌事件中以世界空间 billboard 绘制，使用真实投影矩阵将固定的
- * GUI 逻辑像素尺寸换算成世界尺寸。动画状态由统一的 {@link HudBarAnimator} 提供，
+ * <p>状态牌在原版名称牌事件中以世界空间 billboard 绘制，使用固定世界比例将统一的
+ * 本地排版单位换算成世界尺寸。动画状态由统一的 {@link HudBarAnimator} 提供，
  * 本类只负责生物状态追踪、可见性策略、世界变换和绘制。</p>
  */
 @Mod.EventBusSubscriber(modid = "friday_cultivation", value = Dist.CLIENT)
@@ -259,7 +259,9 @@ public final class EntityStatusHudRenderer {
         drawFill(buffers, pose, primary, HEALTH_TOP, HEALTH_BOTTOM, PRIMARY_Z);
 
         drawHealthText(buffers, pose, mc.font, living, TEXT_Z);
-        drawAttributes(buffers, pose, mc.font, living, layout.iconSize(), TEXT_Z);
+        // pose 已经执行世界缩放；这里必须继续传入 13 个本地排版单位，不能传 layout.iconSize() 再缩放一次。
+        drawAttributes(buffers, pose, mc.font, living,
+                EntityStatusPlateLayout.ICON_SIZE_PIXELS, TEXT_Z);
         pose.popPose();
     }
 
@@ -360,7 +362,8 @@ public final class EntityStatusHudRenderer {
         pose.pushPose();
         pose.translate(x, y, z);
         pose.scale(scale, scale, 1.0F);
-        font.drawInBatch(text, 0.0F, 0.0F, color, true, pose.last().pose(), buffers,
+        // Font 的阴影模式会把主字形沿 +Z 偏移 0.03，在状态牌深度层中会被血条平面遮挡，只留下深色阴影。
+        font.drawInBatch(text, 0.0F, 0.0F, color, false, pose.last().pose(), buffers,
                 Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
         pose.popPose();
     }

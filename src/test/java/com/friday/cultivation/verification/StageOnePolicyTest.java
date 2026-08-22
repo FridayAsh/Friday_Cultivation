@@ -1,6 +1,7 @@
 package com.friday.cultivation.verification;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -97,6 +98,12 @@ class StageOnePolicyTest {
         assertTrue(entityHud.contains("TEXT_Z = -0.004F"));
         assertTrue(entityHud.contains("RenderType.text(texture)"),
                 "状态牌贴图必须进入与原版名称牌一致的 textured 管线，避免 iterationT 实体材质延迟光照压暗 HUD 颜色");
+        assertTrue(entityHud.contains("font.drawInBatch(text, 0.0F, 0.0F, color, false"),
+                "生命与属性数字必须关闭字体阴影，避免主字形的正 Z 偏移被血条平面遮挡后只剩深色阴影");
+        assertTrue(entityHud.contains("EntityStatusPlateLayout.ICON_SIZE_PIXELS, TEXT_Z"),
+                "护甲与韧性图标必须传入 13 个局部排版单位，不能把已经换算成世界尺寸的值再次缩放");
+        assertFalse(entityHud.contains("layout.iconSize(), TEXT_Z"),
+                "已经换算成世界尺寸的 iconSize 不能进入已缩放的局部坐标绘制链");
     }
 
     private static String read(String relativePath) throws IOException {
