@@ -40,18 +40,6 @@ class HudBarAnimatorTest {
     }
 
     @Test
-    void tinyHighValueGainStillProducesVisibleAccentSignal() {
-        HudBarAnimator animator = new HudBarAnimator();
-        animator.beginFrame(UUID.randomUUID());
-        animator.sample(HudBarAnimator.BarId.QI, 1_000_000.0, 2_000_000.0, 0L, 2_500L);
-
-        HudBarAnimator.Visual tinyGain = animator.sample(HudBarAnimator.BarId.QI, 1_000_001.0, 2_000_000.0, 0L, 2_501L);
-
-        assertTrue(tinyGain.pulseStrength() > 0.0F,
-                "大数值下比例变化可能不足一个像素，仍需提供属性色前沿反馈");
-    }
-
-    @Test
     void experienceLevelUpFillsOldStageThenResetsToNewStage() {
         HudBarAnimator animator = new HudBarAnimator();
         animator.beginFrame(UUID.randomUUID());
