@@ -82,7 +82,7 @@ class StageOnePolicyTest {
     void hudUsesProjectExperienceTextureAndStableEntityHealthAnchor() throws IOException {
         String hud = read("com/friday/cultivation/client/CultivationHud.java");
         assertTrue(hud.contains("VanillaGuiOverlay.EXPERIENCE_BAR.type()"));
-        assertTrue(hud.contains("renderExperienceBar(graphics, screenWidth, screenHeight)"));
+        assertTrue(hud.contains("renderExperienceBar(graphics, screenWidth, screenHeight, nowMillis)"));
         assertTrue(hud.contains("BLOOD_EMPTY, BLOOD_FILL"));
 
         String entityHud = read("com/friday/cultivation/client/EntityStatusHudRenderer.java");
