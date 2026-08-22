@@ -58,12 +58,15 @@ public class CultivationHud {
     private static final int WUDAO_WIDTH = 70;
     /** C 版经验 HUD 的完整横向宽度，保持原版经验条宽度。 */
     private static final int EXPERIENCE_GROUP_WIDTH = 182;
-    /** C 版下方细属性条的高度，与修仙面板 drawThinBar 一致。 */
-    private static final int EXPERIENCE_BAR_HEIGHT = 6;
+    /** 经验条内容宽度；绘制函数会在左右各加 1 像素边框。 */
+    private static final int EXPERIENCE_BAR_WIDTH = EXPERIENCE_GROUP_WIDTH - 2;
+    /** 外框总高度为 6：内容 4 像素，加上下各 1 像素边框。 */
+    private static final int EXPERIENCE_BAR_HEIGHT = 4;
     private static final int EXPERIENCE_META_HEIGHT = 8;
     private static final int EXPERIENCE_META_GAP = 1;
     private static final float EXPERIENCE_LEVEL_TEXT_SCALE = 0.62f;
     private static final float EXPERIENCE_VALUE_TEXT_SCALE = 0.6f;
+    private static final float EXPERIENCE_PROGRESS_TEXT_SCALE = 0.45f;
     /** 原版经验等级文字颜色（Gui 中的 0x80FF20）。 */
     private static final int EXPERIENCE_LEVEL_TEXT_COLOR = 0x80FF20;
 
@@ -129,7 +132,7 @@ public class CultivationHud {
         event.setCanceled(true);
     }
 
-    /** C 版布局：上方显示等级/总经验，下方使用完整宽度的细属性条。 */
+    /** C 版布局：上方显示等级/总经验，下方显示本级经验进度。 */
     private static void renderExperienceBar(GuiGraphics graphics, int screenWidth, int screenHeight) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
@@ -145,13 +148,19 @@ public class CultivationHud {
         Component totalExperience = Component.literal("总经验 " + Math.max(0, player.totalExperience));
         int barY = screenHeight - 29;
         int metaY = barY - EXPERIENCE_META_HEIGHT - EXPERIENCE_META_GAP;
+        int nextLevelExperience = Math.max(1, player.getXpNeededForNextLevel());
+        int currentLevelExperience = Math.max(0, Math.min(nextLevelExperience,
+                Math.round(player.experienceProgress * (float)nextLevelExperience)));
+        Component progressText = Component.literal(currentLevelExperience + " / " + nextLevelExperience);
         double progress = Math.max(0.0, Math.min(1.0, player.experienceProgress));
         drawLeftScaledInRect(graphics, mc, level, groupX, metaY,
                 levelWidth, EXPERIENCE_META_HEIGHT, EXPERIENCE_LEVEL_TEXT_SCALE, EXPERIENCE_LEVEL_TEXT_COLOR, false);
         drawRightScaledInRect(graphics, mc, totalExperience, groupX, metaY,
                 EXPERIENCE_GROUP_WIDTH, EXPERIENCE_META_HEIGHT, EXPERIENCE_VALUE_TEXT_SCALE, -1, false);
-        renderCultivationPanelBar(graphics, mc, groupX, barY, EXPERIENCE_GROUP_WIDTH, EXPERIENCE_BAR_HEIGHT, progress,
-                EXPERIENCE_TOP, EXPERIENCE_BOTTOM, null);
+        // renderCultivationPanelBar 的 x/y 是内容区域坐标，边框会向外扩 1 像素。
+        // 因此内容从整体左边界 +1 开始，宽度减 2，确保外框严格落在 groupX..groupX+182 内。
+        renderCultivationPanelBar(graphics, mc, groupX + 1, barY, EXPERIENCE_BAR_WIDTH, EXPERIENCE_BAR_HEIGHT, progress,
+                EXPERIENCE_TOP, EXPERIENCE_BOTTOM, progressText);
     }
 
     private static void render(GuiGraphics graphics, int screenWidth) {
@@ -365,7 +374,7 @@ public class CultivationHud {
     }
 
     /**
-     * 修仙面板属性条的统一视觉：边框、暗槽、顶端高光、上下渐变、底部阴影与分隔纹。
+     * 修仙面板属性条的统一视觉：边框、暗槽、顶端高光、上下渐变与底部阴影。
      * 经验条只替换属性条的填充颜色为原版经验绿色，避免再次引入另一套贴图样式。
      */
     private static void renderCultivationPanelBar(GuiGraphics graphics, Minecraft mc, int x, int y, int width, int height, double ratio, int topColor, int bottomColor, Component text) {
@@ -390,13 +399,16 @@ public class CultivationHud {
             graphics.fill(x, y + half, x + filledW, y + barH, bottomColor);
             graphics.fill(x, y, x + filledW, y + 1, 0x40FFFFFF);
             graphics.fill(x, y + barH - 1, x + filledW, y + barH, 0x33000000);
-            for (int stripeX = x + 6; stripeX < x + filledW; stripeX += 6) {
-                graphics.fill(stripeX, y, stripeX + 1, y + barH, 0x1F000000);
-            }
         }
+        // 空槽只保留四分之一刻度，避免原先每 6 像素一条竖纹造成视觉噪声。
+        for (int quarter = 1; quarter < 4; quarter++) {
+            int tickX = x + Math.round((float)barW * (float)quarter / 4.0f);
+            graphics.fill(tickX, y + 1, tickX + 1, y + barH - 1, 0x24000000);
+        }
+
         if (text != null) {
             drawCenteredScaledInRect(graphics, mc, text, x, y, barW, barH,
-                    EXPERIENCE_VALUE_TEXT_SCALE, -1, false);
+                    EXPERIENCE_PROGRESS_TEXT_SCALE, -1, true);
         }
     }
 
