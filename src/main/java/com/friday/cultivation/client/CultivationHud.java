@@ -56,14 +56,14 @@ public class CultivationHud {
     private static final int CULT_WIDTH = 90;
     private static final int QI_WIDTH = 80;
     private static final int WUDAO_WIDTH = 70;
-    /** 经验 HUD 组的总长度（经验条 + 左侧等级文本），保持原版组宽度。 */
+    /** C 版经验 HUD 的完整横向宽度，保持原版经验条宽度。 */
     private static final int EXPERIENCE_GROUP_WIDTH = 182;
-    /** A 版经验条沿用 CultivationScreen 属性条的 7 像素高度。 */
-    private static final int EXPERIENCE_BAR_HEIGHT = 7;
+    /** C 版下方细属性条的高度，与修仙面板 drawThinBar 一致。 */
+    private static final int EXPERIENCE_BAR_HEIGHT = 6;
+    private static final int EXPERIENCE_META_HEIGHT = 8;
+    private static final int EXPERIENCE_META_GAP = 1;
     private static final float EXPERIENCE_LEVEL_TEXT_SCALE = 0.62f;
     private static final float EXPERIENCE_VALUE_TEXT_SCALE = 0.6f;
-    /** drawLeftStatusBar/drawThinBar 使用的统一属性条标签预留宽度。 */
-    private static final int EXPERIENCE_LEVEL_LABEL_EXTRA = 4;
     /** 原版经验等级文字颜色（Gui 中的 0x80FF20）。 */
     private static final int EXPERIENCE_LEVEL_TEXT_COLOR = 0x80FF20;
 
@@ -129,7 +129,7 @@ public class CultivationHud {
         event.setCanceled(true);
     }
 
-    /** A 版布局：左侧属性条标签，右侧复用修仙面板属性条样式的经验条。 */
+    /** C 版布局：上方显示等级/总经验，下方使用完整宽度的细属性条。 */
     private static void renderExperienceBar(GuiGraphics graphics, int screenWidth, int screenHeight) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
@@ -138,21 +138,20 @@ public class CultivationHud {
             return;
         }
         int groupX = screenWidth / 2 - EXPERIENCE_GROUP_WIDTH / 2;
-        int height = EXPERIENCE_BAR_HEIGHT;
         Component level = Component.literal("等级:" + Math.max(0, player.experienceLevel));
         int rawLevelWidth = mc.font.width((FormattedText)level);
-        int levelWidth = Math.max(18, Math.min(EXPERIENCE_GROUP_WIDTH - 1,
-                (int)Math.ceil((double)rawLevelWidth * (double)EXPERIENCE_LEVEL_TEXT_SCALE) + EXPERIENCE_LEVEL_LABEL_EXTRA));
-        int width = EXPERIENCE_GROUP_WIDTH - levelWidth;
-        int x = groupX + levelWidth;
-        // 保留原版经验 HUD 的底部锚点；经验条高度和属性面板保持一致。
-        int y = screenHeight - 29;
+        int levelWidth = Math.max(1,
+                (int)Math.ceil((double)rawLevelWidth * (double)EXPERIENCE_LEVEL_TEXT_SCALE));
+        Component totalExperience = Component.literal("总经验 " + Math.max(0, player.totalExperience));
+        int barY = screenHeight - 29;
+        int metaY = barY - EXPERIENCE_META_HEIGHT - EXPERIENCE_META_GAP;
         double progress = Math.max(0.0, Math.min(1.0, player.experienceProgress));
-        drawLeftScaledInRect(graphics, mc, level, groupX, y - 1,
-                levelWidth, height, EXPERIENCE_LEVEL_TEXT_SCALE, EXPERIENCE_LEVEL_TEXT_COLOR, false);
-        renderCultivationPanelBar(graphics, mc, x, y, width, height, progress,
-                EXPERIENCE_TOP, EXPERIENCE_BOTTOM,
-                Component.literal(String.valueOf(Math.max(0, player.totalExperience))));
+        drawLeftScaledInRect(graphics, mc, level, groupX, metaY,
+                levelWidth, EXPERIENCE_META_HEIGHT, EXPERIENCE_LEVEL_TEXT_SCALE, EXPERIENCE_LEVEL_TEXT_COLOR, false);
+        drawRightScaledInRect(graphics, mc, totalExperience, groupX, metaY,
+                EXPERIENCE_GROUP_WIDTH, EXPERIENCE_META_HEIGHT, EXPERIENCE_VALUE_TEXT_SCALE, -1, false);
+        renderCultivationPanelBar(graphics, mc, groupX, barY, EXPERIENCE_GROUP_WIDTH, EXPERIENCE_BAR_HEIGHT, progress,
+                EXPERIENCE_TOP, EXPERIENCE_BOTTOM, null);
     }
 
     private static void render(GuiGraphics graphics, int screenWidth) {
@@ -482,6 +481,16 @@ public class CultivationHud {
         int scaledH = (int)(9.0f * actualScale);
         int drawY = y + Math.max(0, (height - scaledH) / 2);
         drawScaled(graphics, mc, text, x, drawY, actualScale, color, shadow);
+    }
+
+    private static void drawRightScaledInRect(GuiGraphics graphics, Minecraft mc, Component text, int x, int y, int width, int height, float scale, int color, boolean shadow) {
+        int textWidth = mc.font.width((FormattedText)text);
+        float actualScale = textWidth <= 0 ? scale : Math.min(scale, Math.max(0.18f, (float)width / (float)textWidth));
+        int scaledW = (int)((float)textWidth * actualScale);
+        int scaledH = (int)(9.0f * actualScale);
+        int drawX = x + width - scaledW;
+        int drawY = y + Math.max(0, (height - scaledH) / 2);
+        drawScaled(graphics, mc, text, drawX, drawY, actualScale, color, shadow);
     }
 
     private static void drawLeftScaled(GuiGraphics graphics, Minecraft mc, Component text, int x, int y, int width, float scale, int color, boolean shadow) {
