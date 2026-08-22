@@ -58,12 +58,14 @@ public class CultivationHud {
     private static final int WUDAO_WIDTH = 70;
     /** 经验 HUD 组的总长度（经验条 + 左侧等级文本），保持原版组宽度。 */
     private static final int EXPERIENCE_GROUP_WIDTH = 182;
-    /** A 版经验条沿用 CultivationScreen 属性条的 7 像素高度。 */
-    private static final int EXPERIENCE_BAR_HEIGHT = 7;
+    /** A 版经验条沿用 CultivationScreen.drawThinBar 的 6 像素细条高度。 */
+    private static final int EXPERIENCE_BAR_HEIGHT = 6;
     private static final float EXPERIENCE_LEVEL_TEXT_SCALE = 0.62f;
-    private static final float EXPERIENCE_VALUE_TEXT_SCALE = 0.6f;
-    /** drawLeftStatusBar/drawThinBar 使用的统一属性条标签预留宽度。 */
+    private static final float EXPERIENCE_VALUE_TEXT_SCALE = 0.55f;
+    /** 属性条标签的左右内边距；经验条与标签之间另留 1 像素。 */
     private static final int EXPERIENCE_LEVEL_LABEL_EXTRA = 4;
+    private static final int EXPERIENCE_LEVEL_GAP = 1;
+    private static final int EXPERIENCE_LEVEL_PADDING = 2;
     /** 原版经验等级文字颜色（Gui 中的 0x80FF20）。 */
     private static final int EXPERIENCE_LEVEL_TEXT_COLOR = 0x80FF20;
 
@@ -141,15 +143,20 @@ public class CultivationHud {
         int height = EXPERIENCE_BAR_HEIGHT;
         Component level = Component.literal("等级:" + Math.max(0, player.experienceLevel));
         int rawLevelWidth = mc.font.width((FormattedText)level);
-        int levelWidth = Math.max(18, Math.min(EXPERIENCE_GROUP_WIDTH - 1,
-                (int)Math.ceil((double)rawLevelWidth * (double)EXPERIENCE_LEVEL_TEXT_SCALE) + EXPERIENCE_LEVEL_LABEL_EXTRA));
-        int width = EXPERIENCE_GROUP_WIDTH - levelWidth;
-        int x = groupX + levelWidth;
+        int levelTextWidth = Math.max(1,
+                (int)Math.ceil((double)rawLevelWidth * (double)EXPERIENCE_LEVEL_TEXT_SCALE));
+        int levelWidth = Math.max(18, Math.min(EXPERIENCE_GROUP_WIDTH - EXPERIENCE_LEVEL_GAP - 1,
+                levelTextWidth + EXPERIENCE_LEVEL_LABEL_EXTRA));
+        int width = EXPERIENCE_GROUP_WIDTH - levelWidth - EXPERIENCE_LEVEL_GAP;
+        int x = groupX + levelWidth + EXPERIENCE_LEVEL_GAP;
         // 保留原版经验 HUD 的底部锚点；经验条高度和属性面板保持一致。
         int y = screenHeight - 29;
         double progress = Math.max(0.0, Math.min(1.0, player.experienceProgress));
-        drawLeftScaledInRect(graphics, mc, level, groupX, y - 1,
-                levelWidth, height, EXPERIENCE_LEVEL_TEXT_SCALE, EXPERIENCE_LEVEL_TEXT_COLOR, false);
+        // 等级标签本身也复用同一套属性条边框，形成 A 版连体标签。
+        renderCultivationPanelBar(graphics, mc, groupX, y, levelWidth, height, 0.0,
+                EXPERIENCE_TOP, EXPERIENCE_BOTTOM, null);
+        drawLeftScaledInRect(graphics, mc, level, groupX + EXPERIENCE_LEVEL_PADDING, y,
+                levelTextWidth, height, EXPERIENCE_LEVEL_TEXT_SCALE, EXPERIENCE_LEVEL_TEXT_COLOR, false);
         renderCultivationPanelBar(graphics, mc, x, y, width, height, progress,
                 EXPERIENCE_TOP, EXPERIENCE_BOTTOM,
                 Component.literal(String.valueOf(Math.max(0, player.totalExperience))));
