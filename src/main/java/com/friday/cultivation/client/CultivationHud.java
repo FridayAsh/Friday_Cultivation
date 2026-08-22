@@ -372,9 +372,19 @@ public class CultivationHud {
                 topColor, bottomColor, true);
 
         int targetW = (int)((double)width * primaryRatio);
-        if (visual.pulseStrength() > 0.0F && targetW > 0) {
-            int alpha = Math.max(0, Math.min(96, (int)(visual.pulseStrength() * 96.0F)));
-            graphics.fill(x, y, x + targetW, y + height, (alpha << 24) | 0x00FFFFFF);
+        if (visual.pulseStrength() > 0.0F) {
+            // 左上角属性条不使用白色闪光；改为当前属性色的窄前沿，保证大数值变化仍可见。
+            int accentWidth = Math.max(1, Math.min(4, (int)Math.ceil(4.0F * visual.pulseStrength())));
+            int accentX = x + targetW;
+            int accentEnd = Math.min(x + width, accentX + accentWidth);
+            if (accentEnd <= accentX) {
+                accentX = Math.max(x, x + targetW - accentWidth);
+                accentEnd = x + targetW;
+            }
+            graphics.fill(accentX, y, accentEnd, y + Math.max(1, height / 2),
+                    brightenColor(topColor, 1.20D));
+            graphics.fill(accentX, y + Math.max(1, height / 2), accentEnd, y + height,
+                    brightenColor(bottomColor, 1.20D));
         }
         graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -426,7 +436,7 @@ public class CultivationHud {
                 graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
             }
             if (highlight) {
-                graphics.fill(x, y, x + targetW, y + 1, 0x40FFFFFF);
+                graphics.fill(x, y, x + targetW, y + 1, brightenColor(topColor, 1.12D));
                 graphics.fill(x, y + height - 1, x + targetW, y + height, 0x33000000);
             }
         }
@@ -496,6 +506,13 @@ public class CultivationHud {
         int red = (int)(((color >> 16) & 0xFF) * factor);
         int green = (int)(((color >> 8) & 0xFF) * factor);
         int blue = (int)((color & 0xFF) * factor);
+        return 0xFF000000 | (red << 16) | (green << 8) | blue;
+    }
+
+    private static int brightenColor(int color, double factor) {
+        int red = Math.min(255, (int)(((color >> 16) & 0xFF) * factor));
+        int green = Math.min(255, (int)(((color >> 8) & 0xFF) * factor));
+        int blue = Math.min(255, (int)((color & 0xFF) * factor));
         return 0xFF000000 | (red << 16) | (green << 8) | blue;
     }
 

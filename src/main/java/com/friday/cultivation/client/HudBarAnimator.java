@@ -14,11 +14,11 @@ public final class HudBarAnimator {
     private static final long SNAP_AFTER_IDLE_MS = 650L;
     private static final double EPSILON = 0.0001D;
 
-    private static final Profile HEALTH = new Profile(220L, 90L, 120L, 320L, false, 0L, 0L, 0L);
-    private static final Profile CULTIVATION = new Profile(420L, 240L, 90L, 260L, true, 140L, 110L, 220L);
-    private static final Profile QI = new Profile(280L, 100L, 60L, 200L, false, 0L, 0L, 0L);
-    private static final Profile WUDAO = new Profile(360L, 240L, 90L, 240L, false, 0L, 0L, 0L);
-    private static final Profile EXPERIENCE = new Profile(260L, 160L, 0L, 220L, true, 120L, 100L, 210L);
+    private static final Profile HEALTH = new Profile(220L, 90L, 120L, 320L, 180L, false, 0L, 0L, 0L);
+    private static final Profile CULTIVATION = new Profile(420L, 240L, 90L, 260L, 220L, true, 140L, 110L, 220L);
+    private static final Profile QI = new Profile(280L, 100L, 60L, 200L, 180L, false, 0L, 0L, 0L);
+    private static final Profile WUDAO = new Profile(360L, 240L, 90L, 240L, 200L, false, 0L, 0L, 0L);
+    private static final Profile EXPERIENCE = new Profile(260L, 160L, 0L, 220L, 180L, true, 120L, 100L, 210L);
 
     public enum BarId {
         HEALTH,
@@ -151,6 +151,7 @@ public final class HudBarAnimator {
             lastSampleMillis = now;
 
             double previousTargetRatio = targetRatio;
+            double previousTargetCurrent = targetCurrent;
             double previousTargetMax = targetMax;
             boolean cycleAdvanced = profile.cycleAware && cycleKey > displayCycleKey;
             boolean cycleChanged = profile.cycleAware && cycleKey != displayCycleKey;
@@ -186,6 +187,7 @@ public final class HudBarAnimator {
             }
 
             if (Math.abs(target - previousTargetRatio) > EPSILON
+                    || Math.abs(current - previousTargetCurrent) > EPSILON
                     || Math.abs(max - previousTargetMax) > EPSILON) {
                 startTransition(target, now, profile);
             }
@@ -213,6 +215,8 @@ public final class HudBarAnimator {
             } else {
                 trailActive = false;
                 trailRatio = from;
+                pulseStartedAt = now;
+                pulseDuration = profile.accentDuration;
             }
         }
 
@@ -225,10 +229,6 @@ public final class HudBarAnimator {
             if (progress >= 1.0D) {
                 ratio = transitionTo;
                 transitionActive = false;
-                if (transitionTo > transitionFrom + EPSILON) {
-                    pulseStartedAt = now;
-                    pulseDuration = 120L;
-                }
             }
         }
 
@@ -352,7 +352,7 @@ public final class HudBarAnimator {
     }
 
     private record Profile(long gainDuration, long lossDuration, long trailDelay,
-                           long trailDuration, boolean cycleAware, long cycleFillDuration,
+                           long trailDuration, long accentDuration, boolean cycleAware, long cycleFillDuration,
                            long cycleFlashDuration, long cycleResetDuration) {
     }
 
