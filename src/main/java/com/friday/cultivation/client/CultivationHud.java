@@ -423,13 +423,12 @@ public class CultivationHud {
             }
             if (highlight) {
                 graphics.fill(x, y, x + targetW, y + 1, 0x40FFFFFF);
-                graphics.fill(x, y + height - 1, x + targetW, y + height, 0x33000000);
             }
         }
     }
 
     /**
-     * 修仙面板属性条的统一视觉：边框、暗槽、顶端高光、上下渐变与底部阴影。
+     * 修仙面板属性条的统一视觉：边框、暗槽、顶端高光与上下渐变。
      * 经验条只替换属性条的填充颜色为原版经验绿色，避免再次引入另一套贴图样式。
      */
     private static void renderCultivationPanelBar(GuiGraphics graphics, Minecraft mc, int x, int y, int width, int height,
@@ -484,7 +483,6 @@ public class CultivationHud {
         graphics.fill(x, y + half, x + filledW, y + height, bottomColor);
         if (highlight) {
             graphics.fill(x, y, x + filledW, y + 1, 0x40FFFFFF);
-            graphics.fill(x, y + height - 1, x + filledW, y + height, 0x33000000);
         }
     }
 
