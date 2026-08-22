@@ -13,14 +13,12 @@
 package com.friday.cultivation.network;
 
 import com.friday.cultivation.block.formation.FormationCorePlateBlockEntity;
-import com.friday.cultivation.client.screen.FormationScreen;
+import com.friday.cultivation.client.ClientFormationSyncHooks;
 import com.friday.cultivation.cultivation.ItemTier;
 import com.friday.cultivation.cultivation.qi.formation.FormationType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
@@ -34,6 +32,14 @@ public class SyncFormationFlagsPacket {
     public SyncFormationFlagsPacket(BlockPos corePos, List<Entry> entries) {
         this.corePos = corePos.east();
         this.entries = List.copyOf(entries);
+    }
+
+    public BlockPos corePos() {
+        return this.corePos;
+    }
+
+    public List<Entry> entries() {
+        return this.entries;
     }
 
     public static SyncFormationFlagsPacket fromViews(BlockPos corePos, List<FormationCorePlateBlockEntity.FlagLinkView> views) {
@@ -70,13 +76,8 @@ public class SyncFormationFlagsPacket {
 
     public static void handle(SyncFormationFlagsPacket msg, Supplier<NetworkEvent.Context> ctxSup) {
         NetworkEvent.Context ctx = ctxSup.get();
-        ctx.enqueueWork(() -> DistExecutor.unsafeRunWhenOn((Dist)Dist.CLIENT, () -> () -> {
-            Screen patt2837$temp = Minecraft.getInstance().screen;
-            if (patt2837$temp instanceof FormationScreen) {
-                FormationScreen screen = (FormationScreen)patt2837$temp;
-                screen.setFlagEntries(msg.corePos, msg.entries);
-            }
-        }));
+        ctx.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                () -> () -> ClientFormationSyncHooks.applyFlags(msg)));
         ctx.setPacketHandled(true);
     }
 
@@ -102,4 +103,3 @@ public class SyncFormationFlagsPacket {
         }
     }
 }
-

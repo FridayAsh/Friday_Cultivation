@@ -5,6 +5,7 @@ package com.friday.cultivation.cultivation;
 
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 
 public final class LifespanHelper {
     public static final int START_BONE_AGE_MIN = 14;
@@ -26,10 +27,10 @@ public final class LifespanHelper {
             return Math.max(1, d.getMortalLifespan());
         }
         int base = realm.baseLifespan();
-        if (realm.ordinal() >= Realm.FOUNDATION_BUILDING.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.FOUNDATION_BUILDING)) {
             base += d.getFoundationDao().lifespanBonus();
         }
-        if (realm.ordinal() >= Realm.GOLDEN_CORE.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.GOLDEN_CORE)) {
             base += d.getGoldenCoreDao().lifespanBonus();
         }
         return base;

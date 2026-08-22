@@ -6,9 +6,6 @@ import com.friday.cultivation.cultivation.spell.Spell;
 import com.friday.cultivation.cultivation.technique.TechniqueBonusHelper;
 import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.event.RealmPressureHandler;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.Map;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -28,21 +25,13 @@ import net.minecraft.world.phys.Vec3;
  * 判定：御剑=已激活；灵气=isSpellEnabled(QI_FLIGHT) && 灵气>0。
  */
 public final class CultivationFlightHandler {
-    private static final Map<UUID, ItemStack> SWORD_FLIGHT = new ConcurrentHashMap<>();
-    private static final Map<UUID, Integer> SWORD_FLIGHT_SLOT = new ConcurrentHashMap<>();
-    /** 飞行灵气消耗累计 tick（进入飞行后每 tick +1，满 20 扣一次） */
-    private static final Map<UUID, Integer> FLIGHT_TICKS = new ConcurrentHashMap<>();
-
     private CultivationFlightHandler() {
     }
 
-    /** 御剑是否激活（服务端读 Map；客户端读 CultivationData 同步值） */
+    /** 御剑是否激活：服务端与客户端均以 Capability FlightState 为准。 */
     public static boolean isSwordFlightActive(Player player) {
         if (player == null) {
             return false;
-        }
-        if (SWORD_FLIGHT.containsKey(player.getUUID())) {
-            return true;
         }
         CultivationData data = CultivationCapability.get((Player)player).orElse(null);
         return data != null && data.isSwordFlightActive();
@@ -52,10 +41,6 @@ public final class CultivationFlightHandler {
     public static ItemStack getSwordFlightStack(Player player) {
         if (player == null) {
             return ItemStack.EMPTY;
-        }
-        ItemStack s = SWORD_FLIGHT.get(player.getUUID());
-        if (s != null && !s.isEmpty()) {
-            return s;
         }
         CultivationData data = CultivationCapability.get((Player)player).orElse(null);
         return data != null ? data.getSwordFlightStack() : ItemStack.EMPTY;
@@ -103,6 +88,27 @@ public final class CultivationFlightHandler {
         return isSwordFlightActive(player) || canQiFlight(player);
     }
 
+    /**
+     * 从 CultivationData 恢复登录/重启后的御剑运行态。
+     * Capability 是唯一权威来源，静态 Map 只重建当前服务器进程的运行缓存。
+     */
+    public static void restoreAfterLogin(ServerPlayer player) {
+        if (player == null) {
+            return;
+        }
+        CultivationData data = CultivationCapability.get((Player)player).orElse(null);
+        if (data == null || !data.isSwordFlightActive()) {
+            return;
+        }
+        ItemStack sword = data.getSwordFlightStack();
+        if (sword == null || sword.isEmpty()) {
+            data.clearSwordFlight();
+            return;
+        }
+        data.clearFlightTicks();
+        enableFlight(player);
+    }
+
     /** 施放/切换御剑飞行 */
     public static void toggleSwordFlight(ServerPlayer player) {
         if (isSwordFlightActive(player)) {
@@ -121,13 +127,13 @@ public final class CultivationFlightHandler {
         }
         ItemStack riding = sword.copy();
         player.getInventory().setItem(slot, ItemStack.EMPTY);
-        SWORD_FLIGHT.put(player.getUUID(), riding);
-        SWORD_FLIGHT_SLOT.put(player.getUUID(), slot);
         // 同步到 CultivationData（供客户端渲染与判定）
         CultivationData cd = CultivationCapability.get((Player)player).orElse(null);
-        if (cd != null) {
-            cd.startSwordFlight(riding, slot);
+        if (cd == null) {
+            player.getInventory().setItem(slot, sword);
+            return;
         }
+        cd.startSwordFlight(riding, slot);
         enableFlight(player);
         // 启用瞬间给予初始上升速度，让玩家原地起跳离地（否则站地无法触发飞行）
         Vec3 motion = player.getDeltaMovement();
@@ -140,13 +146,14 @@ public final class CultivationFlightHandler {
 
     /** 停止御剑飞行并归还剑 */
     public static void stopSwordFlight(ServerPlayer player) {
-        UUID id = player.getUUID();
-        ItemStack sword = SWORD_FLIGHT.remove(id);
-        Integer slot = SWORD_FLIGHT_SLOT.remove(id);
         CultivationData cd = CultivationCapability.get((Player)player).orElse(null);
-        if (cd != null) {
-            cd.clearSwordFlight();
+        if (cd == null) {
+            disableFlight(player);
+            return;
         }
+        ItemStack sword = cd.getSwordFlightStack().copy();
+        Integer slot = cd.getSwordFlightOriginalSlot();
+        cd.clearSwordFlight();
         if (sword != null && !sword.isEmpty()) {
             if (slot != null && slot >= 0 && slot < player.getInventory().items.size() && player.getInventory().getItem(slot).isEmpty()) {
                 player.getInventory().setItem(slot, sword);
@@ -181,9 +188,9 @@ public final class CultivationFlightHandler {
             player.fallDistance = 0.0f;
             // 灵气消耗：灵气飞行 25/秒（每 20 tick），御剑飞行 20/20 tick
             // 用独立飞行 tick 计数（不依赖全局 tickCount 取模，保证每次进入飞行都正常累计）
-            int ticks = FLIGHT_TICKS.merge(player.getUUID(), 1, Integer::sum);
+            int ticks = data.incrementFlightTicks();
             if (ticks >= 20) {
-                FLIGHT_TICKS.remove(player.getUUID());
+                data.clearFlightTicks();
                 long cost = qi ? TechniqueBonusHelper.applySpellQiCostMultiplier(player, Spell.QI_FLIGHT, 25L) : TechniqueBonusHelper.applySpellQiCostMultiplier(player, Spell.SWORD_FLIGHT, 20L);
                 if (cost > 0L) {
                     long actual = Math.min(cost, data.getCurrentQi());
@@ -203,7 +210,7 @@ public final class CultivationFlightHandler {
                 }
             }
         } else {
-            FLIGHT_TICKS.remove(player.getUUID());
+            data.clearFlightTicks();
             disableFlight(player);
         }
     }

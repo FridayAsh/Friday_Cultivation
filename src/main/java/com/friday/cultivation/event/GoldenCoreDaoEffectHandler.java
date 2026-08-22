@@ -31,6 +31,7 @@ import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.GoldenCoreDao;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.event.BloodthirstCurseHandler;
 import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.event.SectCombatHandler;
@@ -126,7 +127,7 @@ public final class GoldenCoreDaoEffectHandler {
         if (!GoldenCoreDaoEffectHandler.isSpellLike(event.getSource())) {
             return;
         }
-        boolean heavenCore = CultivationCapability.get((Player)player).map(data -> data.getRealm().ordinal() >= Realm.GOLDEN_CORE.ordinal() && data.getGoldenCoreDao() == GoldenCoreDao.HEAVEN).orElse(false);
+        boolean heavenCore = CultivationCapability.get((Player)player).map(data -> RealmTopology.isAtLeast(data.getRealm(), Realm.GOLDEN_CORE) && data.getGoldenCoreDao() == GoldenCoreDao.HEAVEN).orElse(false);
         if (!heavenCore) {
             return;
         }
@@ -153,7 +154,7 @@ public final class GoldenCoreDaoEffectHandler {
         if (!SectCombatHandler.canApplyOffensiveEffect((LivingEntity)player, event.getEntity())) {
             return;
         }
-        boolean bloodCore = CultivationCapability.get((Player)player).map(data -> data.getRealm().ordinal() >= Realm.GOLDEN_CORE.ordinal() && data.getGoldenCoreDao() == GoldenCoreDao.BLOOD).orElse(false);
+        boolean bloodCore = CultivationCapability.get((Player)player).map(data -> RealmTopology.isAtLeast(data.getRealm(), Realm.GOLDEN_CORE) && data.getGoldenCoreDao() == GoldenCoreDao.BLOOD).orElse(false);
         if (!bloodCore) {
             return;
         }
@@ -196,7 +197,7 @@ public final class GoldenCoreDaoEffectHandler {
     private static boolean tryTriggerEarthShield(ServerPlayer player) {
         long ready;
         CultivationData data = CultivationCapability.get((Player)player).orElse(null);
-        if (data == null || data.getRealm().ordinal() < Realm.GOLDEN_CORE.ordinal() || data.getGoldenCoreDao() != GoldenCoreDao.EARTH) {
+        if (data == null || !RealmTopology.isAtLeast(data.getRealm(), Realm.GOLDEN_CORE) || data.getGoldenCoreDao() != GoldenCoreDao.EARTH) {
             return false;
         }
         long now = player.serverLevel().getGameTime();

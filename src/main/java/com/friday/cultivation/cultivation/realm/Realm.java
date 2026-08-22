@@ -8,6 +8,7 @@
 package com.friday.cultivation.cultivation.realm;
 
 import com.friday.cultivation.cultivation.realm.SubStage;
+import com.friday.cultivation.event.tribulation.TribulationSpec;
 import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -159,39 +160,9 @@ public enum Realm {
         return this.subStageAt(this.usesNumericLevels() ? n : n - 1);
     }
 
-    /** 逻辑顺序（显式链表，用于进度显示）：散仙在真仙之前，新 4 境界插在真仙与半圣之间 */
-    private static final List<Realm> LOGICAL_ORDER = List.of(
-        MORTAL, BODY_TEMPERING, QI_REFINING, FOUNDATION_BUILDING, GOLDEN_CORE,
-        NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, BODY_INTEGRATION, MAHAYANA,
-        TRIBULATION_TRANSCENDENCE, LOOSE_IMMORTAL,
-        TRUE_IMMORTAL, MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING,
-        HALF_SAGE, SAGE, HALF_EMPEROR, GREAT_EMPEROR);
-
     /** 突破链逻辑顺序（供境界选择等 UI 排序使用） */
     public static List<Realm> logicalOrder() {
-        return Realm.LOGICAL_ORDER;
-    }
-
-    public int progressIndex(SubStage subStage) {
-        if (this == MORTAL) {
-            return 0;
-        }
-        int acc = 0;
-        for (Realm r : Realm.LOGICAL_ORDER) {
-            if (r == this) {
-                break;
-            }
-            if (r == MORTAL || r == LOOSE_IMMORTAL) {
-                acc += 1;
-            } else {
-                acc += r.subStageCount();
-            }
-        }
-        int idx = subStage == null ? 0 : subStage.level();
-        if (this.usesNumericLevels()) {
-            idx = Math.max(0, idx - 1);
-        }
-        return 1 + acc + idx;
+        return RealmTopology.selectionOrder();
     }
 
     public int maxQi(SubStage subStage) {
@@ -331,7 +302,7 @@ public enum Realm {
     }
 
     public String npcCategoryTranslationKey() {
-        String category = this == MORTAL ? "mortal" : (this == GREAT_EMPEROR ? "great_emperor" : ((this == HALF_SAGE || this == SAGE || this == HALF_EMPEROR) ? "sage" : (this.ordinal() >= TRUE_IMMORTAL.ordinal() ? "immortal" : "cultivator")));
+        String category = this == MORTAL ? "mortal" : (this == GREAT_EMPEROR ? "great_emperor" : ((this == HALF_SAGE || this == SAGE || this == HALF_EMPEROR) ? "sage" : (RealmTopology.isAtLeast(this, TRUE_IMMORTAL) ? "immortal" : "cultivator")));
         return "npc_category.friday_cultivation." + category;
     }
 
@@ -431,91 +402,40 @@ public enum Realm {
     }
 
     public Realm next() {
-        // 主链路：凡人→锻体→…→渡劫→真仙→玄仙→仙君→仙尊→仙王→半圣→圣人→半帝→大帝（大帝为终点）
-        // 散仙（LOOSE_IMMORTAL）是渡劫失败独立旁支，不参与主链路进阶
-        if (this == GREAT_EMPEROR || this == LOOSE_IMMORTAL) {
-            return this;
-        }
-        if (this == TRUE_IMMORTAL) {
-            return MYSTIC_IMMORTAL;
-        }
-        if (this == MYSTIC_IMMORTAL) {
-            return IMMORTAL_LORD;
-        }
-        if (this == IMMORTAL_LORD) {
-            return IMMORTAL_VENERABLE;
-        }
-        if (this == IMMORTAL_VENERABLE) {
-            return IMMORTAL_KING;
-        }
-        if (this == IMMORTAL_KING) {
-            return HALF_SAGE;
-        }
-        int idx = this.ordinal() + 1;
-        while (idx < Realm.values().length) {
-            Realm r = Realm.values()[idx];
-            if (r != LOOSE_IMMORTAL) {
-                return r;
-            }
-            ++idx;
-        }
-        return this;
+        return RealmTopology.nextMain(this).orElse(this);
     }
 
     public Realm prev() {
-        if (this == MORTAL) {
-            return this;
-        }
-        if (this == MYSTIC_IMMORTAL) {
-            return TRUE_IMMORTAL;
-        }
-        if (this == IMMORTAL_LORD) {
-            return MYSTIC_IMMORTAL;
-        }
-        if (this == IMMORTAL_VENERABLE) {
-            return IMMORTAL_LORD;
-        }
-        if (this == IMMORTAL_KING) {
-            return IMMORTAL_VENERABLE;
-        }
-        if (this == HALF_SAGE) {
-            return IMMORTAL_KING;
-        }
-        int idx = this.ordinal() - 1;
-        while (idx >= 0) {
-            Realm r = Realm.values()[idx];
-            if (r != LOOSE_IMMORTAL) {
-                return r;
-            }
-            --idx;
-        }
-        return this;
+        return RealmTopology.previousMain(this).orElse(this);
     }
 
     public int tribulationCount(SubStage stage) {
+        // 炼虚之前（凡人~化神）：仅大境界突破（当前子阶段为巅峰）才渡劫
+        if (RealmTopology.isBefore(this, Realm.VOID_REFINING)) {
+            if (stage == null || !stage.isPeakFor(this)) {
+                return 0;
+            }
+            return switch (this) {
+                case BODY_TEMPERING -> 4;          // 锻体→练气
+                case QI_REFINING -> 4;             // 练气→筑基
+                case FOUNDATION_BUILDING -> 4;     // 筑基→金丹
+                case GOLDEN_CORE -> 5;             // 金丹→元婴
+                case NASCENT_SOUL -> 5;            // 元婴→化神
+                case SOUL_FORMATION -> 5;          // 化神→炼虚
+                default -> 0;
+            };
+        }
+        // 炼虚之后（含炼虚）：每个小境界突破都渡劫
         return switch (this) {
-            case MORTAL -> 0;
-            case BODY_TEMPERING -> 0;
-            case QI_REFINING -> 0;
-            case FOUNDATION_BUILDING -> {
-                if (stage != null && stage == SubStage.PEAK) {
-                    yield 3;
-                }
-                yield 1;
-            }
-            case GOLDEN_CORE, NASCENT_SOUL, SOUL_FORMATION, VOID_REFINING, TRIBULATION_TRANSCENDENCE -> 9;
-            // 合道五境按小境界分配波数：入境 5 波起，每境 +1 波（入境5/御境6/合境7/域境8/界境9）
-            case BODY_INTEGRATION -> {
-                if (stage != null && stage.level() >= 1 && stage.level() <= 5) {
-                    yield 4 + stage.level();
-                }
-                yield 9;
-            }
-            case MAHAYANA -> 0;
-            case LOOSE_IMMORTAL -> -1;
-            case TRUE_IMMORTAL -> {
-                // 真仙每 3 重天渡劫一次：三重天→四重天 3波×9道，六重天→七重天 6波×9道
-                // 九重天圆满 9波×9道 → 突破半圣
+            case VOID_REFINING -> 5;
+            case BODY_INTEGRATION -> 6;
+            case MAHAYANA -> 6;
+            case TRIBULATION_TRANSCENDENCE -> 6;
+            // 散仙劫必须包含劫波等级，唯一配置在 LooseImmortalBonusHelper；
+            // Realm 不再提供一套无法表达等级的伪配置。
+            case LOOSE_IMMORTAL -> 0;
+            // 真仙/玄仙：每 3 重天渡劫（3/6/9 波）
+            case TRUE_IMMORTAL, MYSTIC_IMMORTAL -> {
                 if (stage != null && stage.level() == 3) {
                     yield 3;
                 }
@@ -527,41 +447,23 @@ public enum Realm {
                 }
                 yield 0;
             }
-            // 玄仙：与真仙一致（三重天 3 波、六重天 6 波、九重天 9 波）
-            case MYSTIC_IMMORTAL -> {
-                if (stage != null && stage.level() == 3) {
-                    yield 3;
-                }
-                if (stage != null && stage.level() == 6) {
-                    yield 6;
-                }
-                if (stage != null && stage.level() == 9) {
-                    yield 9;
-                }
-                yield 0;
-            }
-            // 仙君：1-9 重天每次突破都渡劫 3 波
-            case IMMORTAL_LORD -> 3;
-            // 仙尊：1-9 重天每次突破都渡劫 4 波
-            case IMMORTAL_VENERABLE -> 4;
-            // 仙王：1-8 重天每次突破 5 波；九重天圆满 9 波 → 突破半圣
+            // 仙君：每重天 5 波
+            case IMMORTAL_LORD -> 5;
+            // 仙尊：每重天 6 波
+            case IMMORTAL_VENERABLE -> 6;
+            // 仙王：每重天 7 波；九重天圆满 9 波 → 突破半圣
             case IMMORTAL_KING -> {
                 if (stage != null && stage.level() == 9) {
                     yield 9;
                 }
-                yield 5;
+                yield 7;
             }
-            // 半圣→圣人：9波×9道
-            case HALF_SAGE -> 9;
-            // 圣人三子阶段：入微→道韵→悟虚 无渡劫；悟虚圆满→半帝 9波×9道
-            case SAGE -> {
-                if (stage != null && stage.isPeakFor(this)) {
-                    yield 9;
-                }
-                yield 0;
-            }
-            // 半帝→大帝：9波×9道
-            case HALF_EMPEROR -> 9;
+            // 半圣→圣人：7 波
+            case HALF_SAGE -> 7;
+            // 圣人三子阶段：每档都渡劫 7 波
+            case SAGE -> 7;
+            // 半帝→大帝：8 波
+            case HALF_EMPEROR -> 8;
             // 大帝九帝界：每个帝界突破均渡劫，第一帝界 9 波起每界 +1（9~17 波）
             case GREAT_EMPEROR -> {
                 if (stage != null && stage.level() >= 1 && stage.level() <= 9) {
@@ -569,65 +471,84 @@ public enum Realm {
                 }
                 yield 9;
             }
+            default -> 0;
         };
     }
 
     public int tribulationBoltsPerWave(SubStage stage) {
         return switch (this) {
-            case GOLDEN_CORE -> {
-                // 金丹九转（圆满）时每波 3 道，其余各转每波 1 道
-                if (stage != null && stage.isPeakFor(this)) {
-                    yield 3;
-                }
-                yield 1;
-            }
-            case NASCENT_SOUL -> {
-                if (stage != null && stage == SubStage.PEAK) {
-                    yield 6;
-                }
-                yield 3;
-            }
-            case SOUL_FORMATION -> 6;
-            case VOID_REFINING -> {
-                if (stage != null && stage == SubStage.PEAK) {
-                    yield 8;
-                }
-                yield 6;
-            }
-            case BODY_INTEGRATION -> 8;
-            case TRIBULATION_TRANSCENDENCE -> 9;
-            // 真仙渡劫每波 9 道（配合 tribulationCount：3重天 3波、6重天 6波、9重天 9波 → 27/54/81 道）
+            // 锻体→练气：每波 9 道
+            case BODY_TEMPERING -> 9;
+            // 练气→筑基：每波 9 道
+            case QI_REFINING -> 9;
+            // 筑基→金丹：每波 10 道
+            case FOUNDATION_BUILDING -> 10;
+            // 金丹→元婴：每波 8 道
+            case GOLDEN_CORE -> 8;
+            // 元婴→化神：每波 8 道
+            case NASCENT_SOUL -> 8;
+            // 化神→炼虚：每波 8 道
+            case SOUL_FORMATION -> 8;
+            // 炼虚→合道：每波 9 道
+            case VOID_REFINING -> 9;
+            // 合道→大乘：每波 9 道
+            case BODY_INTEGRATION -> 9;
+            // 大乘：每波 9 道
+            case MAHAYANA -> 9;
+            // 渡劫→真仙：每波 10 道
+            case TRIBULATION_TRANSCENDENCE -> 10;
+            // 散仙劫波由 LooseImmortalBonusHelper 按等级提供。
+            case LOOSE_IMMORTAL -> 0;
+            // 真仙/玄仙/仙君/仙尊/仙王：每波 9 道
             case TRUE_IMMORTAL, MYSTIC_IMMORTAL, IMMORTAL_LORD, IMMORTAL_VENERABLE, IMMORTAL_KING -> 9;
-            // 半圣/圣人/半帝渡劫每波 9 道
-            case HALF_SAGE, SAGE, HALF_EMPEROR -> 9;
-            // 大帝渡劫每波 9 道（配合 tribulationCount：5~13 波 → 45~117 道）
-            case GREAT_EMPEROR -> 9;
+            // 半圣/圣人/半帝/大帝：每波 9 道
+            case HALF_SAGE, SAGE, HALF_EMPEROR, GREAT_EMPEROR -> 9;
             default -> 1;
         };
     }
 
+    /** 单次雷击伤害（方案数值表：约=标准生命值×10%，由低到高递增） */
     public int tribulationStrikeDamage() {
         return switch (this) {
             case MORTAL -> 0;
-            case BODY_TEMPERING -> 0;
-            case QI_REFINING -> 30;
-            case FOUNDATION_BUILDING -> 40;
-            case GOLDEN_CORE -> 50;
+            // 锻体→练气渡劫：伤害取练气标准（20）
+            case BODY_TEMPERING -> 20;
+            case QI_REFINING -> 20;
+            case FOUNDATION_BUILDING -> 30;
+            case GOLDEN_CORE -> 45;
             case NASCENT_SOUL -> 60;
-            case SOUL_FORMATION -> 70;
-            case VOID_REFINING -> 80;
-            case BODY_INTEGRATION -> 90;
-            case MAHAYANA -> 0;
-            case TRIBULATION_TRANSCENDENCE -> 150;
-            case TRUE_IMMORTAL -> 180;
-            case MYSTIC_IMMORTAL -> 185;
-            case IMMORTAL_LORD -> 190;
-            case IMMORTAL_VENERABLE -> 195;
-            case IMMORTAL_KING -> 200;
-            case HALF_SAGE, SAGE, HALF_EMPEROR -> 190;
-            case GREAT_EMPEROR -> 200;
+            case SOUL_FORMATION -> 80;
+            case VOID_REFINING -> 105;
+            case BODY_INTEGRATION -> 135;
+            case MAHAYANA -> 178;
+            case TRIBULATION_TRANSCENDENCE -> 215;
+            case TRUE_IMMORTAL -> 300;
+            case MYSTIC_IMMORTAL -> 360;
+            case IMMORTAL_LORD -> 430;
+            case IMMORTAL_VENERABLE -> 510;
+            case IMMORTAL_KING -> 600;
+            case HALF_SAGE -> 645;
+            case SAGE -> 710;
+            case HALF_EMPEROR -> 745;
+            case GREAT_EMPEROR -> 785;
+            // 散仙劫波由 LooseImmortalBonusHelper 按等级提供。
             case LOOSE_IMMORTAL -> 0;
         };
+    }
+
+    /**
+     * 当前子阶段的渡劫配置（数据驱动劫谱）。
+     * 返回 null 表示该突破无需渡劫。
+     * 由低到高：单次伤害约=标准生命值×10%，波数/道数按方案数值表。
+     */
+    public TribulationSpec tribulationSpec(SubStage stage) {
+        int waves = this.tribulationCount(stage);
+        if (waves <= 0) {
+            return null;
+        }
+        int bolts = this.tribulationBoltsPerWave(stage);
+        int damage = this.tribulationStrikeDamage();
+        return TribulationSpec.of(waves, bolts, damage);
     }
 
     public static String formatTribulationCount(int waves, int boltsPerWave) {
@@ -639,11 +560,7 @@ public enum Realm {
     }
 
     public static Realm byId(String id) {
-        for (Realm r : Realm.values()) {
-            if (!r.id.equals(id)) continue;
-            return r;
-        }
-        return MORTAL;
+        return RealmTopology.find(id).orElse(MORTAL);
     }
 
     private static final java.util.Map<Realm, Integer> MAX_QI_PREV_PEAK = java.util.Map.ofEntries(

@@ -34,6 +34,7 @@ package com.friday.cultivation.event;
 
 import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.spell.Spell;
 import com.friday.cultivation.entity.ShockwaveEntity;
 import com.friday.cultivation.event.SectCombatHandler;
@@ -87,7 +88,8 @@ public final class CoreSelfDestructHandler {
         Realm realm = CultivationCapability.get((Player)player).map(data -> data.getRealm()).orElse(Realm.GOLDEN_CORE);
         ServerLevel level = player.serverLevel();
         Vec3 center = player.position().add(0.0, (double)player.getBbHeight() * 0.5, 0.0);
-        int realmPower = Math.max(1, realm.ordinal() - Realm.GOLDEN_CORE.ordinal() + 1);
+        int realmPower = Math.max(1, RealmTopology.progressionIndex(realm)
+                - RealmTopology.progressionIndex(Realm.GOLDEN_CORE) + 1);
         float radius = Math.min(100.0f, 24.0f + (float)realmPower * 9.0f);
         float baseDamage = 320.0f + (float)(realmPower * realmPower) * 170.0f;
         float scaledDamage = SpellScalingHelper.scaledDamageFloat((LivingEntity)player, Spell.CORE_SELF_DESTRUCT, baseDamage);

@@ -111,6 +111,7 @@ import com.friday.cultivation.cultivation.alchemy.AlchemyRank;
 import com.friday.cultivation.cultivation.alchemy.PillEffectSpecs;
 import com.friday.cultivation.cultivation.alchemy.PillTier;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.realm.SubStage;
 import com.friday.cultivation.cultivation.refining.RefiningRank;
 import com.friday.cultivation.cultivation.sect.SectRole;
@@ -294,7 +295,7 @@ extends AbstractVillager {
     private static final double SECT_BED_SLEEP_Y_OFFSET = 0.6875;
     private static final double SECT_BED_SLEEP_SNAP_EPSILON_SQ = 0.01;
     private static final double SECT_BED_SLEEP_THREAT_DISTANCE_SQ = 144.0;
-    private static final EntityDataAccessor<Integer> DATA_REALM_ORD;
+    private static final EntityDataAccessor<String> DATA_REALM_ID;
     private static final EntityDataAccessor<Integer> DATA_SUB_STAGE_ORD;
     private static final EntityDataAccessor<Integer> DATA_LOOSE_IMMORTAL_TRIBULATIONS;
     private static final EntityDataAccessor<String> DATA_TECHNIQUE_ID;
@@ -571,7 +572,7 @@ extends AbstractVillager {
 
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(DATA_REALM_ORD, Realm.MORTAL.ordinal());
+        this.entityData.define(DATA_REALM_ID, Realm.MORTAL.id());
         this.entityData.define(DATA_SUB_STAGE_ORD, SubStage.EARLY.level());
         this.entityData.define(DATA_LOOSE_IMMORTAL_TRIBULATIONS, 0);
         this.entityData.define(DATA_TECHNIQUE_ID, "");
@@ -911,9 +912,7 @@ extends AbstractVillager {
     }
 
     public Realm getRealm() {
-        int ord = (Integer)this.entityData.get(DATA_REALM_ORD);
-        Realm[] vals = Realm.values();
-        return vals[Math.floorMod(ord, vals.length)];
+        return RealmTopology.find(this.entityData.get(DATA_REALM_ID)).orElse(Realm.MORTAL);
     }
 
     public SubStage getSubStage() {
@@ -1169,7 +1168,10 @@ extends AbstractVillager {
         if (difu) {
             this.setDifuReaper(true);
         }
-        Realm realm = difu ? Realm.values()[Realm.QI_REFINING.ordinal() + this.random.nextInt(Math.max(1, Realm.TRIBULATION_TRANSCENDENCE.ordinal() - Realm.QI_REFINING.ordinal() + 1))] : (dataTag != null && dataTag.contains("forcedRealmId") ? ((forced = Realm.byId(id = dataTag.getString("forcedRealmId"))) != null ? forced : CultivatorRealmRoller.roll(this.random)) : CultivatorRealmRoller.roll(this.random));
+        List<Realm> mainChain = RealmTopology.mainChain();
+        int difuStart = RealmTopology.progressionIndex(Realm.QI_REFINING);
+        int difuEnd = RealmTopology.progressionIndex(Realm.TRIBULATION_TRANSCENDENCE);
+        Realm realm = difu ? mainChain.get(difuStart + this.random.nextInt(Math.max(1, difuEnd - difuStart + 1))) : (dataTag != null && dataTag.contains("forcedRealmId") ? ((forced = Realm.byId(id = dataTag.getString("forcedRealmId"))) != null ? forced : CultivatorRealmRoller.roll(this.random)) : CultivatorRealmRoller.roll(this.random));
         if (realm == Realm.GREAT_EMPEROR) {
             if (level.getLevel() instanceof ServerLevel && !GreatEmperorTracker.get((ServerLevel)level.getLevel()).claimEmperor()) {
                 // 全存档大帝已达上限（10），本次生成降级为散仙
@@ -1182,7 +1184,7 @@ extends AbstractVillager {
             looseImmortalTribulations = Math.max(1, Math.min(9, looseImmortalTribulations));
         }
         SubStage sub = realm.subStageAt(realm.usesNumericLevels() ? 1 + this.random.nextInt(realm.subStageCount()) : this.random.nextInt(realm.subStageCount()));
-        this.entityData.set(DATA_REALM_ORD, realm.ordinal());
+        this.entityData.set(DATA_REALM_ID, realm.id());
         this.entityData.set(DATA_SUB_STAGE_ORD, sub.level());
         this.entityData.set(DATA_LOOSE_IMMORTAL_TRIBULATIONS, looseImmortalTribulations);
         int rolledGender = this.random.nextBoolean() ? 1 : 2;
@@ -1296,10 +1298,10 @@ extends AbstractVillager {
     private void stockPillsForRealm(Realm realm) {
         SimpleContainer inv = this.getInventory();
         PillTier[] tiers = this.pillTiersForRealm(realm);
-        boolean advancedRealm = realm.ordinal() >= Realm.GOLDEN_CORE.ordinal();
+        boolean advancedRealm = RealmTopology.isAtLeast(realm, Realm.GOLDEN_CORE);
         for (PillTier tier : tiers) {
             List<Item> pillPool = CultivationRandomPools.pillsForTier(tier);
-            int rolls = realm.ordinal() >= Realm.NASCENT_SOUL.ordinal() ? 2 : 1;
+            int rolls = RealmTopology.isAtLeast(realm, Realm.NASCENT_SOUL) ? 2 : 1;
             int maxCount = advancedRealm ? 3 : 2;
             for (int i = 0; i < rolls; ++i) {
                 this.maybeStockRandomItem(inv, pillPool, 1.0f, 1, maxCount);
@@ -1321,7 +1323,7 @@ extends AbstractVillager {
     }
 
     private void stockGoldenCoreMaterials(Realm realm) {
-        if (realm.ordinal() < Realm.FOUNDATION_BUILDING.ordinal()) {
+        if (RealmTopology.isBefore(realm, Realm.FOUNDATION_BUILDING)) {
             return;
         }
         SimpleContainer inv = this.getInventory();
@@ -1331,10 +1333,10 @@ extends AbstractVillager {
         this.maybeStockGoldenCoreItem(inv, (Item)ModItems.ALL_CREATURES_TRUE_BLOOD.get(), Math.min(0.3f, baseChance * 0.9f), 1, 1);
         this.maybeStockGoldenCoreItem(inv, (Item)ModItems.EARTH_EVIL_QI.get(), Math.min(0.32f, baseChance * 0.95f), 1, 1);
         this.maybeStockGoldenCoreItem(inv, (Item)ModItems.BLOOD_TRANSFORMATION_TALISMAN.get(), Math.min(0.28f, baseChance * 0.75f), 1, 1);
-        if (realm.ordinal() >= Realm.GOLDEN_CORE.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.GOLDEN_CORE)) {
             this.maybeStockGoldenCoreItem(inv, (Item)ModItems.HEAVEN_CLEAR_QI.get(), Math.min(0.28f, baseChance * 0.72f), 1, 1);
         }
-        if (realm.ordinal() >= Realm.NASCENT_SOUL.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.NASCENT_SOUL)) {
             this.maybeStockGoldenCoreItem(inv, (Item)ModItems.NINGZHEN_CREATION_FRUIT.get(), Math.min(0.24f, baseChance * 0.58f), 1, 1);
         }
     }
@@ -1636,7 +1638,7 @@ extends AbstractVillager {
         this.maybeStockItem(inv, (Item)ModItems.HERB.get(), 0.42f, 2, 6);
         this.maybeStockItem(inv, (Item)ModItems.FORMATION_COMPASS.get(), 0.1f, 1, 1);
         this.maybeStockItem(inv, (Item)ModItems.FORMATION_INSCRIPTION_KNIFE.get(), 0.08f, 1, 1);
-        if (realm.ordinal() >= Realm.QI_REFINING.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.QI_REFINING)) {
             this.maybeStockRandomBook(inv, CultivationRandomPools.techniqueBookItemsForTier(CultivationRandomPools.techniqueTierForRealm(realm)), 0.22f);
             this.maybeStockRandomBook(inv, CultivationRandomPools.spellBookItemsForTier(CultivationRandomPools.spellTierForRealm(realm)), 0.26f);
             this.maybeStockItem(inv, (Item)ModItems.ZHUJI_DAN.get(), 0.62f, 2, 5);
@@ -1644,7 +1646,7 @@ extends AbstractVillager {
             this.maybeStockItem(inv, (Item)ModItems.YOUTH_PILL.get(), 0.06f, 1, 1);
             this.maybeStockItem(inv, (Item)ModItems.SEX_CHANGE_PILL.get(), 0.05f, 1, 1);
         }
-        if (realm.ordinal() >= Realm.FOUNDATION_BUILDING.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.FOUNDATION_BUILDING)) {
             this.maybeStockItem(inv, (Item)ModItems.FOUNDATION_SECRET.get(), 0.13f, 1, 1);
             this.maybeStockItem(inv, (Item)ModItems.DAO_FOUNDATION_FRUIT.get(), 0.07f, 1, 1);
             this.maybeStockItem(inv, (Item)ModItems.YOUTH_PILL.get(), 0.1f, 1, 1);
@@ -2031,7 +2033,7 @@ extends AbstractVillager {
         if (realm == Realm.MORTAL) {
             return;
         }
-        if (realm.ordinal() >= Realm.QI_REFINING.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.QI_REFINING)) {
             this.addSpellIfMissing(Spell.SPIRIT_VISION);
             this.addSpellIfMissing(Spell.QI_TRANSFER);
             this.addSpellIfMissing(Spell.QI_SHIELD);
@@ -2040,27 +2042,27 @@ extends AbstractVillager {
                 this.addSpellIfMissing(Spell.SWORD_AURA);
             }
         }
-        if (realm.ordinal() >= Realm.FOUNDATION_BUILDING.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.FOUNDATION_BUILDING)) {
             this.addSpellIfMissing(Spell.SWORD_FLIGHT);
             this.addSpellIfMissing(Spell.BIGU);
         }
-        if (realm.ordinal() >= Realm.GOLDEN_CORE.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.GOLDEN_CORE)) {
             this.addSpellIfMissing(Spell.CORE_SELF_DESTRUCT);
         }
-        if (realm.ordinal() >= Realm.NASCENT_SOUL.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.NASCENT_SOUL)) {
             this.addSpellIfMissing(Spell.NASCENT_SOUL_OUT_OF_BODY);
         }
-        if (realm.ordinal() >= Realm.SOUL_FORMATION.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.SOUL_FORMATION)) {
             this.addSpellIfMissing(Spell.DIVINE_SENSE);
         }
-        if (realm.ordinal() >= Realm.VOID_REFINING.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.VOID_REFINING)) {
             this.addSpellIfMissing(Spell.VOID_STEP);
             this.addSpellIfMissing(Spell.VOID_ESCAPE);
         }
-        if (realm.ordinal() >= Realm.BODY_INTEGRATION.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.BODY_INTEGRATION)) {
             this.addSpellIfMissing(Spell.DHARMA_BODY_MANIFESTATION);
         }
-        if (realm.ordinal() >= Realm.TRUE_IMMORTAL.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.TRUE_IMMORTAL)) {
             this.addSpellIfMissing(Spell.QI_FLIGHT);
         }
     }
@@ -2069,7 +2071,7 @@ extends AbstractVillager {
         if (spell == null || realm == Realm.MORTAL) {
             return false;
         }
-        if (realm.ordinal() >= Realm.QI_REFINING.ordinal()) {
+        if (RealmTopology.isAtLeast(realm, Realm.QI_REFINING)) {
             if (spell == Spell.SPIRIT_VISION || spell == Spell.QI_TRANSFER || spell == Spell.QI_SHIELD || spell == Spell.REALM_PRESSURE) {
                 return true;
             }
@@ -2077,25 +2079,25 @@ extends AbstractVillager {
                 return true;
             }
         }
-        if (realm.ordinal() >= Realm.FOUNDATION_BUILDING.ordinal() && (spell == Spell.SWORD_FLIGHT || spell == Spell.BIGU)) {
+        if (RealmTopology.isAtLeast(realm, Realm.FOUNDATION_BUILDING) && (spell == Spell.SWORD_FLIGHT || spell == Spell.BIGU)) {
             return true;
         }
-        if (realm.ordinal() >= Realm.GOLDEN_CORE.ordinal() && spell == Spell.CORE_SELF_DESTRUCT) {
+        if (RealmTopology.isAtLeast(realm, Realm.GOLDEN_CORE) && spell == Spell.CORE_SELF_DESTRUCT) {
             return true;
         }
-        if (realm.ordinal() >= Realm.NASCENT_SOUL.ordinal() && spell == Spell.NASCENT_SOUL_OUT_OF_BODY) {
+        if (RealmTopology.isAtLeast(realm, Realm.NASCENT_SOUL) && spell == Spell.NASCENT_SOUL_OUT_OF_BODY) {
             return true;
         }
-        if (realm.ordinal() >= Realm.SOUL_FORMATION.ordinal() && spell == Spell.DIVINE_SENSE) {
+        if (RealmTopology.isAtLeast(realm, Realm.SOUL_FORMATION) && spell == Spell.DIVINE_SENSE) {
             return true;
         }
-        if (realm.ordinal() >= Realm.VOID_REFINING.ordinal() && (spell == Spell.VOID_STEP || spell == Spell.VOID_ESCAPE)) {
+        if (RealmTopology.isAtLeast(realm, Realm.VOID_REFINING) && (spell == Spell.VOID_STEP || spell == Spell.VOID_ESCAPE)) {
             return true;
         }
-        if (realm.ordinal() >= Realm.BODY_INTEGRATION.ordinal() && spell == Spell.DHARMA_BODY_MANIFESTATION) {
+        if (RealmTopology.isAtLeast(realm, Realm.BODY_INTEGRATION) && spell == Spell.DHARMA_BODY_MANIFESTATION) {
             return true;
         }
-        return realm.ordinal() >= Realm.TRUE_IMMORTAL.ordinal() && spell == Spell.QI_FLIGHT;
+        return RealmTopology.isAtLeast(realm, Realm.TRUE_IMMORTAL) && spell == Spell.QI_FLIGHT;
     }
 
     private void normalizeSpellIdsForRealm(Realm realm) {
@@ -2401,7 +2403,7 @@ extends AbstractVillager {
 
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putInt("realmOrd", ((Integer)this.entityData.get(DATA_REALM_ORD)).intValue());
+        tag.putString("realmId", this.entityData.get(DATA_REALM_ID));
         tag.putInt("subStageOrd", ((Integer)this.entityData.get(DATA_SUB_STAGE_ORD)).intValue());
         tag.putInt("looseImmortalTribulations", ((Integer)this.entityData.get(DATA_LOOSE_IMMORTAL_TRIBULATIONS)).intValue());
         tag.putString("techniqueId", (String)this.entityData.get(DATA_TECHNIQUE_ID));
@@ -2446,7 +2448,12 @@ extends AbstractVillager {
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         int i;
         super.readAdditionalSaveData(tag);
-        this.entityData.set(DATA_REALM_ORD, tag.getInt("realmOrd"));
+        String realmId = tag.contains("realmId", 8)
+                ? tag.getString("realmId")
+                : RealmTopology.fromLegacyEnumOrdinal(tag.getInt("realmOrd"))
+                        .map(Realm::id)
+                        .orElse(Realm.MORTAL.id());
+        this.entityData.set(DATA_REALM_ID, RealmTopology.find(realmId).map(Realm::id).orElse(Realm.MORTAL.id()));
         this.entityData.set(DATA_SUB_STAGE_ORD, tag.getInt("subStageOrd"));
         int looseLevel = tag.contains("looseImmortalTribulations", 3) ? tag.getInt("looseImmortalTribulations") : 0;
         this.entityData.set(DATA_LOOSE_IMMORTAL_TRIBULATIONS, (this.getRealm() == Realm.LOOSE_IMMORTAL ? Math.max(1, Math.min(9, looseLevel)) : 0));
@@ -3705,7 +3712,7 @@ extends AbstractVillager {
         WanderingCultivatorEntity.validateSkinGenderManifest();
         ZHENYUAN_GROUND_SPEED_MODIFIER_ID = UUID.nameUUIDFromBytes("friday_cultivation:npc_zhenyuan_ground_speed".getBytes(StandardCharsets.UTF_8));
         PREFERRED_SPAWN_STRUCTURES = TagKey.create((ResourceKey)Registries.STRUCTURE, (ResourceLocation)new ResourceLocation("friday_cultivation", "wandering_cultivator_preferred"));
-        DATA_REALM_ORD = SynchedEntityData.defineId(WanderingCultivatorEntity.class, (EntityDataSerializer)EntityDataSerializers.INT);
+        DATA_REALM_ID = SynchedEntityData.defineId(WanderingCultivatorEntity.class, (EntityDataSerializer)EntityDataSerializers.STRING);
         DATA_SUB_STAGE_ORD = SynchedEntityData.defineId(WanderingCultivatorEntity.class, (EntityDataSerializer)EntityDataSerializers.INT);
         DATA_LOOSE_IMMORTAL_TRIBULATIONS = SynchedEntityData.defineId(WanderingCultivatorEntity.class, (EntityDataSerializer)EntityDataSerializers.INT);
         DATA_TECHNIQUE_ID = SynchedEntityData.defineId(WanderingCultivatorEntity.class, (EntityDataSerializer)EntityDataSerializers.STRING);

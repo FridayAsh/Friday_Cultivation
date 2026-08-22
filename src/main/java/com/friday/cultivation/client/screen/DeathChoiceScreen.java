@@ -15,6 +15,7 @@
 package com.friday.cultivation.client.screen;
 
 import com.friday.cultivation.client.DeathSequenceClientEffects;
+import com.friday.cultivation.client.screen.widget.CinnabarButton;
 import com.friday.cultivation.network.DeathChoicePacket;
 import com.friday.cultivation.network.ModNetwork;
 import java.util.ArrayList;
@@ -55,14 +56,15 @@ extends Screen {
         int buttonWidth = Math.min(200, Math.max(120, this.width - 40));
         int x = (this.width - buttonWidth) / 2;
         int y = Math.min(this.height - 88, this.height / 4 + 72);
-        this.addChoiceButton(DeathChoicePacket.Choice.VANILLA_DEATH, (Component)Component.translatable((String)"screen.friday_cultivation.death_choice.vanilla.title"), x, y, buttonWidth);
-        this.addChoiceButton(DeathChoicePacket.Choice.GO_DIFU, (Component)Component.translatable((String)"screen.friday_cultivation.death_choice.difu.title"), x, y + 24, buttonWidth);
-        this.addChoiceButton(DeathChoicePacket.Choice.WANDERING_SOUL, (Component)Component.translatable((String)"screen.friday_cultivation.death_choice.wander.title"), x, y + 48, buttonWidth);
+        // 去地府 / 游魂 两个选择（原版死亡按钮已移除，避免 NaN 问题）
+        this.addChoiceButton(DeathChoicePacket.Choice.GO_DIFU, (Component)Component.translatable((String)"screen.friday_cultivation.death_choice.difu.title"), x, y, buttonWidth);
+        this.addChoiceButton(DeathChoicePacket.Choice.WANDERING_SOUL, (Component)Component.translatable((String)"screen.friday_cultivation.death_choice.wander.title"), x, y + 24, buttonWidth);
         this.updateButtonActivity();
     }
 
     private void addChoiceButton(DeathChoicePacket.Choice choice, Component label, int x, int y, int width) {
-        Button button = Button.builder(label, b -> this.choose(choice)).bounds(x, y, width, 20).build();
+        // 突破按钮风格（CinnabarButton）
+        Button button = new CinnabarButton(x, y, width, 20, label, b -> this.choose(choice));
         this.choiceButtons.add(button);
         this.addRenderableWidget(button);
     }
@@ -106,8 +108,7 @@ extends Screen {
             Button button = this.choiceButtons.get(i);
             if (!button.isMouseOver((double)mouseX, (double)mouseY)) continue;
             return switch (i) {
-                case 0 -> Component.translatable((String)"screen.friday_cultivation.death_choice.vanilla.desc");
-                case 1 -> Component.translatable((String)"screen.friday_cultivation.death_choice.difu.desc");
+                case 0 -> Component.translatable((String)"screen.friday_cultivation.death_choice.difu.desc");
                 default -> Component.translatable((String)"screen.friday_cultivation.death_choice.wander.desc");
             };
         }

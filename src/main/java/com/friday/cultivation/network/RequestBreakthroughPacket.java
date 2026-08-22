@@ -19,6 +19,8 @@ import com.friday.cultivation.cultivation.LifespanHelper;
 import com.friday.cultivation.cultivation.realm.Realm;
 import com.friday.cultivation.cultivation.realm.SubStage;
 import com.friday.cultivation.event.TribulationHandler;
+import com.friday.cultivation.event.tribulation.TribulationSpec;
+import com.friday.cultivation.event.tribulation.TribulationScalingHelper;
 import com.friday.cultivation.registry.ModItems;
 import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
@@ -120,8 +122,12 @@ public class RequestBreakthroughPacket {
                     TribulationHandler.completeBreakthroughWithoutTribulation(player, data);
                     return;
                 }
-                TribulationHandler.beginTribulation(player, data, waves, boltsPerWave, damage);
-                player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.tribulation.start", (Object[])new Object[]{Realm.formatTribulationCount(waves, boltsPerWave), damage}), false);
+                TribulationSpec finalSpec = TribulationScalingHelper.scaleSpec(player, data,
+                        new TribulationSpec(waves, boltsPerWave, damage, 0.0, 0, data.getTribulationType()));
+                TribulationHandler.beginTribulation(player, data, finalSpec);
+                player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.tribulation.start",
+                        (Object[])new Object[]{Realm.formatTribulationCount(finalSpec.waves(), finalSpec.boltsPerWave()),
+                                finalSpec.strikeDamage()}), false);
             });
         });
         ctx.setPacketHandled(true);
@@ -149,11 +155,7 @@ public class RequestBreakthroughPacket {
     }
 
     private static int foundationTribulationWaves(FoundationDao dao) {
-        return switch (dao) {
-            case EARTH -> 1;
-            case HEAVEN -> 3;
-            default -> 0;
-        };
+        // 筑基之道渡劫波数：人/血道不渡劫（0），地/天道渡劫（4 波）
+        return dao == null ? 0 : dao.tribulationWaves();
     }
 }
-

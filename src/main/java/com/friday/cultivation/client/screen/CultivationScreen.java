@@ -69,6 +69,7 @@ import com.friday.cultivation.cultivation.alchemy.AlchemyRank;
 import com.friday.cultivation.cultivation.qi.PlayerQiAbsorptionHelper;
 import com.friday.cultivation.cultivation.qi.consumer.PlayerQiConsumer;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.realm.SubStage;
 import com.friday.cultivation.cultivation.refining.RefiningRank;
 import com.friday.cultivation.cultivation.sect.SectRole;
@@ -80,6 +81,9 @@ import com.friday.cultivation.cultivation.technique.Technique;
 import com.friday.cultivation.cultivation.technique.TechniqueBonusHelper;
 import com.friday.cultivation.entity.SeatEntity;
 import com.friday.cultivation.event.SoulStateHandler;
+import com.friday.cultivation.event.tribulation.TribulationScalingHelper;
+import com.friday.cultivation.event.tribulation.TribulationSpec;
+import com.friday.cultivation.event.tribulation.TribulationTier;
 import com.friday.cultivation.network.CreateImperialArtPacket;
 import com.friday.cultivation.network.CycleGenderPacket;
 import com.friday.cultivation.network.EquipSpellPacket;
@@ -455,7 +459,7 @@ extends Screen {
         this.bonusToggleRowRects.clear();
         this.hoveredBonusCategory = null;
         this.normalizeBreakthroughSelection(data, player);
-        if (this.currentTab != Tab.BREAKTHROUGH || data.getRealm().ordinal() < Realm.GOLDEN_CORE.ordinal()) {
+        if (this.currentTab != Tab.BREAKTHROUGH || RealmTopology.isBefore(data.getRealm(), Realm.GOLDEN_CORE)) {
             this.breakthroughHistoryPopupOpen = false;
         }
         if (this.currentTab != Tab.ATTRIBUTES) {
@@ -745,7 +749,21 @@ extends Screen {
                 int strikes = realm.tribulationCount(sub);
                 int boltsPerWave = realm.tribulationBoltsPerWave(sub);
                 int damage = realm.tribulationStrikeDamage();
-                hint = Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_tribulation", (Object[])new Object[]{Realm.formatTribulationCount(strikes, boltsPerWave), damage});
+                if (strikes > 0) {
+                    TribulationTier tier = TribulationScalingHelper.tier(Minecraft.getInstance().player, data);
+                    TribulationSpec finalSpec = TribulationScalingHelper.scaleSpec(Minecraft.getInstance().player, data,
+                            new TribulationSpec(strikes, boltsPerWave, damage, 0.0, 0, data.getTribulationType()));
+                    hint = tier.difficultyMult() > 1.01
+                            ? Component.translatable("screen.friday_cultivation.breakthrough.hint_tribulation_tier",
+                                    Component.translatable(tier.translationKey()),
+                                    Realm.formatTribulationCount(finalSpec.waves(), finalSpec.boltsPerWave()),
+                                    finalSpec.strikeDamage())
+                            : Component.translatable("screen.friday_cultivation.breakthrough.hint_tribulation",
+                                    Realm.formatTribulationCount(finalSpec.waves(), finalSpec.boltsPerWave()),
+                                    finalSpec.strikeDamage());
+                } else {
+                    hint = Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_normal");
+                }
             }
             int hintMaxW = half - 24;
             this.drawTinyMultilineCentered(gfx, (Component)hint, x + half / 2, btnY - 16, hintMaxW, -9807288);
@@ -1077,7 +1095,7 @@ extends Screen {
         Realm realm = data.getRealm();
         boolean soul = data.isSoulState();
         MutableComponent race = Component.translatable((String)(soul ? "race.friday_cultivation.ghost" : "race.friday_cultivation.human"));
-        String subKey = realm == Realm.MORTAL ? (soul ? "race_sub.friday_cultivation.ghost_mortal" : "race_sub.friday_cultivation.mortal") : (realm == Realm.GREAT_EMPEROR ? (soul ? "race_sub.friday_cultivation.ghost_great_emperor" : "race_sub.friday_cultivation.great_emperor") : (realm.ordinal() >= Realm.TRUE_IMMORTAL.ordinal() ? (soul ? "race_sub.friday_cultivation.ghost_immortal" : "race_sub.friday_cultivation.immortal") : (soul ? "race_sub.friday_cultivation.ghost_cultivator" : "race_sub.friday_cultivation.cultivator")));
+        String subKey = realm == Realm.MORTAL ? (soul ? "race_sub.friday_cultivation.ghost_mortal" : "race_sub.friday_cultivation.mortal") : (realm == Realm.GREAT_EMPEROR ? (soul ? "race_sub.friday_cultivation.ghost_great_emperor" : "race_sub.friday_cultivation.great_emperor") : (RealmTopology.isAtLeast(realm, Realm.TRUE_IMMORTAL) ? (soul ? "race_sub.friday_cultivation.ghost_immortal" : "race_sub.friday_cultivation.immortal") : (soul ? "race_sub.friday_cultivation.ghost_cultivator" : "race_sub.friday_cultivation.cultivator")));
         return Component.translatable((String)"screen.friday_cultivation.attr.id.race_value", (Object[])new Object[]{race, Component.translatable((String)subKey)});
     }
 
@@ -1219,12 +1237,28 @@ extends Screen {
             if (!killedEmperor || !hasArt || !artEquipped) {
                 y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_locked_stage"), cx, y, width - 8, -9807288) + 4;
             }
-        } else if (realm.ordinal() >= Realm.GOLDEN_CORE.ordinal()) {
+        } else if (RealmTopology.isAtLeast(realm, Realm.GOLDEN_CORE)) {
             y = this.renderBreakthroughHistoryButton(gfx, x, rightX, y, data, mouseX, mouseY);
             y += this.drawBreakthroughParagraphCentered(gfx, (Component)Component.translatable((String)"screen.friday_cultivation.breakthrough.route_waiting"), cx, y, width - 8, -9807288) + 4;
         }
         Component hint = this.breakthroughHint(data, boneAge, hasBloodTalisman);
-        this.drawBreakthroughParagraphCentered(gfx, hint, cx, y + 4, width - 8, -9807288);
+        // 渡劫/突破提示放在突破按钮上方，多行时向上生长避免盖住按钮；天骄档位用对应颜色
+        int hintBtnY = this.breakthroughBtn.getY() - 16;
+        int hintColor = -9807288;
+        if (data != null && data.getRealm() != Realm.MORTAL) {
+            com.friday.cultivation.event.tribulation.TribulationTier tier = com.friday.cultivation.event.tribulation.TribulationScalingHelper.tier(net.minecraft.client.Minecraft.getInstance().player, data);
+            if (tier.difficultyMult() > 1.01) {
+                hintColor = tier.color();
+            }
+        }
+        float scale = 0.7f;
+        int rawMaxW = Math.max(1, (int) ((float) (width - 8) / scale));
+        int hintLines = this.font.split((net.minecraft.network.chat.FormattedText) hint, rawMaxW).size();
+        int lineH = (int) Math.ceil(9.0f * scale) + 3;
+        if (hintLines > 1) {
+            hintBtnY -= (hintLines - 1) * lineH;
+        }
+        this.drawBreakthroughParagraphCentered(gfx, hint, cx, hintBtnY, width - 8, hintColor);
     }
 
     private void renderLooseImmortalBreakthroughTab(GuiGraphics gfx, int x, int rightX, int y, LocalPlayer player, CultivationData data) {
@@ -1727,15 +1761,50 @@ extends Screen {
         if (realm == Realm.QI_REFINING && sub.isPeakFor(realm)) {
             int waves = this.foundationTribulationWaves(this.selectedFoundationDao);
             int damage = waves > 0 ? Realm.QI_REFINING.tribulationStrikeDamage() : 0;
-            return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_foundation", (Object[])new Object[]{Component.translatable((String)this.selectedFoundationDao.translationKey()), Realm.formatTribulationCount(waves, 1), damage});
+            if (waves > 0) {
+                TribulationTier tier = TribulationScalingHelper.tier(Minecraft.getInstance().player, data);
+                TribulationSpec finalSpec = TribulationScalingHelper.scaleSpec(Minecraft.getInstance().player, data,
+                        new TribulationSpec(waves, 1, damage, 0.0, 0, data.getTribulationType()));
+                return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_foundation",
+                        (Object[])new Object[]{Component.translatable((String)this.selectedFoundationDao.translationKey()),
+                                Component.translatable(tier.translationKey()),
+                                Realm.formatTribulationCount(finalSpec.waves(), finalSpec.boltsPerWave()),
+                                finalSpec.strikeDamage()});
+            }
+            return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_normal");
         }
         if (realm == Realm.FOUNDATION_BUILDING && sub.isPeakFor(realm)) {
-            return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_golden_core", (Object[])new Object[]{Component.translatable((String)this.selectedGoldenCoreDao.translationKey()), Realm.formatTribulationCount(this.selectedGoldenCoreDao.tribulationStrikes(), 1), this.selectedGoldenCoreDao.tribulationDamage()});
+            int gcWaves = this.selectedGoldenCoreDao.tribulationStrikes();
+            if (gcWaves > 0) {
+                TribulationTier tier = TribulationScalingHelper.tier(Minecraft.getInstance().player, data);
+                TribulationSpec finalSpec = TribulationScalingHelper.scaleSpec(Minecraft.getInstance().player, data,
+                        new TribulationSpec(gcWaves, 1, this.selectedGoldenCoreDao.tribulationDamage(),
+                                0.0, 0, data.getTribulationType()));
+                return Component.translatable((String)"screen.friday_cultivation.breakthrough.route_hint_golden_core",
+                        (Object[])new Object[]{Component.translatable((String)this.selectedGoldenCoreDao.translationKey()),
+                                Component.translatable(tier.translationKey()),
+                                Realm.formatTribulationCount(finalSpec.waves(), finalSpec.boltsPerWave()),
+                                finalSpec.strikeDamage()});
+            }
+            return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_normal");
         }
         int strikes = realm.tribulationCount(sub);
         int boltsPerWave = realm.tribulationBoltsPerWave(sub);
         int damage = realm.tribulationStrikeDamage();
-        return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_tribulation", (Object[])new Object[]{Realm.formatTribulationCount(strikes, boltsPerWave), damage});
+        if (strikes > 0) {
+            // 综合评判：按天资档位修正渡劫难度（道数/伤害）并显示档位名
+            TribulationTier tier = TribulationScalingHelper.tier(Minecraft.getInstance().player, data);
+            TribulationSpec finalSpec = TribulationScalingHelper.scaleSpec(tier,
+                    new TribulationSpec(strikes, boltsPerWave, damage, 0.0, 0, data.getTribulationType()));
+            if (tier.difficultyMult() > 1.01) {
+                return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_tribulation_tier",
+                        Component.translatable(tier.translationKey()),
+                        Realm.formatTribulationCount(finalSpec.waves(), finalSpec.boltsPerWave()),
+                        finalSpec.strikeDamage());
+            }
+            return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_tribulation", (Object[])new Object[]{Realm.formatTribulationCount(strikes, boltsPerWave), damage});
+        }
+        return Component.translatable((String)"screen.friday_cultivation.breakthrough.hint_normal");
     }
 
     private void drawBreakthroughCentered(GuiGraphics gfx, Component text, int cx, int y, int maxW, int color, boolean strike) {
@@ -1923,6 +1992,19 @@ extends Screen {
         Technique.Bonus tb = eq == null ? Technique.Bonus.NONE : eq.bonus();
         int rightX = x + 160 - 24;
         LocalPlayer pp = Minecraft.getInstance().player;
+        // 天资栏目（近战伤害上方）：显示渡劫天资档位，hover 显示详情
+        com.friday.cultivation.event.tribulation.TribulationTier talentTier = com.friday.cultivation.event.tribulation.TribulationScalingHelper.tier(pp, data);
+        String talentName = Component.translatable(talentTier.translationKey()).getString();
+        int talentRowY = y;
+        y = this.drawStatRow(gfx, x, rightX, y, "talent", talentName, talentTier.difficultyMult() > 1.01);
+        if (mouseX >= x && mouseX < rightX && mouseY >= talentRowY && mouseY < talentRowY + 10) {
+            java.util.List<Component> lines = new java.util.ArrayList<>();
+            lines.add(Component.translatable(talentTier.translationKey()).copy().withStyle(net.minecraft.ChatFormatting.GOLD));
+            lines.add(Component.translatable("screen.friday_cultivation.attr.talent_hint"));
+            lines.add(Component.translatable("screen.friday_cultivation.attr.talent_difficulty", String.format("%.1f", talentTier.difficultyMult())));
+            lines.add(Component.translatable("screen.friday_cultivation.attr.talent_reward", Math.round(talentTier.rewardPercent() * 100.0)));
+            gfx.renderComponentTooltip(this.font, lines, mouseX, mouseY);
+        }
         boolean meleeBonusEnabled = data.isBonusCategoryEnabled(CultivationBonusCategory.MELEE_DAMAGE);
         int zyAtk = !meleeBonusEnabled || pp == null ? 0 : ZhenyuanBonusHelper.physiqueAttackBonus((Player)pp);
         int baseAttackDisplay = meleeBonusEnabled ? data.getAttack() : 0;
@@ -2628,29 +2710,6 @@ extends Screen {
             return Integer.toString((int)Math.rint(value));
         }
         return String.format(Locale.ROOT, "%.1f", value);
-    }
-
-    @Deprecated
-    private void renderElementPercents(GuiGraphics gfx, int x, int rightX, int y, CultivationData data) {
-        QiElement dominant = data.getDominantElement();
-        MutableComponent header = Component.translatable((String)"screen.friday_cultivation.attr.element_section", (Object[])new Object[]{Component.translatable((String)("element.friday_cultivation." + dominant.id()))});
-        this.drawSectionLabel(gfx, (Component)header, x, y += 4, rightX);
-        y += 11;
-        for (QiElement el : QiElement.values()) {
-            long count = data.getElementCount(el);
-            double pct = data.getElementPercent(el);
-            int bonus = data.getElementDamageBonus(el);
-            MutableComponent name = Component.translatable((String)("element.friday_cultivation." + el.id()));
-            String countStr = CompactNumberFormat.format(count);
-            MutableComponent mainPart = Component.translatable((String)"screen.friday_cultivation.attr.element_row_main", (Object[])new Object[]{name, countStr});
-            MutableComponent suffixPart = Component.translatable((String)"screen.friday_cultivation.attr.element_row_suffix", (Object[])new Object[]{String.format("%.1f", pct), bonus});
-            int mainColor = el == dominant ? -3562934 : -12766422;
-            int suffixColor = -7702176;
-            this.drawAttrSmall(gfx, (Component)mainPart, x, y, mainColor);
-            int mainW = (int)((float)this.font.width((FormattedText)mainPart) * this.attrTabScale());
-            this.drawAttrTinyInline(gfx, (Component)suffixPart, x + mainW + 4, y + 1, suffixColor);
-            y += 9;
-        }
     }
 
     private void drawAttrTinyInline(GuiGraphics gfx, Component text, int x, int y, int color) {

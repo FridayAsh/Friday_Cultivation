@@ -24,6 +24,8 @@ import com.friday.cultivation.util.TooltipUtils;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -44,7 +46,7 @@ extends Item {
     public InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (level.isClientSide) {
-            net.minecraft.client.Minecraft.getInstance().setScreen((net.minecraft.client.gui.screens.Screen)new com.friday.cultivation.client.screen.RealmSelectionScreen());
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> com.friday.cultivation.client.ClientRealmSelectionHooks.open());
         }
         player.getCooldowns().addCooldown((Item)this, 10);
         return InteractionResultHolder.sidedSuccess(stack, (boolean)level.isClientSide());

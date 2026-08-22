@@ -70,6 +70,7 @@ import com.friday.cultivation.block.formation.FormationCorePlateBlockEntity;
 import com.friday.cultivation.block.spirit.SpiritVeinCoreBlockEntity;
 import com.friday.cultivation.config.ModCommonConfig;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.sect.SectRole;
 import com.friday.cultivation.cultivation.sect.SectSavedData;
 import com.friday.cultivation.entity.npc.WanderingCultivatorEntity;
@@ -1374,17 +1375,17 @@ extends Feature<NoneFeatureConfiguration> {
     private static Realm sectMemberRealm(SectGeneration sect, SectRole role) {
         long sectSeed = (long)sect.id().hashCode() << 21 ^ 0x5EC73EA1B107L;
         RandomSource random = RandomSource.create((long)sectSeed);
-        int masterOrd = SectSettlementFeature.rollSectMasterRealmOrdinal(random, SectSettlementFeature.sectPowerScore(sect));
+        int masterIndex = SectSettlementFeature.rollSectMasterRealmIndex(random, SectSettlementFeature.sectPowerScore(sect));
         if (role == SectRole.ANCESTOR) {
-            return Realm.values()[SectSettlementFeature.rollSectAncestorRealmOrdinal(random, masterOrd, SectSettlementFeature.sectPowerScore(sect))];
+            return SectSettlementFeature.rollSectAncestorRealm(random, masterIndex, SectSettlementFeature.sectPowerScore(sect));
         }
         int offset = Math.min(5, Math.max(0, role.rank() - SectRole.MASTER.rank()));
-        int ord = Mth.clamp((int)(masterOrd - offset), (int)Realm.QI_REFINING.ordinal(), (int)masterOrd);
-        return Realm.values()[ord];
+        int index = Mth.clamp((int)(masterIndex - offset), (int)RealmTopology.progressionIndex(Realm.QI_REFINING), (int)masterIndex);
+        return RealmTopology.mainChain().get(index);
     }
 
-    private static int rollSectAncestorRealmOrdinal(RandomSource random, int masterOrd, int powerScore) {
-        int ord = Mth.clamp((int)(masterOrd + 1 + random.nextInt(2)), (int)Realm.FOUNDATION_BUILDING.ordinal(), (int)Realm.TRIBULATION_TRANSCENDENCE.ordinal());
+    private static Realm rollSectAncestorRealm(RandomSource random, int masterIndex, int powerScore) {
+        int index = Mth.clamp((int)(masterIndex + 1 + random.nextInt(2)), (int)RealmTopology.progressionIndex(Realm.FOUNDATION_BUILDING), (int)RealmTopology.progressionIndex(Realm.TRIBULATION_TRANSCENDENCE));
         float immortalChance = switch (Mth.clamp((int)powerScore, (int)0, (int)4)) {
             case 0 -> 0.02f;
             case 1 -> 0.05f;
@@ -1392,10 +1393,10 @@ extends Feature<NoneFeatureConfiguration> {
             case 3 -> 0.24f;
             default -> 0.38f;
         };
-        if (masterOrd >= Realm.TRIBULATION_TRANSCENDENCE.ordinal() || random.nextFloat() < immortalChance) {
-            return random.nextFloat() < SectSettlementFeature.looseImmortalAncestorChance(powerScore) ? Realm.LOOSE_IMMORTAL.ordinal() : Realm.TRUE_IMMORTAL.ordinal();
+        if (masterIndex >= RealmTopology.progressionIndex(Realm.TRIBULATION_TRANSCENDENCE) || random.nextFloat() < immortalChance) {
+            return random.nextFloat() < SectSettlementFeature.looseImmortalAncestorChance(powerScore) ? Realm.LOOSE_IMMORTAL : Realm.TRUE_IMMORTAL;
         }
-        return ord;
+        return RealmTopology.mainChain().get(index);
     }
 
     private static float looseImmortalAncestorChance(int powerScore) {
@@ -1444,11 +1445,11 @@ extends Feature<NoneFeatureConfiguration> {
         return score;
     }
 
-    private static int rollSectMasterRealmOrdinal(RandomSource random, int powerScore) {
-        int[] centerByPower = new int[]{Realm.GOLDEN_CORE.ordinal(), Realm.NASCENT_SOUL.ordinal(), Realm.SOUL_FORMATION.ordinal(), Realm.VOID_REFINING.ordinal(), Realm.MAHAYANA.ordinal()};
+    private static int rollSectMasterRealmIndex(RandomSource random, int powerScore) {
+        int[] centerByPower = new int[]{RealmTopology.progressionIndex(Realm.GOLDEN_CORE), RealmTopology.progressionIndex(Realm.NASCENT_SOUL), RealmTopology.progressionIndex(Realm.SOUL_FORMATION), RealmTopology.progressionIndex(Realm.VOID_REFINING), RealmTopology.progressionIndex(Realm.MAHAYANA)};
         int center = centerByPower[Mth.clamp((int)powerScore, (int)0, (int)(centerByPower.length - 1))];
         int jitter = random.nextInt(3) - 1;
-        return Mth.clamp((int)(center + jitter), (int)Realm.FOUNDATION_BUILDING.ordinal(), (int)Realm.TRIBULATION_TRANSCENDENCE.ordinal());
+        return Mth.clamp((int)(center + jitter), (int)RealmTopology.progressionIndex(Realm.FOUNDATION_BUILDING), (int)RealmTopology.progressionIndex(Realm.TRIBULATION_TRANSCENDENCE));
     }
 
     private static int medianTerrainY(ServerLevel server, int x, int z, int sx, int sz) {

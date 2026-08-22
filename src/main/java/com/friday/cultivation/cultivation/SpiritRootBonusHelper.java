@@ -17,6 +17,7 @@ import com.friday.cultivation.cultivation.QiElement;
 import com.friday.cultivation.cultivation.SpiritRoot;
 import com.friday.cultivation.cultivation.SpiritRootBonus;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.spell.Spell;
 import com.friday.cultivation.cultivation.spell.SpellElement;
 import com.friday.cultivation.cultivation.technique.Technique;
@@ -235,7 +236,7 @@ public final class SpiritRootBonusHelper {
             if (!Technique.FIVE_ELEMENT_CHAOS_ART.id().equals(data.getEquippedTechniqueId())) {
                 return false;
             }
-            return data.getRealm().ordinal() >= Realm.NASCENT_SOUL.ordinal();
+            return RealmTopology.isAtLeast(data.getRealm(), Realm.NASCENT_SOUL);
         }).orElse(false);
     }
 
@@ -271,7 +272,7 @@ public final class SpiritRootBonusHelper {
             if (!hasChaosAptitude) {
                 return false;
             }
-            return data.getRealm().ordinal() >= Realm.NASCENT_SOUL.ordinal();
+            return RealmTopology.isAtLeast(data.getRealm(), Realm.NASCENT_SOUL);
         }).orElse(false);
     }
 
@@ -281,7 +282,7 @@ public final class SpiritRootBonusHelper {
 
     private static boolean hasWoodRootOrBodyIntegration(Player player) {
         return CultivationCapability.get(player).map(data -> {
-            if (data.getRealm().ordinal() >= Realm.BODY_INTEGRATION.ordinal()) {
+            if (RealmTopology.isAtLeast(data.getRealm(), Realm.BODY_INTEGRATION)) {
                 return true;
             }
             SpiritRoot root = data.getSpiritRoot();

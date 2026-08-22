@@ -400,9 +400,8 @@ public final class ChargeableSpellHandler {
         Vec3 look = player.getLookAngle();
         if (spell == Spell.GREAT_FIREBALL) {
             QiElement fire = QiElement.FIRE;
-            int powerPct = data.getElementPowerPercent(fire);
             double techMult = TechniqueBonusHelper.spellElementMultiplier((Player)player, fire);
-            double mult = (1.0 + (double)powerPct / 100.0) * techMult;
+            double mult = techMult;
             long effective = Math.max(charged, Math.round((double)charged * mult));
             GreatFireballEntity ball = new GreatFireballEntity((Level)level, (LivingEntity)player, look.x, look.y, look.z, (int)Math.min(Integer.MAX_VALUE, effective));
             ball.setDamageMultiplier(SpellScalingHelper.damageMultiplier((LivingEntity)player, spell));
@@ -775,4 +774,3 @@ public final class ChargeableSpellHandler {
         }
     }
 }
-

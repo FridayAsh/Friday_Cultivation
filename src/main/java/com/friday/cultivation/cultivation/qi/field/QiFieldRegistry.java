@@ -36,6 +36,18 @@ public final class QiFieldRegistry {
         return INSTANCES.computeIfAbsent((ResourceKey<Level>)level.dimension(), k -> new QiFieldRegistry());
     }
 
+    /** Removes the registry for an unloading server level. */
+    public static void clear(ServerLevel level) {
+        if (level != null) {
+            INSTANCES.remove(level.dimension());
+        }
+    }
+
+    /** Clears every level registry when the integrated/dedicated server stops. */
+    public static void clearAll() {
+        INSTANCES.clear();
+    }
+
     private QiFieldRegistry() {
     }
 
@@ -109,4 +121,3 @@ public final class QiFieldRegistry {
         return all.size();
     }
 }
-

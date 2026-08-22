@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "friday_cultivation:realm_token_tribulation_transcendence"
+    },
+    "title": {
+      "translate": "advancements.friday_cultivation.talent.sovereign_of_daos.title"
+    },
+    "description": {
+      "translate": "advancements.friday_cultivation.talent.sovereign_of_daos.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "reached": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

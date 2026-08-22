@@ -69,16 +69,14 @@ implements INBTSerializable<CompoundTag> {
         if (st == null) {
             return spec.baseMaxQi();
         }
-        this.applyRegen(st, spec, now);
-        if (st.currentQi >= spec.baseMaxQi()) {
-            this.entries.remove(key);
-            return spec.baseMaxQi();
-        }
-        return st.currentQi;
+        // peek 是无副作用查询：在副本上投影再生，不推进真实时间戳/小数余量。
+        BlockQiState projected = new BlockQiState(st.currentQi, st.totalDrained, st.lastTouchTime);
+        projected.regenRemainder = st.regenRemainder;
+        this.applyRegen(projected, spec, now);
+        return Math.min(spec.baseMaxQi(), projected.currentQi);
     }
 
     private void applyRegen(BlockQiState st, BlockQiSpec spec, long now) {
-        int newQi;
         long elapsedTicks = now - st.lastTouchTime;
         if (elapsedTicks <= 0L) {
             return;
@@ -87,7 +85,10 @@ implements INBTSerializable<CompoundTag> {
         if (regenAmount <= 0.0) {
             return;
         }
-        st.currentQi = newQi = (int)Math.min((double)spec.baseMaxQi(), (double)st.currentQi + regenAmount);
+        double available = st.regenRemainder + regenAmount;
+        int gain = (int)Math.min((double)(spec.baseMaxQi() - st.currentQi), Math.floor(available));
+        st.currentQi += Math.max(0, gain);
+        st.regenRemainder = st.currentQi >= spec.baseMaxQi() ? 0.0 : Math.max(0.0, available - gain);
         st.lastTouchTime = now;
     }
 
@@ -113,6 +114,7 @@ implements INBTSerializable<CompoundTag> {
             entry.putInt("qi", st.currentQi);
             entry.putInt("drained", st.totalDrained);
             entry.putLong("time", st.lastTouchTime);
+            entry.putDouble("regenRemainder", st.regenRemainder);
             list.add(entry);
         }
         tag.put("entries", (Tag)list);
@@ -128,6 +130,7 @@ implements INBTSerializable<CompoundTag> {
         for (Tag t : list) {
             CompoundTag entry = (CompoundTag)t;
             BlockQiState st = new BlockQiState(entry.getInt("qi"), entry.getInt("drained"), entry.getLong("time"));
+            st.regenRemainder = Math.max(0.0, entry.getDouble("regenRemainder"));
             this.entries.put(entry.getLong("pos"), st);
         }
     }
@@ -140,4 +143,3 @@ implements INBTSerializable<CompoundTag> {
         public static final DrainResult ZERO = new DrainResult(0, false);
     }
 }
-

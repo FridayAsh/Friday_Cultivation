@@ -28,6 +28,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -39,6 +40,8 @@ public class ShadowStepPacket {
     public static final byte DIR_UP = 4;
     public static final byte DIR_DOWN = 5;
     public static final double DISTANCE = 5.0;
+    private static final String NEXT_ALLOWED_TICK = "friday_cultivation_shadow_step_next_tick";
+    private static final int COOLDOWN_TICKS = 5;
     private final byte direction;
 
     public ShadowStepPacket(byte direction) {
@@ -66,6 +69,10 @@ public class ShadowStepPacket {
             if (!player.hasEffect((MobEffect)ModEffects.SHADOW_STEP.get())) {
                 return;
             }
+            long now = player.serverLevel().getGameTime();
+            if (now < player.getPersistentData().getLong(NEXT_ALLOWED_TICK)) {
+                return;
+            }
             Vec3 dir = ShadowStepPacket.computeDirection(player, msg.direction);
             if (dir == null) {
                 return;
@@ -73,6 +80,12 @@ public class ShadowStepPacket {
             Vec3 from = player.position();
             Vec3 to = from.add(dir.scale(5.0));
             ServerLevel sl = (ServerLevel)player.level();
+            AABB destinationBox = player.getBoundingBox().move(to.subtract(from));
+            if (!sl.noCollision((Entity)player, destinationBox)
+                    || !sl.getWorldBorder().isWithinBounds(to.x, to.z)) {
+                return;
+            }
+            player.getPersistentData().putLong(NEXT_ALLOWED_TICK, now + COOLDOWN_TICKS);
             sl.playSound(null, from.x, from.y, from.z, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.7f, 1.4f);
             sl.sendParticles((ParticleOptions)ParticleTypes.PORTAL, from.x, from.y + 0.8, from.z, 30, 0.3, 0.6, 0.3, 0.4);
             player.teleportTo(to.x, to.y, to.z);
@@ -99,4 +112,3 @@ public class ShadowStepPacket {
         };
     }
 }
-

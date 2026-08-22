@@ -24,6 +24,7 @@ import com.friday.cultivation.cultivation.SpiritRootBonus;
 import com.friday.cultivation.cultivation.SpiritRootBonusHelper;
 import com.friday.cultivation.cultivation.ZhenyuanBonusHelper;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.spell.Spell;
 import com.friday.cultivation.cultivation.spell.SpellElement;
 import com.friday.cultivation.cultivation.technique.Technique;
@@ -196,7 +197,7 @@ public final class SpellScalingHelper {
     }
 
     private static boolean npcHasChaosCombo(WanderingCultivatorEntity npc) {
-        return npc.getSpiritRoot() == SpiritRoot.FIVE_ELEMENT_CHAOS && Technique.FIVE_ELEMENT_CHAOS_ART.id().equals(npc.getTechniqueId()) && npc.getRealm().ordinal() >= Realm.NASCENT_SOUL.ordinal();
+        return npc.getSpiritRoot() == SpiritRoot.FIVE_ELEMENT_CHAOS && Technique.FIVE_ELEMENT_CHAOS_ART.id().equals(npc.getTechniqueId()) && RealmTopology.isAtLeast(npc.getRealm(), Realm.NASCENT_SOUL);
     }
 
     private static boolean isFiveElementBasic(QiElement element) {

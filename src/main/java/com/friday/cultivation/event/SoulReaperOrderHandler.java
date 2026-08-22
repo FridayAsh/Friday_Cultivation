@@ -48,6 +48,7 @@ import com.friday.cultivation.cultivation.CultivationCapability;
 import com.friday.cultivation.cultivation.CultivationData;
 import com.friday.cultivation.cultivation.Identity;
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.cultivation.realm.SubStage;
 import com.friday.cultivation.entity.npc.CorpseEntity;
 import com.friday.cultivation.entity.npc.WanderingCultivatorEntity;
@@ -334,7 +335,7 @@ public final class SoulReaperOrderHandler {
             return false;
         }
         CultivationData data = CultivationCapability.get((Player)player).orElse(null);
-        return data != null && data.isSoulState() && data.isSoulReaperIdentity() && data.getRealm().ordinal() >= Realm.QI_REFINING.ordinal();
+        return data != null && data.isSoulState() && data.isSoulReaperIdentity() && RealmTopology.isAtLeast(data.getRealm(), Realm.QI_REFINING);
     }
 
     private static int countOverworldNpcSouls(MinecraftServer server) {
@@ -423,7 +424,7 @@ public final class SoulReaperOrderHandler {
             }
             return false;
         }
-        if (data.getRealm().ordinal() < Realm.QI_REFINING.ordinal()) {
+        if (RealmTopology.isBefore(data.getRealm(), Realm.QI_REFINING)) {
             if (notify) {
                 player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.soul_reaper_token.requires_realm", (Object[])new Object[]{Realm.QI_REFINING.displayName()}), true);
             }

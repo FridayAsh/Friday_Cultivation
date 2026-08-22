@@ -36,6 +36,7 @@ import com.friday.cultivation.event.CapabilityEvents;
 import com.friday.cultivation.event.SoulStateHandler;
 import com.friday.cultivation.event.TimeAccelerationHandler;
 import com.friday.cultivation.event.TribulationHandler;
+import com.friday.cultivation.event.tribulation.TribulationSpec;
 import com.friday.cultivation.network.ModNetwork;
 import com.friday.cultivation.network.OpenLooseImmortalChoicePacket;
 import net.minecraft.advancements.Advancement;
@@ -121,6 +122,7 @@ public final class LooseImmortalHandler {
                 LooseImmortalHandler.becomeLooseImmortal(player, data);
             } else {
                 data.demoteOnFailure();
+                TechniqueEffectHandler.refreshMaxHealth(player);
                 SoulStateHandler.enterSoulState(player, false, false);
                 SoulStateHandler.beginVoluntaryDifuTransfer(player);
                 CapabilityEvents.syncToClient(player);
@@ -132,6 +134,7 @@ public final class LooseImmortalHandler {
     public static void becomeLooseImmortal(ServerPlayer player, CultivationData data) {
         long next = player.serverLevel().getGameTime() + 12000000L;
         data.becomeLooseImmortal(next);
+        TechniqueEffectHandler.refreshMaxHealth(player);
         player.setHealth(Math.max(1.0f, Math.min(player.getHealth(), player.getMaxHealth())));
         LooseImmortalHandler.grantLooseImmortalAdvancement(player);
         CapabilityEvents.syncToClient(player);
@@ -148,6 +151,7 @@ public final class LooseImmortalHandler {
         int before = data.getLooseImmortalTribulations();
         long next = player.serverLevel().getGameTime() + 12000000L;
         CultivationData.LooseImmortalPromotionResult promotion = data.promoteLooseImmortal(next);
+        TechniqueEffectHandler.refreshMaxHealth(player);
         CapabilityEvents.syncToClient(player);
         if (!promotion.promoted()) {
             return;
@@ -247,7 +251,8 @@ public final class LooseImmortalHandler {
         if (data.isTimeAccelerationActive()) {
             TimeAccelerationHandler.stop(player, data, true);
         }
-        TribulationHandler.beginLooseImmortalTribulation(player, data, waves, bolts, damage);
+        TribulationHandler.beginLooseImmortalTribulation(player, data,
+                new TribulationSpec(waves, bolts, damage, 0.0, 0, data.getTribulationType()));
         player.displayClientMessage((Component)Component.translatable((String)"message.friday_cultivation.loose_immortal.tribulation_start", (Object[])new Object[]{level, Realm.formatTribulationCount(waves, bolts), damage}), false);
     }
 

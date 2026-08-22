@@ -17,6 +17,7 @@
 package com.friday.cultivation.registry;
 
 import com.friday.cultivation.cultivation.realm.Realm;
+import com.friday.cultivation.cultivation.realm.RealmTopology;
 import com.friday.cultivation.registry.ModItems;
 import java.util.Map;
 import net.minecraft.core.registries.Registries;
@@ -185,7 +186,7 @@ public final class ModCreativeTabs {
             output.accept((ItemLike)item);
         }
         output.accept((ItemLike)ModItems.REALM_SELECTOR_TOKEN.get());
-        for (Object realm : Realm.values()) {
+        for (Realm realm : RealmTopology.selectionOrder()) {
             output.accept((ItemLike)ModItems.CULTIVATOR_SPAWN_EGGS.get(realm).get());
         }
         output.accept((ItemLike)ModItems.SOUL_REAPER_SPAWN_EGG.get());

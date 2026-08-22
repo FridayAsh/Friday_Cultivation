@@ -767,7 +767,8 @@ public final class SoulStateHandler {
         VANILLA_DEATH_BYPASS.add(id);
         player.invulnerableTime = 0;
         player.setHealth(Math.max(1.0f, player.getHealth()));
-        player.hurt(source, Float.MAX_VALUE);
+        // 用足够大的有限伤害击杀（避免 Float.MAX_VALUE 溢出为 NaN）
+        player.hurt(source, Math.max(1.0f, player.getMaxHealth()) * 100.0f);
         if (player.isAlive() && !player.isDeadOrDying()) {
             VANILLA_DEATH_BYPASS.remove(id);
         }
@@ -917,6 +918,7 @@ public final class SoulStateHandler {
             if (!tribulationFailureApplied) {
                 data.demoteOnFailure();
             }
+            TechniqueEffectHandler.refreshMaxHealth(player);
             PENDING_VANILLA_DAMAGE_SOURCES.put(player.getUUID(), event.getSource());
             SoulStateHandler.enterSoulState(player, data);
         }

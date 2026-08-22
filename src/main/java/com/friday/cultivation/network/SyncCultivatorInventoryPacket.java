@@ -15,17 +15,16 @@
  */
 package com.friday.cultivation.network;
 
-import com.friday.cultivation.inventory.WanderingCultivatorMenu;
+import com.friday.cultivation.client.ClientCultivatorSyncHooks;
 import java.util.function.Supplier;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
 public class SyncCultivatorInventoryPacket {
@@ -66,18 +65,8 @@ public class SyncCultivatorInventoryPacket {
 
     public static void handle(SyncCultivatorInventoryPacket msg, Supplier<NetworkEvent.Context> ctxSup) {
         NetworkEvent.Context ctx = ctxSup.get();
-        ctx.enqueueWork(() -> {
-            AbstractContainerMenu patt2629$temp;
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (player == null) {
-                return;
-            }
-            if (player.containerMenu.containerId == msg.containerId && (patt2629$temp = player.containerMenu) instanceof WanderingCultivatorMenu) {
-                WanderingCultivatorMenu menu = (WanderingCultivatorMenu)patt2629$temp;
-                menu.setNpcInventoryTag(msg.inventoryTag);
-            }
-        });
+        ctx.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                () -> () -> ClientCultivatorSyncHooks.applyInventory(msg.containerId, msg.inventoryTag)));
         ctx.setPacketHandled(true);
     }
 }
-
