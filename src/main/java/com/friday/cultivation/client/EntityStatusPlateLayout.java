@@ -3,8 +3,8 @@ package com.friday.cultivation.client;
 /**
  * 生物头顶状态牌的纯布局模块。
  *
- * <p>所有尺寸以 Minecraft GUI 逻辑像素定义，再通过当前投影矩阵换算为世界尺寸。
- * 该类不接触实体、OpenGL 或光影状态，因此可以直接通过单元测试验证恒定尺寸公式。</p>
+ * <p>所有尺寸先以统一的本地排版单位定义，再换算成固定世界尺寸；屏幕投影由
+ * {@link EntityStatusScreenProjection} 单独负责。该类不接触实体、OpenGL 或光影状态。</p>
  */
 public final class EntityStatusPlateLayout {
     /**
@@ -15,7 +15,9 @@ public final class EntityStatusPlateLayout {
     public static final float BAR_WIDTH_PIXELS = 75.0F;
     public static final float BAR_HEIGHT_PIXELS = 9.0F;
     public static final float BAR_HEAD_GAP_PIXELS = 3.0F;
-    public static final float ICON_SIZE_PIXELS = 13.0F;
+    public static final float ATTRIBUTE_ICON_SIZE_PIXELS = 9.0F;
+    public static final float ATTRIBUTE_TEXT_SCALE = 0.6F;
+    public static final float ATTRIBUTE_ICON_TEXT_GAP_PIXELS = 1.0F;
     public static final float ICON_GAP_PIXELS = 3.0F;
     public static final float TEXT_SCALE = 0.78F;
     public static final float TEXT_SHADOW_Z = 0.001F;
@@ -38,7 +40,7 @@ public final class EntityStatusPlateLayout {
         }
         float scale = WORLD_UNITS_PER_LOGICAL_PIXEL;
         return new Layout(scale, BAR_WIDTH_PIXELS * scale, BAR_HEIGHT_PIXELS * scale,
-                ICON_SIZE_PIXELS * scale, BAR_HEAD_GAP_PIXELS * scale);
+                ATTRIBUTE_ICON_SIZE_PIXELS * scale, BAR_HEAD_GAP_PIXELS * scale);
     }
 
     public static float clampRatio(double ratio) {

@@ -15,6 +15,8 @@ class EntityStatusPlateLayoutTest {
 
             assertEquals(1.2F, layout.barWidth(), 0.0001F);
             assertEquals(0.144F, layout.barHeight(), 0.0001F);
+            assertEquals(0.144F, layout.iconSize(), 0.0001F,
+                    "护甲与韧性图标应使用原生 9×9 排版尺寸，经过 0.016 世界比例后为 0.144 格");
         }
     }
 
