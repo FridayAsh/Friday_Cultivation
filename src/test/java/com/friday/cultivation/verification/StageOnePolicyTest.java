@@ -103,8 +103,20 @@ class StageOnePolicyTest {
                 "RenderType.text 会被 iterationT 识别为 particle-lit 并随昼夜及光照方向改变颜色");
         assertTrue(entityLayout.contains("ATTRIBUTE_ICON_SIZE_PIXELS = 9.0F"),
                 "护甲与韧性图标必须按原生 9×9 纹理显示，不能继续拉伸到 13×13");
-        assertTrue(entityLayout.contains("ATTRIBUTE_TEXT_SCALE = 0.6F"),
-                "护甲与韧性数字必须使用统一 0.6 倍缩放并垂直居中");
+        assertTrue(entityLayout.contains("ATTRIBUTE_TEXT_SCALE = 0.72F"),
+                "护甲与韧性数字必须放大到清晰可读的 0.72 倍并垂直居中");
+        assertTrue(entityHud.contains("ARMOR_COLOR = 0xFFFFD54F"),
+                "护甲数字必须使用高对比金色，不能继续使用不明显的灰色");
+        assertTrue(entityHud.contains("TOUGH_COLOR = 0xFF55FFFF"),
+                "韧性数字必须使用高对比亮青色");
+        assertTrue(entityHud.contains("drawOutlinedText("),
+                "护甲与韧性数字必须增加深色描边，保证亮天空和夜晚均清楚");
+        assertTrue(entityHud.contains("CustomizeGuiOverlayEvent.BossEventProgress"),
+                "必须监听 Forge 标准 Boss 条事件，避免与其他模组已有 Boss 条重复");
+        assertTrue(entityHud.contains("Tags.EntityTypes.BOSSES"),
+                "Boss 分类必须优先使用 Forge 通用实体标签以兼容其他模组");
+        assertTrue(entityHud.contains("renderFallbackBossBar("),
+                "缺少标准 Boss 条的 Boss 必须改走屏幕顶部兜底条");
     }
 
     private static String read(String relativePath) throws IOException {

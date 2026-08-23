@@ -16,7 +16,7 @@ public final class EntityStatusPlateLayout {
     public static final float BAR_HEIGHT_PIXELS = 9.0F;
     public static final float BAR_HEAD_GAP_PIXELS = 3.0F;
     public static final float ATTRIBUTE_ICON_SIZE_PIXELS = 9.0F;
-    public static final float ATTRIBUTE_TEXT_SCALE = 0.6F;
+    public static final float ATTRIBUTE_TEXT_SCALE = 0.72F;
     public static final float ATTRIBUTE_ICON_TEXT_GAP_PIXELS = 1.0F;
     public static final float ICON_GAP_PIXELS = 3.0F;
     public static final float TEXT_SCALE = 0.78F;
