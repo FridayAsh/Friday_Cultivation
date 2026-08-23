@@ -105,18 +105,47 @@ class StageOnePolicyTest {
                 "护甲与韧性图标必须按原生 9×9 纹理显示，不能继续拉伸到 13×13");
         assertTrue(entityLayout.contains("ATTRIBUTE_TEXT_SCALE = 0.72F"),
                 "护甲与韧性数字必须放大到清晰可读的 0.72 倍并垂直居中");
-        assertTrue(entityHud.contains("ARMOR_COLOR = 0xFFFFD54F"),
-                "护甲数字必须使用高对比金色，不能继续使用不明显的灰色");
         assertTrue(entityHud.contains("TOUGH_COLOR = 0xFF55FFFF"),
                 "韧性数字必须使用高对比亮青色");
         assertTrue(entityHud.contains("drawOutlinedText("),
                 "护甲与韧性数字必须增加深色描边，保证亮天空和夜晚均清楚");
-        assertTrue(entityHud.contains("CustomizeGuiOverlayEvent.BossEventProgress"),
-                "必须监听 Forge 标准 Boss 条事件，避免与其他模组已有 Boss 条重复");
         assertTrue(entityHud.contains("Tags.EntityTypes.BOSSES"),
                 "Boss 分类必须优先使用 Forge 通用实体标签以兼容其他模组");
-        assertTrue(entityHud.contains("renderFallbackBossBar("),
-                "缺少标准 Boss 条的 Boss 必须改走屏幕顶部兜底条");
+    }
+
+    @Test
+    void entityArmorTextUsesPlayerHudColor() throws IOException {
+        String entityHud = read("com/friday/cultivation/client/EntityStatusHudRenderer.java");
+        assertTrue(entityHud.contains("CultivationHud.ARMOR_COLOR"),
+                "生物护甲数字必须直接复用玩家 HUD 的护甲颜色，禁止维护第二套颜色常量");
+        assertFalse(entityHud.contains("private static final int ARMOR_COLOR"),
+                "生物状态 HUD 不能继续声明独立护甲颜色");
+    }
+
+    @Test
+    void projectBossBarAlwaysReplacesExternalBossBars() throws IOException {
+        String entityHud = read("com/friday/cultivation/client/EntityStatusHudRenderer.java");
+        assertTrue(entityHud.contains("CustomizeGuiOverlayEvent.BossEventProgress"),
+                "必须监听 Forge 标准 Boss 条事件");
+        assertTrue(entityHud.contains("@SubscribeEvent(priority = EventPriority.HIGHEST)"),
+                "必须先于其他普通监听器接管 Boss 条事件");
+        assertTrue(entityHud.contains("event.setCanceled(true)"),
+                "必须强制取消原版及其他模组通过标准事件绘制的 Boss 条");
+        assertFalse(entityHud.contains("EXISTING_BOSS_BARS"),
+                "强制统一后不能再保留外部 Boss 条快照或为其预留位置");
+        assertFalse(entityHud.contains("hasCorrespondingBossBar("),
+                "不能再因检测到外部 Boss 条而跳过项目 Boss 条");
+        assertTrue(entityHud.contains("renderProjectBossBar("),
+                "所有 Boss 必须统一走项目自己的屏幕顶部血条");
+    }
+
+    @Test
+    void projectBossBarRendersArmorAndToughness() throws IOException {
+        String entityHud = read("com/friday/cultivation/client/EntityStatusHudRenderer.java");
+        assertTrue(entityHud.contains("renderBossAttributes("),
+                "项目 Boss 血条必须绘制护甲与韧性组件");
+        assertTrue(entityHud.contains("target.armor()") && entityHud.contains("target.toughness()"),
+                "Boss 快照必须携带并读取实时护甲与韧性数值");
     }
 
     private static String read(String relativePath) throws IOException {

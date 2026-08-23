@@ -106,7 +106,8 @@ public class CultivationHud {
     private static final int TOUGH_ICON_U = 18, TOUGH_ICON_V = 0;
     private static final int AIR_ICON_U = 16, AIR_ICON_V = 18;
     private static final int FOOD_COLOR = 0xD8A100;
-    private static final int ARMOR_COLOR = 0xAAAAAA;
+    /** 玩家 HUD、生物状态牌与 Boss 条共用的护甲数字颜色。 */
+    static final int ARMOR_COLOR = 0xAAAAAA;
     private static final int TOUGH_COLOR = 0x40E0D0;
     private static final int AIR_COLOR = 0x3FA6FF;
 

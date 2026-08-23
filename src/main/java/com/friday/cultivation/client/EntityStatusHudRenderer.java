@@ -74,7 +74,6 @@ public final class EntityStatusHudRenderer {
     private static final int ARMOR_ICON_V = 9;
     private static final int TOUGH_ICON_U = 18;
     private static final int TOUGH_ICON_V = 0;
-    private static final int ARMOR_COLOR = 0xFFFFD54F;
     private static final int TOUGH_COLOR = 0xFF55FFFF;
     private static final int ATTRIBUTE_TEXT_OUTLINE = 0xFF101010;
     private static final int HEALTH_TOP = -1944235;
@@ -93,8 +92,6 @@ public final class EntityStatusHudRenderer {
     private static final Map<UUID, HealthTrack> HEALTH_TRACKS = new HashMap<>();
     private static final Map<UUID, PendingPlate> PENDING_PLATES = new HashMap<>();
     private static final Map<UUID, BossTarget> ACTIVE_BOSS_TARGETS = new HashMap<>();
-    private static final List<EntityStatusBossPolicy.ExistingBossBar> EXISTING_BOSS_BARS =
-            new ArrayList<>();
     private static final HudBarAnimator ANIMATOR = new HudBarAnimator();
     private static final ShadowPassGuard SHADOW_PASS_GUARD = ShadowPassGuard.create();
     private static Object trackedLevel;
@@ -151,9 +148,11 @@ public final class EntityStatusHudRenderer {
             HudBarAnimator.Visual visual = ANIMATOR.sample(id, HudBarAnimator.BarId.HEALTH,
                     health, living.getMaxHealth(), 0L, nowMillis);
             if (isBossCandidate(living) && nowTick < track.hurtUntilTick) {
+                AttributeInstance toughnessAttribute = living.getAttribute(Attributes.ARMOR_TOUGHNESS);
+                double toughness = toughnessAttribute == null ? 0.0D : toughnessAttribute.getValue();
                 ACTIVE_BOSS_TARGETS.put(id, new BossTarget(living, living.getDisplayName(),
                         health, living.getMaxHealth(), visual.primaryRatio(), visual.trailingRatio(),
-                        track.hurtUntilTick));
+                        living.getArmorValue(), toughness, track.hurtUntilTick));
             } else {
                 ACTIVE_BOSS_TARGETS.remove(id);
             }
@@ -219,24 +218,13 @@ public final class EntityStatusHudRenderer {
                 living.getArmorValue(), toughness));
     }
 
-    /** 每帧开始先清空标准 Boss 条快照，随后由 BossEventProgress 重新收集。 */
-    @SubscribeEvent
-    public static void onRenderGuiPre(RenderGuiEvent.Pre event) {
-        EXISTING_BOSS_BARS.clear();
+    /** 统一接管原版及模组通过标准 BossHealthOverlay 提交的 Boss 条。 */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onExternalBossBar(CustomizeGuiOverlayEvent.BossEventProgress event) {
+        event.setCanceled(true);
     }
 
-    /**
-     * 收集原版和模组经标准 BossHealthOverlay 绘制的条，用名称与进度识别对应关系，
-     * 让 Friday 只补缺失的 Boss 条。
-     */
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onExistingBossBar(CustomizeGuiOverlayEvent.BossEventProgress event) {
-        EXISTING_BOSS_BARS.add(new EntityStatusBossPolicy.ExistingBossBar(
-                event.getBossEvent().getName().getString(), event.getBossEvent().getProgress(),
-                event.getY(), event.getIncrement()));
-    }
-
-    /** 在所有世界光影与 HUD 合成完成后绘制固定颜色状态牌和 Boss 兜底条。 */
+    /** 在所有世界光影与 HUD 合成完成后绘制固定颜色状态牌和项目 Boss 条。 */
     @SubscribeEvent
     public static void onRenderGui(RenderGuiEvent.Post event) {
         if (PENDING_PLATES.isEmpty() && ACTIVE_BOSS_TARGETS.isEmpty()) {
@@ -246,8 +234,6 @@ public final class EntityStatusHudRenderer {
         List<PendingPlate> plates = new ArrayList<>(PENDING_PLATES.values());
         PENDING_PLATES.clear();
         List<BossTarget> bossTargets = new ArrayList<>(ACTIVE_BOSS_TARGETS.values());
-        List<EntityStatusBossPolicy.ExistingBossBar> existingBossBars =
-                List.copyOf(EXISTING_BOSS_BARS);
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null || mc.options.hideGui) {
@@ -265,18 +251,16 @@ public final class EntityStatusHudRenderer {
             for (PendingPlate plate : plates) {
                 renderProjectedStatus(graphics, mc.font, plate);
             }
-            int bossY = EntityStatusBossPolicy.nextFreeBossBarY(existingBossBars);
+            int bossY = EntityStatusBossPolicy.PROJECT_FIRST_BOSS_BAR_Y;
             bossTargets.sort(Comparator.comparingLong(BossTarget::hurtUntilTick).reversed());
             for (BossTarget target : bossTargets) {
-                if (!canRenderBossTarget(mc, target, event.getPartialTick())
-                        || EntityStatusBossPolicy.hasCorrespondingBossBar(
-                        target.name().getString(), target.healthRatio(), existingBossBars)) {
+                if (!canRenderBossTarget(mc, target, event.getPartialTick())) {
                     continue;
                 }
                 if (bossY >= graphics.guiHeight() / 3) {
                     break;
                 }
-                renderFallbackBossBar(graphics, mc.font, target, bossY);
+                renderProjectBossBar(graphics, mc.font, target, bossY);
                 bossY += BOSS_BAR_STACK_INCREMENT;
             }
             graphics.flush();
@@ -312,7 +296,6 @@ public final class EntityStatusHudRenderer {
         HEALTH_TRACKS.clear();
         PENDING_PLATES.clear();
         ACTIVE_BOSS_TARGETS.clear();
-        EXISTING_BOSS_BARS.clear();
         ANIMATOR.reset();
     }
 
@@ -393,15 +376,15 @@ public final class EntityStatusHudRenderer {
                 EntityStatusPlateLayout.BAR_HEIGHT_PIXELS,
                 primary, HEALTH_TOP, HEALTH_BOTTOM);
 
-        drawAttributes(graphics, font, plate, barTop, barRight);
+        drawAttributes(graphics, font, plate.armor(), plate.toughness(), barTop, barRight);
         drawHealthText(graphics, font, plate, barTop);
         graphics.flush();
         pose.popPose();
     }
 
-    /** 缺少模组自身标准 Boss 条时，在与末影龙相同的屏幕顶部区域绘制固定尺寸兜底条。 */
-    private static void renderFallbackBossBar(GuiGraphics graphics, Font font,
-                                              BossTarget target, int barY) {
+    /** 在与末影龙相同的屏幕顶部区域绘制项目唯一的固定尺寸 Boss 条。 */
+    private static void renderProjectBossBar(GuiGraphics graphics, Font font,
+                                             BossTarget target, int barY) {
         float left = (graphics.guiWidth() - BOSS_BAR_WIDTH) * 0.5F;
         float right = left + BOSS_BAR_WIDTH;
         float bottom = barY + BOSS_BAR_HEIGHT;
@@ -435,6 +418,12 @@ public final class EntityStatusHudRenderer {
         float textX = (graphics.guiWidth() - font.width(healthText) * textScale) * 0.5F;
         float textY = barY + (BOSS_BAR_HEIGHT - font.lineHeight * textScale) * 0.5F;
         drawText(graphics, font, healthText, textX, textY, textScale, 0xFFFFFFFF);
+        renderBossAttributes(graphics, font, target, barY, right);
+    }
+
+    private static void renderBossAttributes(GuiGraphics graphics, Font font,
+                                             BossTarget target, float barTop, float barRight) {
+        drawAttributes(graphics, font, target.armor(), target.toughness(), barTop, barRight);
     }
 
     private static void drawFill(GuiGraphics graphics, float left, float top,
@@ -498,9 +487,10 @@ public final class EntityStatusHudRenderer {
     }
 
     private static void drawAttributes(GuiGraphics graphics, Font font,
-                                       PendingPlate plate, float barTop, float barRight) {
-        boolean showArmor = plate.armor() > 0;
-        boolean showToughness = plate.toughness() > 0.0D;
+                                       int armor, double toughness,
+                                       float barTop, float barRight) {
+        boolean showArmor = armor > 0;
+        boolean showToughness = toughness > 0.0D;
         if (!showArmor && !showToughness) {
             return;
         }
@@ -516,10 +506,10 @@ public final class EntityStatusHudRenderer {
             drawTextureQuad(graphics, VANILLA_ICONS, x, iconY, x + iconSize, iconY + iconSize,
                     ARMOR_ICON_U, ARMOR_ICON_V, ARMOR_ICON_U + 9.0F, ARMOR_ICON_V + 9.0F,
                     0xFFFFFFFF, 256.0F, 256.0F);
-            Component armorText = Component.literal(formatNumber(plate.armor()));
+            Component armorText = Component.literal(formatNumber(armor));
             float textX = x + iconSize + EntityStatusPlateLayout.ATTRIBUTE_ICON_TEXT_GAP_PIXELS;
             drawOutlinedText(graphics, font, armorText, textX, textY,
-                    textScale, ARMOR_COLOR);
+                    textScale, CultivationHud.ARMOR_COLOR);
             x = textX + font.width(armorText) * textScale + EntityStatusPlateLayout.ICON_GAP_PIXELS;
         }
 
@@ -527,7 +517,7 @@ public final class EntityStatusHudRenderer {
             drawTextureQuad(graphics, OVERFLOWING_ICONS, x, iconY, x + iconSize, iconY + iconSize,
                     TOUGH_ICON_U, TOUGH_ICON_V, TOUGH_ICON_U + 9.0F, TOUGH_ICON_V + 9.0F,
                     0xFFFFFFFF, 256.0F, 256.0F);
-            Component toughnessText = Component.literal(formatNumber(plate.toughness()));
+            Component toughnessText = Component.literal(formatNumber(toughness));
             float textX = x + iconSize + EntityStatusPlateLayout.ATTRIBUTE_ICON_TEXT_GAP_PIXELS;
             drawOutlinedText(graphics, font, toughnessText, textX, textY,
                     textScale, TOUGH_COLOR);
@@ -629,10 +619,8 @@ public final class EntityStatusHudRenderer {
     private record BossTarget(LivingEntity entity, Component name,
                               float health, float maxHealth,
                               double primaryRatio, double trailingRatio,
+                              int armor, double toughness,
                               long hurtUntilTick) {
-        private double healthRatio() {
-            return maxHealth <= 0.0F ? 0.0D : health / maxHealth;
-        }
     }
 
     /** Oculus/Iris 可选阴影轮次 Adapter；未安装时安全退化到主世界轮次。 */
