@@ -21,7 +21,6 @@ public final class EntityStatusPlateLayout {
     public static final float ICON_GAP_PIXELS = 3.0F;
     public static final float TEXT_SCALE = 0.78F;
     public static final float TEXT_SHADOW_Z = 0.001F;
-    public static final float CLIP_TEXTURE_PIXELS = 3.0F;
     public static final float TEXTURE_WIDTH = 96.0F;
     public static final float TEXTURE_HEIGHT = 6.0F;
 
@@ -50,10 +49,21 @@ public final class EntityStatusPlateLayout {
         return (float) Math.max(0.0D, Math.min(1.0D, ratio));
     }
 
+    /** 按同一比例裁取目标宽度和源纹理，避免极低血量时压缩整张斜角贴图。 */
+    public static FillSlice healthFillSlice(float barLeft, float barWidth, double ratio) {
+        float clampedRatio = clampRatio(ratio);
+        float width = barWidth * clampedRatio;
+        float sourceRight = TEXTURE_WIDTH * clampedRatio;
+        return new FillSlice(barLeft, barLeft + width, 0.0F, sourceRight);
+    }
+
     public record Layout(float worldUnitsPerLogicalPixel,
                          float barWidth,
                          float barHeight,
                          float iconSize,
                          float headGap) {
+    }
+
+    public record FillSlice(float left, float right, float sourceLeft, float sourceRight) {
     }
 }

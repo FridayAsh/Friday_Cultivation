@@ -224,8 +224,28 @@ public final class EntityStatusHudRenderer {
         event.setCanceled(true);
     }
 
+    /** 在 Jade 绘制前登记项目 Boss 条高度，使其沿用自身 PUSH_DOWN/HIDE_TOOLTIP 设置。 */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onRenderGuiPre(RenderGuiEvent.Pre event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null || mc.options.hideGui
+                || ACTIVE_BOSS_TARGETS.isEmpty()) {
+            return;
+        }
+        int visibleBossCount = 0;
+        for (BossTarget target : ACTIVE_BOSS_TARGETS.values()) {
+            if (canRenderBossTarget(mc, target, event.getPartialTick())) {
+                visibleBossCount++;
+            }
+        }
+        int reservedBottom = JadeOverlayCompat.reservedBottom(
+                EntityStatusBossPolicy.PROJECT_FIRST_BOSS_BAR_Y,
+                Math.round(BOSS_BAR_HEIGHT), BOSS_BAR_STACK_INCREMENT, visibleBossCount);
+        JadeOverlayCompat.reserveBossBarArea(reservedBottom);
+    }
+
     /** 在所有世界光影与 HUD 合成完成后绘制固定颜色状态牌和项目 Boss 条。 */
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onRenderGui(RenderGuiEvent.Post event) {
         if (PENDING_PLATES.isEmpty() && ACTIVE_BOSS_TARGETS.isEmpty()) {
             return;
@@ -429,47 +449,20 @@ public final class EntityStatusHudRenderer {
     private static void drawFill(GuiGraphics graphics, float left, float top,
                                  float fullWidth, float fullHeight, double ratio,
                                  int topColor, int bottomColor) {
-        float width = fullWidth * EntityStatusPlateLayout.clampRatio(ratio);
-        if (width <= 0.0F) {
+        EntityStatusPlateLayout.FillSlice slice =
+                EntityStatusPlateLayout.healthFillSlice(left, fullWidth, ratio);
+        if (slice.right() <= slice.left()) {
             return;
         }
 
         float bottom = top + fullHeight;
         float half = fullHeight * 0.5F;
-        float cap = fullWidth * EntityStatusPlateLayout.CLIP_TEXTURE_PIXELS
-                / EntityStatusPlateLayout.TEXTURE_WIDTH;
-
-        if (width <= cap) {
-            drawTextureQuad(graphics, BLOOD_FILL, left, top, left + width, top + half,
-                    0.0F, 0.0F, EntityStatusPlateLayout.TEXTURE_WIDTH, 3.0F,
-                    topColor, EntityStatusPlateLayout.TEXTURE_WIDTH,
-                    EntityStatusPlateLayout.TEXTURE_HEIGHT);
-            drawTextureQuad(graphics, BLOOD_FILL, left, top + half, left + width, bottom,
-                    0.0F, 3.0F, EntityStatusPlateLayout.TEXTURE_WIDTH,
-                    EntityStatusPlateLayout.TEXTURE_HEIGHT, bottomColor,
-                    EntityStatusPlateLayout.TEXTURE_WIDTH, EntityStatusPlateLayout.TEXTURE_HEIGHT);
-            return;
-        }
-
-        float capWidth = Math.min(cap, width);
-        drawTextureQuad(graphics, BLOOD_FILL, left, top, left + capWidth, top + half,
-                0.0F, 0.0F, EntityStatusPlateLayout.CLIP_TEXTURE_PIXELS, 3.0F,
+        drawTextureQuad(graphics, BLOOD_FILL, slice.left(), top, slice.right(), top + half,
+                slice.sourceLeft(), 0.0F, slice.sourceRight(), 3.0F,
                 topColor, EntityStatusPlateLayout.TEXTURE_WIDTH,
                 EntityStatusPlateLayout.TEXTURE_HEIGHT);
-        drawTextureQuad(graphics, BLOOD_FILL, left, top + half, left + capWidth, bottom,
-                0.0F, 3.0F, EntityStatusPlateLayout.CLIP_TEXTURE_PIXELS,
-                EntityStatusPlateLayout.TEXTURE_HEIGHT, bottomColor,
-                EntityStatusPlateLayout.TEXTURE_WIDTH, EntityStatusPlateLayout.TEXTURE_HEIGHT);
-
-        float bodyWidth = width - capWidth;
-        float sourceWidth = EntityStatusPlateLayout.TEXTURE_WIDTH * bodyWidth / fullWidth;
-        float sourceLeft = EntityStatusPlateLayout.TEXTURE_WIDTH - sourceWidth;
-        drawTextureQuad(graphics, BLOOD_FILL, left + capWidth, top, left + width, top + half,
-                sourceLeft, 0.0F, EntityStatusPlateLayout.TEXTURE_WIDTH, 3.0F,
-                topColor, EntityStatusPlateLayout.TEXTURE_WIDTH,
-                EntityStatusPlateLayout.TEXTURE_HEIGHT);
-        drawTextureQuad(graphics, BLOOD_FILL, left + capWidth, top + half, left + width, bottom,
-                sourceLeft, 3.0F, EntityStatusPlateLayout.TEXTURE_WIDTH,
+        drawTextureQuad(graphics, BLOOD_FILL, slice.left(), top + half, slice.right(), bottom,
+                slice.sourceLeft(), 3.0F, slice.sourceRight(),
                 EntityStatusPlateLayout.TEXTURE_HEIGHT, bottomColor,
                 EntityStatusPlateLayout.TEXTURE_WIDTH, EntityStatusPlateLayout.TEXTURE_HEIGHT);
     }

@@ -7,7 +7,8 @@ package com.friday.cultivation.client;
  */
 public final class EntityStatusBossPolicy {
     public static final double UNTAGGED_HOSTILE_BOSS_HEALTH = 100.0D;
-    public static final int PROJECT_FIRST_BOSS_BAR_Y = 12;
+    /** 为顶部 FPS 文本保留一行高度；Boss 标题位于血条上方 9 像素。 */
+    public static final int PROJECT_FIRST_BOSS_BAR_Y = 24;
 
     private EntityStatusBossPolicy() {
     }

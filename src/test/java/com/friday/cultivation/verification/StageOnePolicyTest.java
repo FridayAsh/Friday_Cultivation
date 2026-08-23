@@ -148,6 +148,18 @@ class StageOnePolicyTest {
                 "Boss 快照必须携带并读取实时护甲与韧性数值");
     }
 
+    @Test
+    void entityStatusTextRendersAfterJadeAndReservesBossArea() throws IOException {
+        String entityHud = read("com/friday/cultivation/client/EntityStatusHudRenderer.java");
+        String renderGui = between(entityHud,
+                "/** 在所有世界光影与 HUD 合成完成后绘制固定颜色状态牌和项目 Boss 条。 */",
+                "private static boolean canTrack");
+        assertTrue(renderGui.contains("@SubscribeEvent(priority = EventPriority.LOWEST)"),
+                "项目状态牌必须在 Jade 等普通 Post 监听器之后绘制，避免生命数字被遮罩");
+        assertTrue(entityHud.contains("JadeOverlayCompat.reserveBossBarArea("),
+                "取消标准 Boss 条后仍需主动告知 Jade 项目 Boss 条占用区域");
+    }
+
     private static String read(String relativePath) throws IOException {
         return Files.readString(SOURCE_ROOT.resolve(relativePath), StandardCharsets.UTF_8);
     }

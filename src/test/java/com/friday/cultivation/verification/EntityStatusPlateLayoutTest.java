@@ -2,6 +2,7 @@ package com.friday.cultivation.verification;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.friday.cultivation.client.EntityStatusPlateLayout;
 import org.junit.jupiter.api.Test;
@@ -49,5 +50,26 @@ class EntityStatusPlateLayoutTest {
         assertEquals(0.0F, EntityStatusPlateLayout.clampRatio(-1.0D));
         assertEquals(0.5F, EntityStatusPlateLayout.clampRatio(0.5D));
         assertEquals(1.0F, EntityStatusPlateLayout.clampRatio(2.0D));
+    }
+
+    @Test
+    void healthFillKeepsTextureScaleWhenRatioIsTiny() {
+        EntityStatusPlateLayout.FillSlice zero =
+                EntityStatusPlateLayout.healthFillSlice(100.0F, 96.0F, 0.0D);
+        EntityStatusPlateLayout.FillSlice tiny =
+                EntityStatusPlateLayout.healthFillSlice(100.0F, 96.0F, 0.01D);
+        EntityStatusPlateLayout.FillSlice full =
+                EntityStatusPlateLayout.healthFillSlice(100.0F, 96.0F, 1.0D);
+
+        assertEquals(zero.left(), zero.right(), 0.0001F, "零血量不能绘制填充");
+        assertEquals(0.0F, zero.sourceRight(), 0.0001F, "零血量不能采样填充纹理");
+        assertTrue(tiny.right() > tiny.left(), "极低血量仍应保留对应宽度");
+        assertTrue(tiny.right() <= 196.0F, "极低血量目标范围不能越过右边框");
+        assertEquals(0.01F,
+                (tiny.sourceRight() - tiny.sourceLeft()) / EntityStatusPlateLayout.TEXTURE_WIDTH,
+                0.0001F,
+                "极低血量只能裁取纹理左侧同比例切片，不能把96像素整张贴图压缩成红色竖条");
+        assertEquals(96.0F, full.sourceRight(), 0.0001F);
+        assertEquals(196.0F, full.right(), 0.0001F);
     }
 }
