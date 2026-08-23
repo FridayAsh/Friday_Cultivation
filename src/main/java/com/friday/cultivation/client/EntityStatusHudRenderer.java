@@ -76,6 +76,7 @@ public final class EntityStatusHudRenderer {
     private static final int TOUGH_ICON_V = 0;
     private static final int TOUGH_COLOR = 0xFF55FFFF;
     private static final int ATTRIBUTE_TEXT_OUTLINE = 0xFF101010;
+    private static final float FOREGROUND_TEXT_Z = 200.0F;
     private static final int HEALTH_TOP = -1944235;
     private static final int HEALTH_BOTTOM = -5758944;
     private static final float BOSS_BAR_WIDTH = 182.0F;
@@ -224,9 +225,9 @@ public final class EntityStatusHudRenderer {
         event.setCanceled(true);
     }
 
-    /** 在 Jade 绘制前登记项目 Boss 条高度，使其沿用自身 PUSH_DOWN/HIDE_TOOLTIP 设置。 */
+    /** 所有标准 Boss 事件结束后、Jade 正式绘制前，登记并重算项目 Boss 条避让区域。 */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onRenderGuiPre(RenderGuiEvent.Pre event) {
+    public static void onRenderGuiBeforeJade(RenderGuiEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null || mc.options.hideGui
                 || ACTIVE_BOSS_TARGETS.isEmpty()) {
@@ -242,6 +243,7 @@ public final class EntityStatusHudRenderer {
                 EntityStatusBossPolicy.PROJECT_FIRST_BOSS_BAR_Y,
                 Math.round(BOSS_BAR_HEIGHT), BOSS_BAR_STACK_INCREMENT, visibleBossCount);
         JadeOverlayCompat.reserveBossBarArea(reservedBottom);
+        JadeOverlayCompat.recalculateTooltipLayout();
     }
 
     /** 在所有世界光影与 HUD 合成完成后绘制固定颜色状态牌和项目 Boss 条。 */
@@ -437,7 +439,7 @@ public final class EntityStatusHudRenderer {
         float textScale = EntityStatusPlateLayout.TEXT_SCALE;
         float textX = (graphics.guiWidth() - font.width(healthText) * textScale) * 0.5F;
         float textY = barY + (BOSS_BAR_HEIGHT - font.lineHeight * textScale) * 0.5F;
-        drawText(graphics, font, healthText, textX, textY, textScale, 0xFFFFFFFF);
+        drawForegroundText(graphics, font, healthText, textX, textY, textScale, 0xFFFFFFFF);
         renderBossAttributes(graphics, font, target, barY, right);
     }
 
@@ -476,7 +478,7 @@ public final class EntityStatusHudRenderer {
         float x = -width * 0.5F;
         float y = barTop + (EntityStatusPlateLayout.BAR_HEIGHT_PIXELS
                 - font.lineHeight * scale) * 0.5F;
-        drawText(graphics, font, text, x, y, scale, 0xFFFFFFFF);
+        drawForegroundText(graphics, font, text, x, y, scale, 0xFFFFFFFF);
     }
 
     private static void drawAttributes(GuiGraphics graphics, Font font,
@@ -537,6 +539,23 @@ public final class EntityStatusHudRenderer {
         pose.translate(x, y, 0.0F);
         pose.scale(scale, scale, 1.0F);
         graphics.drawString(font, text.getVisualOrderText(), 0.0F, 0.0F, color, false);
+        pose.popPose();
+    }
+
+    /** 生命数字独立提升并立即提交，避免与血条填充或第三方遮罩共享深度结果。 */
+    private static void drawForegroundText(GuiGraphics graphics, Font font, Component text,
+                                           float x, float y, float scale, int color) {
+        if (scale <= 0.0F) {
+            return;
+        }
+        PoseStack pose = graphics.pose();
+        pose.pushPose();
+        pose.translate(x, y, FOREGROUND_TEXT_Z);
+        pose.scale(scale, scale, 1.0F);
+        RenderSystem.disableDepthTest();
+        graphics.drawString(font, text.getVisualOrderText(), 0.0F, 0.0F, color, false);
+        graphics.flush();
+        RenderSystem.disableDepthTest();
         pose.popPose();
     }
 

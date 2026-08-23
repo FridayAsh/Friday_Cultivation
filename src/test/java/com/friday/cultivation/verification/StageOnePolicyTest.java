@@ -158,6 +158,12 @@ class StageOnePolicyTest {
                 "项目状态牌必须在 Jade 等普通 Post 监听器之后绘制，避免生命数字被遮罩");
         assertTrue(entityHud.contains("JadeOverlayCompat.reserveBossBarArea("),
                 "取消标准 Boss 条后仍需主动告知 Jade 项目 Boss 条占用区域");
+        assertTrue(entityHud.contains("JadeOverlayCompat.recalculateTooltipLayout()"),
+                "登记高度后必须在 Jade 正式绘制前重算真实 Tooltip 位置");
+        assertTrue(entityHud.contains("drawForegroundText("),
+                "生命数字必须走独立的最终前景文字通道");
+        assertTrue(entityHud.contains("FOREGROUND_TEXT_Z"),
+                "生命数字必须提升到血条填充之前的独立GUI深度");
     }
 
     private static String read(String relativePath) throws IOException {
